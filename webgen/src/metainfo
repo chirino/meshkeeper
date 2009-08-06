@@ -17,13 +17,13 @@
   # pages using the {var:} syntax.
   # -------------------------------------------------------------------
   project_name: "Cloud Launch"
-  project_slogan: 'cleans up your Java classpath mess - easily run any Java application from the command line'
-  project_id: 'mop'
+  project_slogan: 'Distributed process launching made easy'
+  project_id: 'cloudlaunch'
   project_jira_key: 'CLOUDLAUNCH'
   project_issue_url: 'http://fusesource.com/issues/browse/cloudlaunch'
   project_forums_url: 'http://fusesource.com/forums'
   project_wiki_url: 'http://fusesource.com/wiki/display/cloudlaunch'
-  project_logo: "/images/project-logo.gif"
+  project_logo: '/images/cloudlaunch-logo.png'
 
   # -------------------------------------------------------------------
   # TODO it would be nice to define these in terms of the project_id variable!
@@ -33,7 +33,6 @@
   project_svn_tags_url: 'http://fusesource.com/forge/svn/cloudlaunch/tags'
   project_maven_groupId: 'org.fusesource.cloudlaunch'
   project_maven_artifactId: cloudlaunch
-  project_logo: '/images/cloudlaunch-logo.png'
 
 blog/*/**/*:
   template: /styles/impact/blog.template
