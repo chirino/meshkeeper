@@ -24,10 +24,12 @@ import org.fusesource.cloudlaunch.Expression;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
+import org.fusesource.cloudlaunch.control.ControlServer;
 import org.fusesource.cloudlaunch.rmi.RemoteClassLoader;
 import org.fusesource.cloudlaunch.rmi.RemoteLauncherClient;
 import org.fusesource.cloudlaunch.rmi.RemoteLoadingMain;
 import org.fusesource.cloudlaunch.rmi.RemoteProcessLauncher;
+import org.fusesource.cloudlaunch.zk.ZooKeeperFactory;
 import org.fusesource.rmiviajms.JMSRemoteObject;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.command.ActiveMQQueue;
@@ -45,22 +47,31 @@ import java.util.concurrent.TimeUnit;
  */
 public class RemoteClassLoaderTest extends TestCase {
     
-    BrokerService controlBroker;
+    ControlServer controlServer;
     RemoteProcessLauncher agent;
     RemoteLauncherClient clientRemote;
 
 
     protected void setUp() throws Exception {
-        controlBroker = new BrokerService();
-        controlBroker.setBrokerName("RemoteLauncherBroker");
-        controlBroker.setPersistent(false);
-        controlBroker.addConnector("tcp://localhost:61616");
-        controlBroker.start();
-
+        
+        String dataDir = "target" + File.separator + "remote-classloader-test-data";
+        
+        controlServer = new ControlServer();
+        controlServer.setDataDirectory(dataDir + File.separator + "control-server");
+        controlServer.setJmsConnectUrl("tcp://localhost:61616");
+        controlServer.setZookKeeperConnectUrl("tcp://localhost:2012");
+        controlServer.start();
+        
+        ZooKeeperFactory factory = new ZooKeeperFactory();
+        factory.setHost("localhost");
+        factory.setPort(2012);
+        
         //Set up a launch agent:
         agent = new RemoteProcessLauncher();
-        agent.setDataDirectory(new File("target" + File.separator + "testrunner-data"));
+        agent.setDataDirectory(new File(dataDir + File.separator + "testrunner-data"));
+        agent.setZooKeeper(factory.getZooKeeper());
         agent.start();
+        agent.purgeResourceRepository();
 
         clientRemote = new RemoteLauncherClient("client1");
         clientRemote.bindAgent(agent.getAgentId());
@@ -77,8 +88,7 @@ public class RemoteClassLoaderTest extends TestCase {
             e.printStackTrace();
         }
         System.out.println("Shutting down control broker");
-        controlBroker.stop();
-        JMSRemoteObject.resetSystem();
+        controlServer.destroy();
     }
 
     /**

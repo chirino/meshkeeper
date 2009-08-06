@@ -17,81 +17,88 @@
 package org.fusesource.cloudlaunch;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 import java.util.Properties;
 
-/** 
+/**
  * HostProperties
  * <p>
  * Description:
  * </p>
+ * 
  * @author cmacnaug
  * @version 1.0
  */
-public class HostProperties implements Serializable{
+public class HostProperties implements Serializable {
 
     public String os;
     public int numProcessors;
-    public int systemMemory;
     public String defaultHostName;
     public String defaultExternalHostName;
     public String dataDirectory;
     private Properties systemProperties;
+    private String agentId;
+
     
-    /**
-     * Gets the os that the host is running. 
-     * @return The host's os. 
-     */
-    public String getOS()
+    void fillIn(ProcessLauncher launcher) throws Exception
     {
+        this.agentId = launcher.getAgentId();
+        this.systemProperties = System.getProperties();
+        this.dataDirectory = launcher.getDataDirectory().getCanonicalPath();
+        defaultHostName = java.net.InetAddress.getLocalHost().getHostName();
+        defaultExternalHostName = defaultHostName;
+        this.numProcessors = Runtime.getRuntime().availableProcessors();
+        this.os = System.getProperty("os.name");
+    }
+   
+    
+    public String getAgentId() {
+        return agentId;
+    }
+
+    /**
+     * Gets the os that the host is running.
+     * 
+     * @return The host's os.
+     */
+    public String getOS() {
         return os;
     }
-    
+
     /**
      * @return Gets the number of processors on the host.
      */
-    public int getNumProcessors()
-    {
+    public int getNumProcessors() {
         return numProcessors;
     }
-    
+
     /**
-     * @return Gets the total amount of RAM on the host. 
+     * The default hostname
+     * 
+     * @return The hostname as seen by the host
      */
-    public int getSystemMemory()
-    {
-        return systemMemory;
+    public String getDefaultHostName() {
+        return defaultHostName;
     }
-    
+
     /**
-     * The default hostname 
-     * @return The hostname as seen by the host  
-     */
-    public String getDefaultHostName()
-    {
-        return defaultHostName; 
-    }
-    
-    /**
-     * The hostname externally accessible to by other hosts. If the host isn't behind a firewall
-     * this will be the same as the hostname.  
+     * The hostname externally accessible to by other hosts. If the host isn't
+     * behind a firewall this will be the same as the hostname.
      * 
      * @return The hostname externally accessible to by other hosts
      */
-    public String getExternalHostName()
-    {
+    public String getExternalHostName() {
         return defaultExternalHostName;
     }
-    
+
     /**
-     * @return Returns a directory on the host that is free for tests to use. 
+     * @return Returns a directory on the host that is free for tests to use.
      */
-    public String getDataDirectory()
-    {   
+    public String getDataDirectory() {
         return dataDirectory;
     }
-    
-    public Properties getSystemProperties()
-    {
+
+    public Properties getSystemProperties() {
         return systemProperties;
     }
 }

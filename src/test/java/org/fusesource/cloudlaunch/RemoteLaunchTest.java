@@ -36,9 +36,10 @@ import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.ResourceManager;
 import org.fusesource.cloudlaunch.Expression.FileExpression;
+import org.fusesource.cloudlaunch.control.ControlServer;
 import org.fusesource.cloudlaunch.rmi.RemoteLauncherClient;
 import org.fusesource.cloudlaunch.rmi.RemoteProcessLauncher;
-import org.fusesource.rmiviajms.JMSRemoteObject;
+import org.fusesource.cloudlaunch.zk.ZooKeeperFactory;
 
 /**
  * RemoteLaunchTest
@@ -51,7 +52,7 @@ import org.fusesource.rmiviajms.JMSRemoteObject;
  */
 public class RemoteLaunchTest extends TestCase {
 
-    BrokerService controlBroker;
+    ControlServer controlServer;
     RemoteProcessLauncher agent;
     RemoteLauncherClient clientRemote;
     ResourceManager commonResourceManager;
@@ -61,16 +62,21 @@ public class RemoteLaunchTest extends TestCase {
         String dataDir = "target" + File.separator + "remote-launch-test-data";
         String commonRepo = new File(dataDir + File.separator + "common-repo").toURI().toString();
 
-        controlBroker = new BrokerService();
-        controlBroker.setBrokerName("RemoteLauncherBroker");
-        controlBroker.setPersistent(false);
-        controlBroker.addConnector("tcp://localhost:61616");
-        controlBroker.start();
+        controlServer = new ControlServer();
+        controlServer.setDataDirectory(dataDir + File.separator + "control-server");
+        controlServer.setJmsConnectUrl("tcp://localhost:61616");
+        controlServer.setZookKeeperConnectUrl("tcp://localhost:2012");
+        controlServer.start();
+        
+        ZooKeeperFactory factory = new ZooKeeperFactory();
+        factory.setHost("localhost");
+        factory.setPort(2012);
         
         //Set up a launch agent:
         agent = new RemoteProcessLauncher();
         agent.setDataDirectory(new File(dataDir + File.separator + "testrunner-data"));
         agent.setCommonResourceRepoUrl(commonRepo);
+        agent.setZooKeeper(factory.getZooKeeper());
         agent.start();
         agent.purgeResourceRepository();
 
@@ -95,11 +101,8 @@ public class RemoteLaunchTest extends TestCase {
             e.printStackTrace();
         }
         System.out.println("Shutting down control broker");
-        controlBroker.stop();
-        controlBroker.waitUntilStopped();
-        
-        JMSRemoteObject.resetSystem();
-        
+        controlServer.destroy();
+        System.out.println("Shut down control broker");
     }
 
     public void testDataOutput() throws Exception {

@@ -2,7 +2,6 @@ package org.fusesource.cloudlaunch;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.io.File;
 import java.io.IOException;
 
@@ -29,7 +28,7 @@ public class ProcessLauncher {
 
     private String commonResourceRepoUrl;
 
-    private Properties properties = System.getProperties();
+    private HostProperties properties = new HostProperties();
 
     synchronized public void bind(String owner) throws Exception {
         if (exclusiveOwner == null) {
@@ -73,7 +72,7 @@ public class ProcessLauncher {
 
         if (localRepoDirectory == null) {
             localRepoDirectory = new File(dataDirectory, "local-repo");
-            properties.setProperty(LOCAL_REPO_PROP, localRepoDirectory.getCanonicalPath());
+            System.getProperties().setProperty(LOCAL_REPO_PROP, localRepoDirectory.getCanonicalPath());
         }
 
         if (resourceManager == null) {
@@ -103,6 +102,8 @@ public class ProcessLauncher {
             }
         };
 
+        properties.fillIn(this);
+        
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
@@ -191,11 +192,18 @@ public class ProcessLauncher {
         this.dataDirectory = dataDirectory;
     }
 
+    /**
+     * @return Gets the data directory where the launcher stores files. 
+     */
     public File getDataDirectory() {
         return dataDirectory;
     }
 
-    public Properties getProperties() {
+    /**
+     * Gets properties about the agent and it's host machine.
+     * @return
+     */
+    public HostProperties getHostProperties() {
         return properties;
     }
 

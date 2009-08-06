@@ -99,35 +99,42 @@ public class ResourceTest extends TestCase {
      */
     private void assertEquals(File source, File copy) {
         assertTrue(copy.exists());
-        
-        if(source.isFile() && copy.isFile())
-        {
+
+        if (ignoreFile(source.getName())) {
             return;
         }
-        else if(source.isFile() != copy.isFile())
-        {
+
+        if (source.isFile() && copy.isFile()) {
+            return;
+        } else if (source.isFile() != copy.isFile()) {
             fail(source + " is not equal to " + copy);
         }
-        
+
         //Compare directory contents:
         ArrayList<String> copies = new ArrayList<String>(Arrays.asList(copy.list()));
         List<String> sources = Arrays.asList(source.list());
-        for (String sf : sources)
-        {
-            if(!copies.remove(sf))
-            {
+        for (String sf : sources) {
+            if (!copies.remove(sf)) {
+                
+                if(!ignoreFile(sf))
                 fail(sf + " not found in " + copy);
             }
-            
-            assertEquals(new File(source, sf), new File(copy, sf));
-            
+            else
+            {
+                assertEquals(new File(source, sf), new File(copy, sf));
+            }
+
         }
-       
-        if(!copies.isEmpty())
-        {
+
+        if (!copies.isEmpty()) {
             fail("Extra files in copy: " + copies);
         }
-        
-        
+    }
+
+    private static final boolean ignoreFile(String name) {
+        if (name.equals(".svn")) {
+            return true;
+        }
+        return false;
     }
 }

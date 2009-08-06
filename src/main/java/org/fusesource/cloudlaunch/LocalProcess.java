@@ -67,7 +67,7 @@ public class LocalProcess implements Process {
             }
             first = false;
 
-            String arg = expression.evaluate(processLauncher.getProperties());
+            String arg = expression.evaluate(processLauncher.getHostProperties().getSystemProperties());
             cmd[i++] = arg;
 
             command_line.append('\'');
