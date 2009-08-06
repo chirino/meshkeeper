@@ -1,6 +1,5 @@
 package org.fusesource.cloudlaunch.rmi;
 
-import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.rmiviajms.Oneway;
 
 import java.rmi.Remote;

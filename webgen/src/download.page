@@ -1,0 +1,27 @@
+---
+title: Download
+in_menu: true
+sort_info: 5
+--- name:overview
+
+# {project_name:}
+Download it Today!
+
+--- name:content
+
+<div class="left" markdown="1">
+# Download a distro
+</div>
+<div class="right" markdown="1">
+You can download *{project_name:}* from the [{project_name:} Snapshot Repository](http://cloudlaunch.fusesource.org/repo/snapshot/org/fusesource/cloudlaunch/cloudlaunch/) 
+
+</div>
+
+<div class="left" markdown="1">
+# Building from Source
+</div>
+
+<div class="right" markdown="1">
+If you prefer you can try building from [the source code](source.html) and [building it](building.html)
+</div>
+

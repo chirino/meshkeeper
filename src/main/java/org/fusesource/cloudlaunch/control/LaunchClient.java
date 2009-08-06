@@ -16,11 +16,8 @@
  */
 package org.fusesource.cloudlaunch.control;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.zookeeper.ZooKeeper;

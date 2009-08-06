@@ -18,7 +18,6 @@ package org.fusesource.cloudlaunch;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -52,9 +51,6 @@ public class ResourceManager {
     //Access to our local repo:
     private Wagon localWagon;
 
-    //Access to the remote common repo:
-    private Wagon commonWagon;
-
     private static final HashMap<String, Class<? extends Wagon>> wagonProviders = new HashMap<String, Class<? extends Wagon>>();
 
     private HashMap<String, Wagon> connectedRepos = new HashMap<String, Wagon>();
@@ -76,15 +72,13 @@ public class ResourceManager {
 
     public void setCommonRepo(String url, AuthenticationInfo authInfo) throws Exception {
         Repository remoteRepo = new Repository("common", url);
-        commonWagon = connectWagon(remoteRepo, authInfo);
+        connectWagon(remoteRepo, authInfo);
     }
 
     public void locateResource(LaunchResource resource) throws Exception {
         Wagon w = null;
         long timestamp = 0;
-        boolean existsLocally = false;
         if (localWagon.resourceExists(resource.getRepoPath())) {
-            existsLocally = true;
             timestamp = new File(localWagon.getRepository().getBasedir() + File.separator + resource.getRepoPath()).lastModified();
         } else {
             synchronized (this) {
