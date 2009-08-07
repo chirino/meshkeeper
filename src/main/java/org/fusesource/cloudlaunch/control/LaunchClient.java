@@ -26,10 +26,10 @@ import org.fusesource.cloudlaunch.HostProperties;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
+import org.fusesource.cloudlaunch.registry.Registry;
+import org.fusesource.cloudlaunch.registry.RegistryWatcher;
 import org.fusesource.cloudlaunch.rmi.IRemoteProcessLauncher;
 import org.fusesource.cloudlaunch.rmi.RemoteLauncherClient;
-import org.fusesource.cloudlaunch.zk.ZooKeeperChildWatcher;
-import org.fusesource.cloudlaunch.zk.ZooKeeperExporter;
 
 /**
  * LaunchClient
@@ -43,27 +43,25 @@ import org.fusesource.cloudlaunch.zk.ZooKeeperExporter;
 public class LaunchClient {
 
     private RemoteLauncherClient comm;
-    private ZooKeeper zooKeeper;
-    ZooKeeperChildWatcher zooKeeperWatcher;
+    private Registry registry;
+    RegistryWatcher agentWatcher;
     private HashMap<String, HostProperties> knownAgents = new HashMap<String, HostProperties>();
 
-    public void start() {
+    public void start() throws Exception {
         comm = new RemoteLauncherClient(System.getProperty("user.name") + "-" + System.currentTimeMillis());
         comm.setBindTimeout(5000);
         comm.setLaunchTimeout(10000);
         comm.setKillTimeout(5000);
 
-        ZooKeeperChildWatcher zooKeeperWatcher = new ZooKeeperChildWatcher(zooKeeper, IRemoteProcessLauncher.REGISTRY_PATH) {
+        agentWatcher = new RegistryWatcher() {
 
-            @Override
             public void onChildrenChanged(String path, List<String> children) {
                 synchronized (knownAgents) {
                     for (String agentId : children) {
                         if (!knownAgents.containsKey(agentId)) {
                             Stat stat = new Stat();
                             try {
-                                byte[] data = zk.getData(path + "/" + agentId, false, stat);
-                                IRemoteProcessLauncher irpl = ZooKeeperExporter.unmarshall(data);
+                                IRemoteProcessLauncher irpl = registry.getObject(path + "/" + agentId);
                                 HostProperties props = irpl.getHostProperties();
                                 knownAgents.put(agentId, props);
 
@@ -77,13 +75,13 @@ public class LaunchClient {
                     knownAgents.notifyAll();
                 }
             }
-
         };
-        zooKeeperWatcher.start();
+        
+        registry.addRegistryWatcher(IRemoteProcessLauncher.REGISTRY_PATH, agentWatcher);
     }
 
     public void destroy() {
-        zooKeeperWatcher.stop();
+        registry.removeRegistryWatcher(IRemoteProcessLauncher.REGISTRY_PATH, agentWatcher);
         knownAgents.clear();
         comm.close();
     }
@@ -115,12 +113,12 @@ public class LaunchClient {
         return comm.launchProcess(agentId, launch, handler);
     }
 
-    public void setZooKeeper(ZooKeeper zooKeeper) {
-        this.zooKeeper = zooKeeper;
+    public void setRegistry(Registry registry) {
+        this.registry = registry;
     }
 
-    public ZooKeeper getZooKeeper() {
-        return zooKeeper;
+    public Registry getRegistry() {
+        return registry;
     }
 
     public void close() throws Exception {

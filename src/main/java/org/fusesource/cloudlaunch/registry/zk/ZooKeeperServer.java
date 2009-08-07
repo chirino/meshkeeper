@@ -1,4 +1,4 @@
-package org.fusesource.cloudlaunch.control;
+package org.fusesource.cloudlaunch.registry.zk;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.DisposableBean;

@@ -4,6 +4,7 @@ import org.apache.activemq.command.ActiveMQQueue;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
+import org.fusesource.cloudlaunch.registry.zk.ZooKeeperRegistry;
 import org.fusesource.rmiviajms.JMSRemoteObject;
 
 import javax.jms.Destination;
@@ -32,7 +33,7 @@ public class RemoteLauncherClient {
     public RemoteLauncherClient(String name) {
         this.name = name;
     }
-
+    
     public void bindAgent(String agentName) throws Exception {
         checkNotClosed();
 
@@ -232,4 +233,6 @@ public class RemoteLauncherClient {
             //Yup, still here...
         }
     }
+
+    
 }

@@ -17,10 +17,14 @@
 package org.fusesource.cloudlaunch.control;
 
 import java.io.File;
+import java.net.URI;
 
 import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.fusesource.cloudlaunch.registry.zk.ZooKeeperFactory;
+import org.fusesource.cloudlaunch.registry.zk.ZooKeeperRegistry;
+import org.fusesource.cloudlaunch.registry.zk.ZooKeeperServer;
 import org.fusesource.rmiviajms.JMSRemoteObject;
 import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
 
@@ -40,12 +44,15 @@ public class ControlServer {
     Log log = LogFactory.getLog(ControlServer.class);
     BrokerService controlBroker;
     ZooKeeperServer zkServer;
+    ZooKeeperRegistry registry;
 
     private String jmsConnectUrl;
-    private String zookKeeperConnectUrl;
+    private String zooKeeperConnectUrl;
     private String dataDirectory = ".";
     
     public void start() throws Exception {
+        System.setProperty(ActiveMQRemoteSystem.CONNECT_URL_PROPNAME, jmsConnectUrl);
+        
         //TODO should probably store the control broker url in ZooKeeper so that application
         //need only specify one url. 
         //Start up a RMI control broker:
@@ -60,27 +67,34 @@ public class ControlServer {
                 controlBroker.setDeleteAllMessagesOnStartup(true);
                 controlBroker.start();
                 log.info("Control Server started");
-                System.setProperty(ActiveMQRemoteSystem.CONNECT_URL_PROPNAME, jmsConnectUrl);
+            }
+        } catch (Exception e) {
+            log.error("Error starting control server", e);
+        }
+
+       
+        //Start a zoo-keeper server.
+        try {
+            if (zooKeeperConnectUrl != null) {
+                URI uri = new URI(zooKeeperConnectUrl);
+                
+                log.info("Starting ZooKeeper Server");
+                zkServer = new ZooKeeperServer();
+                zkServer.setPurge(true);
+                zkServer.setDirectory(dataDirectory + File.separator + "zoo-keeper");
+                zkServer.setPort(uri.getPort());
+                zkServer.start();
+                log.info("ZooKeeper Server started");
+
                 
             }
         } catch (Exception e) {
             log.error("Error starting control server", e);
         }
-
-        //Start a zoo-keeper server.
-        try {
-            if (zookKeeperConnectUrl != null) {
-                log.info("Starting ZooKeeper Server");
-                zkServer = new ZooKeeperServer();
-                zkServer.setPurge(true);
-                zkServer.setDirectory(dataDirectory + File.separator + "zoo-keeper");
-                zkServer.start();
-                log.info("ZooKeeper Server started");
-
-            }
-        } catch (Exception e) {
-            log.error("Error starting control server", e);
-        }
+        
+        
+        
+        
     }
 
     public void destroy() throws Exception {
@@ -117,12 +131,12 @@ public class ControlServer {
         this.jmsConnectUrl = jmsConnectUrl;
     }
 
-    public String getZookKeeperConnectUrl() {
-        return zookKeeperConnectUrl;
+    public String getZooKeeperConnectUrl() {
+        return zooKeeperConnectUrl;
     }
 
-    public void setZookKeeperConnectUrl(String zookKeeperConnectUrl) {
-        this.zookKeeperConnectUrl = zookKeeperConnectUrl;
+    public void setZooKeeperConnectUrl(String zooKeeperConnectUrl) {
+        this.zooKeeperConnectUrl = zooKeeperConnectUrl;
     }
 
     public void setDataDirectory(String dataDirectory) {

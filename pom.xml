@@ -99,8 +99,7 @@
     </snapshotRepository>
     <site> <id>website.fusesource.org</id> <name>website</name>
       <url>dav:http://fusesource.com/forge/dav/cloudlaunch/maven/${project.version}</url>
-    </site
-    
+    </site>
   </distributionManagement>
 
   <dependencies>

@@ -1,4 +1,4 @@
-package org.fusesource.cloudlaunch.zk;
+package org.fusesource.cloudlaunch.registry.zk;
 
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.ACL;
@@ -7,6 +7,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.DisposableBean;
 
+import java.net.URI;
 import java.rmi.Remote;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -21,20 +22,20 @@ import java.io.ObjectOutputStream;
  */
 public class ZooKeeperFactory implements FactoryBean, InitializingBean, DisposableBean {
 
-    private String host = "localhost";
-    private int port = 2181;
+    private String connectUrl = "localhost:2181";
     private String userid = "guest";
     private String password = "";
 
-    private ZooKeeper zk;
+    private ZooKeeperRegistry registry;
     long connectTimeout = 30000;
+    int sessionTimeout = 30000;
 
     public Object getObject() throws Exception {
-        return zk;
+        return registry;
     }
 
     public Class getObjectType() {
-        return ZooKeeper.class;
+        return ZooKeeperRegistry.class;
     }
 
     public boolean isSingleton() {
@@ -48,7 +49,9 @@ public class ZooKeeperFactory implements FactoryBean, InitializingBean, Disposab
     }
 
     public void start() throws Exception {
-        zk = new ZooKeeper(host, port, new Watcher() {
+        //ZK doesn't like schemes, so just take host and port
+        URI uri = new URI(connectUrl);
+        ZooKeeper zk = new ZooKeeper(uri.getAuthority() + ":" + uri.getPort(), sessionTimeout, new Watcher() {
             public void process(WatchedEvent event) {
                 switch (event.getState()) {
                 case SyncConnected:
@@ -69,35 +72,30 @@ public class ZooKeeperFactory implements FactoryBean, InitializingBean, Disposab
         } else {
             connected.await();
         }
+        
+        registry = new ZooKeeperRegistry();
+        registry.setZooKeeper(zk);
     }
 
     public void destroy() throws Exception {
-        if (zk != null) {
-            zk.close();
+        if (registry != null) {
+            registry.close();
         }
     }
 
-    public ZooKeeper getZooKeeper() throws Exception {
-        if (zk == null) {
+    public ZooKeeperRegistry getRegistry() throws Exception {
+        if (registry == null) {
             start();
         }
-        return zk;
+        return registry;
     }
 
-    public String getHost() {
-        return host;
+    public String getConnectUrl() {
+        return connectUrl;
     }
 
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
+    public void setConnectUrl(String connectUrl) {
+        this.connectUrl = connectUrl;
     }
 
     public String getUserid() {
@@ -122,6 +120,14 @@ public class ZooKeeperFactory implements FactoryBean, InitializingBean, Disposab
 
     public void setConnectTimeout(long connectTimeout) {
         this.connectTimeout = connectTimeout;
+    }
+
+    public int getSessionTimeout() {
+        return sessionTimeout;
+    }
+
+    public void setSessionTimeout(int sessionTimeout) {
+        this.sessionTimeout = sessionTimeout;
     }
 
 }

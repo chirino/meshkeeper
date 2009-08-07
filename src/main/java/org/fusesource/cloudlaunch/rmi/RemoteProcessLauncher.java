@@ -5,11 +5,10 @@ import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.LocalProcess;
 import org.fusesource.cloudlaunch.ProcessLauncher;
 import org.fusesource.cloudlaunch.ProcessListener;
-import org.fusesource.cloudlaunch.zk.ZooKeeperExporter;
-import org.fusesource.cloudlaunch.zk.ZooKeeperFactory;
+import org.fusesource.cloudlaunch.registry.Registry;
+import org.fusesource.cloudlaunch.registry.zk.ZooKeeperFactory;
 import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
 import org.apache.activemq.command.ActiveMQQueue;
-import org.apache.zookeeper.ZooKeeper;
 
 import java.net.URI;
 import java.rmi.RemoteException;
@@ -30,11 +29,11 @@ public class RemoteProcessLauncher implements IRemoteProcessLauncher {
         }
     };
     private RemoteListenerMonitor monitor = new RemoteListenerMonitor(processLauncher);
-    private ZooKeeper zooKeeper;
-    ZooKeeperExporter exporter;
+    private Registry registry;
+    Exporter exporter;
 
-    public void setZooKeeper(ZooKeeper zooKeeper) {
-        this.zooKeeper = zooKeeper;
+    public void setRegistry(Registry registry) {
+        this.registry = registry;
     }
 
     /**
@@ -76,8 +75,8 @@ public class RemoteProcessLauncher implements IRemoteProcessLauncher {
         processLauncher.start();
         monitor.start();
 
-        exporter = new ZooKeeperExporter();
-        exporter.setZooKeeper(zooKeeper);
+        exporter = new Exporter();
+        exporter.setRegistry(registry);
         exporter.setSource(this);
         exporter.setPath(IRemoteProcessLauncher.REGISTRY_PATH + "/" + getAgentId());
         exporter.setDestination(new ActiveMQQueue(processLauncher.getAgentId()));
@@ -136,7 +135,7 @@ public class RemoteProcessLauncher implements IRemoteProcessLauncher {
         }
 
         String commonRepoUrl = null;
-        ZooKeeper zk = null;
+        Registry registry = null;
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
         while (!alist.isEmpty()) {
@@ -151,11 +150,9 @@ public class RemoteProcessLauncher implements IRemoteProcessLauncher {
             } else if (arg.equals("-zkUrl")) {
 
                 try {
-                    URI uri = new URI(alist.removeFirst().trim());
                     ZooKeeperFactory factory = new ZooKeeperFactory();
-                    factory.setHost(uri.getHost());
-                    factory.setPort(uri.getPort());
-                    zk = factory.getZooKeeper();
+                    factory.setConnectUrl(alist.removeFirst());
+                    registry = factory.getRegistry();
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.err.println("Error connecting zoo-keeper: " + e.getMessage());
@@ -167,7 +164,7 @@ public class RemoteProcessLauncher implements IRemoteProcessLauncher {
 
         RemoteProcessLauncher agent = new RemoteProcessLauncher();
         agent.setCommonResourceRepoUrl(commonRepoUrl);
-        agent.setZooKeeper(zk);
+        agent.setRegistry(registry);
 
         //        agent.setPropFileName(argv[0]);
         try {

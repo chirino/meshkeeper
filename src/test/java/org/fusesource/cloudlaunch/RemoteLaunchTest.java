@@ -37,9 +37,9 @@ import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.ResourceManager;
 import org.fusesource.cloudlaunch.Expression.FileExpression;
 import org.fusesource.cloudlaunch.control.ControlServer;
+import org.fusesource.cloudlaunch.registry.zk.ZooKeeperFactory;
 import org.fusesource.cloudlaunch.rmi.RemoteLauncherClient;
 import org.fusesource.cloudlaunch.rmi.RemoteProcessLauncher;
-import org.fusesource.cloudlaunch.zk.ZooKeeperFactory;
 
 /**
  * RemoteLaunchTest
@@ -65,18 +65,17 @@ public class RemoteLaunchTest extends TestCase {
         controlServer = new ControlServer();
         controlServer.setDataDirectory(dataDir + File.separator + "control-server");
         controlServer.setJmsConnectUrl("tcp://localhost:61616");
-        controlServer.setZookKeeperConnectUrl("tcp://localhost:2012");
+        controlServer.setZooKeeperConnectUrl("tcp://localhost:2012");
         controlServer.start();
         
         ZooKeeperFactory factory = new ZooKeeperFactory();
-        factory.setHost("localhost");
-        factory.setPort(2012);
+        factory.setConnectUrl(controlServer.getZooKeeperConnectUrl());
         
         //Set up a launch agent:
         agent = new RemoteProcessLauncher();
         agent.setDataDirectory(new File(dataDir + File.separator + "testrunner-data"));
         agent.setCommonResourceRepoUrl(commonRepo);
-        agent.setZooKeeper(factory.getZooKeeper());
+        agent.setRegistry(factory.getRegistry());
         agent.start();
         agent.purgeResourceRepository();
 

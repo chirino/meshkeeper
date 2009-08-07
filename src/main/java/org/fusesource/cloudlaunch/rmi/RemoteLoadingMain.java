@@ -130,7 +130,7 @@ public class RemoteLoadingMain {
         }
 
         // Create the remote classloader
-        Class remoteCLClass = cl.loadClass("org.fusesource.testrunner.rmi.RemoteClassLoader");
+        Class remoteCLClass = cl.loadClass("org.fusesource.cloudlaunch.rmi.RemoteClassLoader");
         Method method = remoteCLClass.getMethod("createRemoteClassLoader", new Class[]{String.class, File.class, int.class, ClassLoader.class});
 
         // Use the new remote classloader to load the main class
