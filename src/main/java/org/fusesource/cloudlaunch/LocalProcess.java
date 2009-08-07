@@ -12,6 +12,7 @@ import org.fusesource.cloudlaunch.ProcessLauncher;
 import java.io.*;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.lang.*;
 
 /**
  * @version $Revision: 1.1 $
@@ -51,9 +52,9 @@ public class LocalProcess implements Process {
             throw new Exception("LaunchDescription command empty.");
         }
 
-        // Resolve resources (copy them locally:
-        for (LaunchResource resource : ld.getResources()) {
-            processLauncher.getResourceManager().locateResource(resource);
+        // Execute pre launch tasks.
+        for (LaunchTask resource : ld.getPreLaunchTasks()) {
+            resource.execute(this);
         }
 
         // Evaluate the command...
@@ -236,4 +237,27 @@ public class LocalProcess implements Process {
         }
     }
 
+    public ProcessListener getListener() {
+        return listener;
+    }
+
+    public LaunchDescription getLd() {
+        return ld;
+    }
+
+    public java.lang.Process getProcess() {
+        return process;
+    }
+
+    public ProcessLauncher getProcessLauncher() {
+        return processLauncher;
+    }
+
+    public AtomicBoolean getRunning() {
+        return running;
+    }
+
+    public int getPid() {
+        return pid;
+    }
 }//private class ProcessServer

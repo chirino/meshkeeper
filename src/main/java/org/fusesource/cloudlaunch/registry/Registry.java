@@ -67,7 +67,7 @@ public interface Registry {
      * Removes a node from the registry.
      * 
      * @param path The path to remove.
-     * @param recursive. If true then any children will also be removed. 
+     * @param recursive If true then any children will also be removed.
      * @throws Exception If the path couldn't be removed. 
      */
     public void remove(String path, boolean recursive) throws Exception;

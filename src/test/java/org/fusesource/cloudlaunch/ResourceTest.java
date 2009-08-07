@@ -24,7 +24,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.wagon.authentication.AuthenticationInfo;
-import org.fusesource.cloudlaunch.LaunchResource;
+import org.fusesource.cloudlaunch.Resource;
 import org.fusesource.cloudlaunch.ResourceManager;
 
 import junit.framework.TestCase;
@@ -57,10 +57,10 @@ public class ResourceTest extends TestCase {
         authInfo.setPassword("fusemqtestpw");
         rm.setCommonRepo(remoteRepo, authInfo);
 
-        LaunchResource resource = new LaunchResource();
+        Resource resource = new Resource();
         resource.setRepoName("common");
         resource.setRepoPath("testfolder");
-        resource.setType(LaunchResource.DIRECTORY);
+        resource.setType(Resource.DIRECTORY);
 
         rm.locateResource(resource);
 
@@ -82,10 +82,10 @@ public class ResourceTest extends TestCase {
         rm.setCommonRepo(remoteDir.toURI().toString(), null);
 
         String resourcePath = "testfolder";
-        LaunchResource resource = new LaunchResource();
+        Resource resource = new Resource();
         resource.setRepoName("common");
         resource.setRepoPath(resourcePath);
-        resource.setType(LaunchResource.DIRECTORY);
+        resource.setType(Resource.DIRECTORY);
 
         rm.locateResource(resource);
 
@@ -95,7 +95,8 @@ public class ResourceTest extends TestCase {
     }
 
     /**
-     * @param resolvedPath
+     * @param source
+     * @param copy
      */
     private void assertEquals(File source, File copy) {
         assertTrue(copy.exists());

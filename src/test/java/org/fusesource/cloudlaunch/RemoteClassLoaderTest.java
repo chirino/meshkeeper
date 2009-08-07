@@ -26,12 +26,8 @@ import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.control.ControlServer;
 import org.fusesource.cloudlaunch.registry.zk.ZooKeeperFactory;
-import org.fusesource.cloudlaunch.rmi.RemoteClassLoader;
-import org.fusesource.cloudlaunch.rmi.RemoteLauncherClient;
-import org.fusesource.cloudlaunch.rmi.RemoteLoadingMain;
-import org.fusesource.cloudlaunch.rmi.RemoteProcessLauncher;
+import org.fusesource.cloudlaunch.rmi.*;
 import org.fusesource.rmiviajms.JMSRemoteObject;
-import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.command.ActiveMQQueue;
 
 import java.io.IOException;
@@ -123,7 +119,7 @@ public class RemoteClassLoaderTest extends TestCase {
     }
 
     public void testLoadRemoteClass() throws Exception {
-        RemoteClassLoader.ClassLoaderServer server = new RemoteClassLoader.ClassLoaderServer(null, DataInputTestApplication.class.getClassLoader());
+        ClassLoaderServer server = new ClassLoaderServer(null, DataInputTestApplication.class.getClassLoader());
         JMSRemoteObject.exportObject(server, new ActiveMQQueue("CLASSLOADER"));
 
         LaunchDescription ld = new LaunchDescription();

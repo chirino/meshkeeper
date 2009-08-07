@@ -29,9 +29,8 @@ import java.util.Arrays;
 
 import junit.framework.TestCase;
 
-import org.apache.activemq.broker.BrokerService;
 import org.fusesource.cloudlaunch.LaunchDescription;
-import org.fusesource.cloudlaunch.LaunchResource;
+import org.fusesource.cloudlaunch.Resource;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.ResourceManager;
@@ -135,13 +134,13 @@ public class RemoteLaunchTest extends TestCase {
         ld.add(path(files));
         ld.add(DataInputTestApplication.class.getName());
 
-        LaunchResource resource = new LaunchResource();
-        resource.setType(LaunchResource.FILE);
+        Resource resource = new Resource();
+        resource.setType(Resource.FILE);
         resource.setRepoName("common");
         resource.setRepoPath("test/file.dat");
         byte[] data = new String("Test Data").getBytes();
         commonResourceManager.deployFile(resource, data);
-        ld.addResource(resource);
+        ld.installResource(resource);
 
         ld.add("-DataFile");
         ld.add(resource(resource));

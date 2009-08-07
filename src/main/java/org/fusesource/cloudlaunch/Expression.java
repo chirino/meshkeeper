@@ -57,7 +57,7 @@ abstract public class Expression implements Serializable {
         return append(list);
     }
 
-    public static FileExpression resource(LaunchResource resource) {
+    public static FileExpression resource(Resource resource) {
         return new FileExpression(append(property(ProcessLauncher.LOCAL_REPO_PROP, string("local-repo")), file(File.separator + resource.getRepoPath())));
     }
 

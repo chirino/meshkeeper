@@ -75,7 +75,7 @@ public class ResourceManager {
         connectWagon(remoteRepo, authInfo);
     }
 
-    public void locateResource(LaunchResource resource) throws Exception {
+    public void locateResource(Resource resource) throws Exception {
         Wagon w = null;
         long timestamp = 0;
         if (localWagon.resourceExists(resource.getRepoPath())) {
@@ -91,7 +91,7 @@ public class ResourceManager {
 
             if (w != null && w.resourceExists(resource.getRepoPath())) {
                 try {
-                    if (resource.getType() == LaunchResource.DIRECTORY) {
+                    if (resource.getType() == Resource.DIRECTORY) {
                         String path = resource.getRepoPath();
                         if (!path.endsWith("/")) {
                             path = path + "/";
@@ -117,7 +117,7 @@ public class ResourceManager {
      * @param data
      * @throws IOException
      */
-    public void deployFile(LaunchResource resource, byte[] data) throws Exception {
+    public void deployFile(Resource resource, byte[] data) throws Exception {
         // TODO Auto-generated method stub
         File f = File.createTempFile("tmp", "dat");
         FileOutputStream fw = new FileOutputStream(f);
@@ -131,11 +131,11 @@ public class ResourceManager {
         }
     }
 
-    public void deployDirectory(LaunchResource resource, File d) throws Exception {
+    public void deployDirectory(Resource resource, File d) throws Exception {
         deployResource(resource, d);
     }
 
-    private void deployResource(LaunchResource resource, File f) throws Exception {
+    private void deployResource(Resource resource, File f) throws Exception {
         Wagon w = null;
         synchronized (this) {
             w = connectedRepos.get(resource.getRepoName());
@@ -144,7 +144,6 @@ public class ResourceManager {
                 w = connectWagon(remote, null);
             }
         }
-
         w.put(f, resource.getRepoPath());
     }
 

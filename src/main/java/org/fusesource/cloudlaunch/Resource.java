@@ -27,7 +27,7 @@ import java.io.Serializable;
  * @author cmacnaug
  * @version 1.0
  */
-public class LaunchResource implements Serializable {
+public class Resource implements Serializable {
 
     public static final short FILE = 0;
     public static final short DIRECTORY = 1;

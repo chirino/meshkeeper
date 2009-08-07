@@ -5,6 +5,7 @@ import org.fusesource.cloudlaunch.Expression;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author chirino
@@ -13,7 +14,7 @@ public class LaunchDescription implements Serializable {
     ArrayList<Expression> command = new ArrayList<Expression>();
     HashMap<String, Expression> environment;
     Expression.FileExpression workingDirectory;
-    ArrayList<LaunchResource> resources = new ArrayList<LaunchResource>();
+    ArrayList<LaunchTask> preLaunchTasks = new ArrayList<LaunchTask>();
     
     public LaunchDescription add(String value) {
         return add(Expression.string(value));
@@ -35,14 +36,66 @@ public class LaunchDescription implements Serializable {
         environment.put(key, value);
         return this;
     }
-    
+
+    private static class InstallLaunchResourceTask implements Serializable, LaunchTask {
+        private final Resource resource;
+
+        public InstallLaunchResourceTask(Resource resource) {
+            this.resource = resource;
+        }
+
+        public void execute(LocalProcess process) throws Exception {
+            process.getProcessLauncher().getResourceManager().locateResource(resource);
+        }
+    }
+
+
+    private static class SubLaunchTask implements Serializable, LaunchTask, ProcessListener {
+        private final LaunchDescription launch;
+
+        transient private CountDownLatch done = new CountDownLatch(1);
+        transient private LocalProcess process;
+        transient private Exception error;
+
+        public SubLaunchTask(LaunchDescription launch) {
+            this.launch = launch;
+        }
+
+        public void execute(LocalProcess process) throws Exception {
+            this.process = process;
+            process.getProcessLauncher().launch(launch, this);
+            done.await();
+            if( error!=null ) {
+                throw error;
+            }
+        }
+
+        public void onProcessExit(int exitCode) {
+            if( exitCode!=0 ) {
+                error = new Exception("Sub process failed. exit code:"+exitCode);
+            }
+            done.countDown();
+        }
+        public void onProcessError(Throwable thrown) {
+            error = new Exception("Sub process failed", thrown);
+        }
+        public void onProcessInfo(String message) {
+            process.getListener().onProcessInfo(message);
+
+        }
+        public void onProcessOutput(int fd, byte[] output) {
+            process.getListener().onProcessOutput(fd, output);
+        }
+    }
+
+
     /**
      * Adds a resource to the launch description. The receiving
      * agent will resolve it, copying it to it's local resource
      * cache. 
      * 
      * To refer to the Resource on the command line call {@link #add(Expression)}
-     * with {@link Expression#resource(LaunchResource)} e.g.
+     * with {@link Expression#resource(Resource)} e.g.
      * 
      * <code>
      * LaunchDescription ld = new LaunchDescription();
@@ -54,10 +107,18 @@ public class LaunchDescription implements Serializable {
      * 
      * 
      * @param resource
-     * @see Expression#resource(LaunchResource)
+     * @see Expression#resource(Resource)
      */
-    public void addResource(LaunchResource resource) {
-        resources.add(resource);
+    public void installResource(Resource resource) {
+        preLaunchTasks.add(new InstallLaunchResourceTask(resource));
+    }
+
+    /**
+     * Executes a process before launching this process.  Usually used to setup/
+     * @param launch
+     */
+    public void setup(LaunchDescription launch) {
+        preLaunchTasks.add(new SubLaunchTask(launch));
     }
 
     public Expression.FileExpression getWorkingDirectory() {
@@ -81,7 +142,7 @@ public class LaunchDescription implements Serializable {
         return environment;
     }
 
-    public ArrayList<LaunchResource> getResources() {
-        return resources;
+    public ArrayList<LaunchTask> getPreLaunchTasks() {
+        return preLaunchTasks;
     }
 }
