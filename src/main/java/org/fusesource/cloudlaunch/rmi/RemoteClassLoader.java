@@ -1,7 +1,5 @@
 package org.fusesource.cloudlaunch.rmi;
 
-import org.apache.activemq.command.ActiveMQDestination;
-import org.fusesource.rmiviajms.JMSRemoteObject;
 
 import javax.jms.Destination;
 import java.io.*;
@@ -19,10 +17,10 @@ import java.util.zip.Checksum;
 public class RemoteClassLoader extends ClassLoader {
     private IClassLoaderServer server;
 
-    public static ClassLoader createRemoteClassLoader(String uri, File cacheDir, int depth, ClassLoader parent) throws IOException {
-        Destination queue = ActiveMQDestination.createDestination(uri, ActiveMQDestination.QUEUE_TYPE);
-        System.out.println("CL server at "+queue);
-        IClassLoaderServer cle = JMSRemoteObject.toProxy(queue, IClassLoaderServer.class);
+    public static ClassLoader createRemoteClassLoader(Distributor d, String path, File cacheDir, int depth, ClassLoader parent) throws Exception {
+        
+        System.out.println("CL server at "+path);
+        IClassLoaderServer cle = d.getRegistry().getObject(path);
         return createRemoteClassLoader(cle, cacheDir, depth, parent);
     }
     
@@ -37,7 +35,7 @@ public class RemoteClassLoader extends ClassLoader {
      * @return
      * @throws RemoteException
      */
-    public static ClassLoader createRemoteClassLoader(IClassLoaderServer cle, File cacheDir, int depth, ClassLoader parent) throws IOException {
+    public static ClassLoader createRemoteClassLoader(IClassLoaderServer cle, File cacheDir, int depth, ClassLoader parent) throws Exception {
 
         if( depth == 0 ) {
             return parent;
@@ -122,7 +120,7 @@ public class RemoteClassLoader extends ClassLoader {
                 throw new ClassNotFoundException(name);
             }
             return defineClass(name, data, 0, data.length);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             throw new ClassNotFoundException(name);
         }
     }

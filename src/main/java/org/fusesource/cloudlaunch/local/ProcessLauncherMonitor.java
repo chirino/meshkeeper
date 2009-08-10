@@ -5,10 +5,8 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch.rmi;
+package org.fusesource.cloudlaunch.local;
 
-import org.fusesource.cloudlaunch.LocalProcess;
-import org.fusesource.cloudlaunch.ProcessLauncher;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +15,7 @@ import java.util.Map;
 /**
  * @version $Revision: 1.1 $
 */
-public class RemoteListenerMonitor implements Runnable {
+public class ProcessLauncherMonitor implements Runnable {
 
     private final ProcessLauncher processLauncher;
 
@@ -25,7 +23,7 @@ public class RemoteListenerMonitor implements Runnable {
     private String tempDirectory;
     private boolean cleanupRequested = false;
 
-    public RemoteListenerMonitor(ProcessLauncher processLauncher) {
+    public ProcessLauncherMonitor(ProcessLauncher processLauncher) {
         this.processLauncher = processLauncher;
     }
 
@@ -53,7 +51,7 @@ public class RemoteListenerMonitor implements Runnable {
                     cleanupRequested = true;
                     return;
                 } finally {
-                    checkForRogueProcesses(15000);
+                    processLauncher.checkForRogueProcesses(15000);
                     if (cleanupRequested) {
                         cleanUpTempFiles();
                         cleanupRequested = false;
@@ -81,12 +79,6 @@ public class RemoteListenerMonitor implements Runnable {
                     e.printStackTrace();
                 }
             }
-        }
-    }
-
-    public void checkForRogueProcesses(long timeout) {
-        for (LocalProcess remoteProcess : processLauncher.getProcesses().values()) {
-            ((RemotedProcess)remoteProcess).ping(timeout);
         }
     }
 

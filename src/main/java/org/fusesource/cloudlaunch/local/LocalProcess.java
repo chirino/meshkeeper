@@ -5,14 +5,17 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch;
+package org.fusesource.cloudlaunch.local;
 
-import org.fusesource.cloudlaunch.ProcessLauncher;
+import org.fusesource.cloudlaunch.Expression;
+import org.fusesource.cloudlaunch.LaunchDescription;
+import org.fusesource.cloudlaunch.LaunchTask;
+import org.fusesource.cloudlaunch.Process;
+import org.fusesource.cloudlaunch.ProcessListener;
 
 import java.io.*;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.lang.*;
 
 /**
  * @version $Revision: 1.1 $
@@ -44,6 +47,14 @@ public class LocalProcess implements Process {
         this.pid = pid;
     }
 
+    public ProcessLauncher getProcessLauncher() {
+        return processLauncher;
+    }
+
+    public ProcessListener getListener() {
+        return listener;
+    }
+
     /**
      * Launches the process.
      */
@@ -52,9 +63,9 @@ public class LocalProcess implements Process {
             throw new Exception("LaunchDescription command empty.");
         }
 
-        // Execute pre launch tasks.
-        for (LaunchTask resource : ld.getPreLaunchTasks()) {
-            resource.execute(this);
+        // Resolve resources (copy them locally:
+        for (LaunchTask task : ld.getPreLaunchTasks()) {
+            task.execute(this);
         }
 
         // Evaluate the command...
@@ -136,6 +147,11 @@ public class LocalProcess implements Process {
     protected void onExit(int exitValue) {
         running.set(false);
         listener.onProcessExit(exitValue);
+        try {
+            processLauncher.getDistributor().unexport(this);
+        } catch (Exception e) {
+
+        }
     }
 
     public boolean isRunning() {
@@ -237,27 +253,4 @@ public class LocalProcess implements Process {
         }
     }
 
-    public ProcessListener getListener() {
-        return listener;
-    }
-
-    public LaunchDescription getLd() {
-        return ld;
-    }
-
-    public java.lang.Process getProcess() {
-        return process;
-    }
-
-    public ProcessLauncher getProcessLauncher() {
-        return processLauncher;
-    }
-
-    public AtomicBoolean getRunning() {
-        return running;
-    }
-
-    public int getPid() {
-        return pid;
-    }
 }//private class ProcessServer

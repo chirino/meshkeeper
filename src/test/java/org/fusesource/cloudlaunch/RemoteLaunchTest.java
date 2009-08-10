@@ -36,9 +36,11 @@ import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.ResourceManager;
 import org.fusesource.cloudlaunch.Expression.FileExpression;
 import org.fusesource.cloudlaunch.control.ControlServer;
+import org.fusesource.cloudlaunch.control.LaunchClient;
 import org.fusesource.cloudlaunch.registry.zk.ZooKeeperFactory;
-import org.fusesource.cloudlaunch.rmi.RemoteLauncherClient;
-import org.fusesource.cloudlaunch.rmi.RemoteProcessLauncher;
+import org.fusesource.cloudlaunch.rmi.Distributor;
+import org.fusesource.cloudlaunch.rmi.rmiviajms.RmiViaJmsExporter;
+import org.fusesource.cloudlaunch.local.ProcessLauncher;
 
 /**
  * RemoteLaunchTest
@@ -52,37 +54,48 @@ import org.fusesource.cloudlaunch.rmi.RemoteProcessLauncher;
 public class RemoteLaunchTest extends TestCase {
 
     ControlServer controlServer;
-    RemoteProcessLauncher agent;
-    RemoteLauncherClient clientRemote;
+    ProcessLauncher agent;
+    LaunchClient launchClient;
     ResourceManager commonResourceManager;
 
     protected void setUp() throws Exception {
 
         String dataDir = "target" + File.separator + "remote-launch-test-data";
         String commonRepo = new File(dataDir + File.separator + "common-repo").toURI().toString();
-
+        
         controlServer = new ControlServer();
         controlServer.setDataDirectory(dataDir + File.separator + "control-server");
         controlServer.setJmsConnectUrl("tcp://localhost:61616");
         controlServer.setZooKeeperConnectUrl("tcp://localhost:2012");
         controlServer.start();
-        
+
         ZooKeeperFactory factory = new ZooKeeperFactory();
         factory.setConnectUrl(controlServer.getZooKeeperConnectUrl());
-        
+
+        RmiViaJmsExporter exporter = new RmiViaJmsExporter();
+        exporter.setConnectUrl("tcp://localhost:61616");
+
+        Distributor distributor = new Distributor();
+        distributor.setRegistry(factory.getRegistry());
+        distributor.setExporter(exporter);
+
+
         //Set up a launch agent:
-        agent = new RemoteProcessLauncher();
+        agent = new ProcessLauncher();
         agent.setDataDirectory(new File(dataDir + File.separator + "testrunner-data"));
         agent.setCommonResourceRepoUrl(commonRepo);
-        agent.setRegistry(factory.getRegistry());
+        agent.setDistributor(distributor);
         agent.start();
         agent.purgeResourceRepository();
 
-        clientRemote = new RemoteLauncherClient("client1");
-        clientRemote.setBindTimeout(5000);
-        clientRemote.setLaunchTimeout(10000);
-        clientRemote.setKillTimeout(5000);
-        clientRemote.bindAgent(agent.getAgentId());
+        launchClient = new LaunchClient();
+        launchClient.setBindTimeout(5000);
+        launchClient.setLaunchTimeout(10000);
+        launchClient.setKillTimeout(5000);
+        launchClient.setDistributor(distributor);
+        launchClient.start();
+        launchClient.waitForAvailableAgents(5000);
+        launchClient.bindAgent(agent.getAgentId());
 
         commonResourceManager = new ResourceManager();
         commonResourceManager.setCommonRepo(commonRepo, null);
@@ -91,7 +104,7 @@ public class RemoteLaunchTest extends TestCase {
 
     protected void tearDown() throws Exception {
         System.out.println("Shutting down control com");
-        clientRemote.close();
+        launchClient.destroy();
         System.out.println("Shutting down agent");
         try {
             agent.stop();
@@ -117,7 +130,7 @@ public class RemoteLaunchTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         DataOutputTester tester = new DataOutputTester();
-        tester.test(clientRemote.launchProcess(agent.getAgentId(), ld, tester));
+        tester.test(launchClient.launchProcess(agent.getAgentId(), ld, tester));
 
     }
 
@@ -146,7 +159,7 @@ public class RemoteLaunchTest extends TestCase {
         ld.add(resource(resource));
 
         DataFileTester tester = new DataFileTester();
-        tester.test(clientRemote.launchProcess(agent.getAgentId(), ld, tester), data);
+        tester.test(launchClient.launchProcess(agent.getAgentId(), ld, tester), data);
 
     }
 

@@ -22,9 +22,11 @@ import java.net.URI;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.fusesource.cloudlaunch.registry.Registry;
 import org.fusesource.cloudlaunch.registry.zk.ZooKeeperFactory;
 import org.fusesource.cloudlaunch.registry.zk.ZooKeeperRegistry;
 import org.fusesource.cloudlaunch.registry.zk.ZooKeeperServer;
+import org.fusesource.cloudlaunch.rmi.IExporter;
 import org.fusesource.rmiviajms.JMSRemoteObject;
 import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
 
@@ -45,10 +47,11 @@ public class ControlServer {
     BrokerService controlBroker;
     ZooKeeperServer zkServer;
     ZooKeeperRegistry registry;
-
+    
     private String jmsConnectUrl;
     private String zooKeeperConnectUrl;
     private String dataDirectory = ".";
+   
     
     public void start() throws Exception {
         System.setProperty(ActiveMQRemoteSystem.CONNECT_URL_PROPNAME, jmsConnectUrl);
@@ -65,6 +68,7 @@ public class ControlServer {
                 controlBroker.setDataDirectory(dataDirectory + File.separator + "control-broker");
                 controlBroker.setPersistent(false);
                 controlBroker.setDeleteAllMessagesOnStartup(true);
+//                controlBroker.setUseJmx(false);
                 controlBroker.start();
                 log.info("Control Server started");
             }
@@ -80,8 +84,8 @@ public class ControlServer {
                 
                 log.info("Starting ZooKeeper Server");
                 zkServer = new ZooKeeperServer();
-                zkServer.setPurge(true);
                 zkServer.setDirectory(dataDirectory + File.separator + "zoo-keeper");
+                zkServer.setPurge(true);
                 zkServer.setPort(uri.getPort());
                 zkServer.start();
                 log.info("ZooKeeper Server started");
@@ -93,6 +97,15 @@ public class ControlServer {
         }
         
         
+        ZooKeeperFactory factory = new ZooKeeperFactory();
+        factory.setConnectUrl(zooKeeperConnectUrl);
+        Registry registry = factory.getRegistry();
+        
+        //Set the exporter connect url (note that we delete first since
+        //in some instances zoo-keeper doesn't shutdown cleanly and hangs
+        //on to file handles so that the registry isn't purged:
+        registry.remove(IExporter.EXPORTER_CONNECT_URL_PATH, true);
+        registry.addObject(IExporter.EXPORTER_CONNECT_URL_PATH, false, new String(jmsConnectUrl));
         
         
     }
@@ -102,7 +115,6 @@ public class ControlServer {
         if (zkServer != null) {
             try {
                 zkServer.destroy();
-                
             } finally {
                 zkServer = null;
             }

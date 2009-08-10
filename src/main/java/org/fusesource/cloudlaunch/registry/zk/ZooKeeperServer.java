@@ -1,7 +1,5 @@
 package org.fusesource.cloudlaunch.registry.zk;
 
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.DisposableBean;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
@@ -11,7 +9,7 @@ import java.io.File;
 /**
  * @author chirino
  */
-public class ZooKeeperServer implements InitializingBean, DisposableBean {
+public class ZooKeeperServer {
 
     private int port = 2181;
     private String userid = "guest";
@@ -44,7 +42,6 @@ public class ZooKeeperServer implements InitializingBean, DisposableBean {
     }
 
     public void destroy() throws Exception {
-        serverFactory.getZooKeeperServer().shutdown();
         serverFactory.shutdown();
         ServerStats.unregister();
     }

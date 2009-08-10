@@ -16,13 +16,7 @@
  */
 package org.fusesource.cloudlaunch.rmi;
 
-import java.io.Serializable;
-import java.rmi.Remote;
-
-import javax.jms.Destination;
-
-import org.fusesource.cloudlaunch.registry.Registry;
-import org.fusesource.rmiviajms.JMSRemoteObject;
+import org.fusesource.cloudlaunch.rmi.Distributor.DistributionRef;
 
 /**
  * Exporter
@@ -35,46 +29,47 @@ import org.fusesource.rmiviajms.JMSRemoteObject;
  */
 public class Exporter {
 
-    Registry registry;
-    private Remote source;
+    Distributor distributor;
+    private Distributable source;
     private String path;
-    private Destination destination;
-    private String actualPath;
-    private Remote exportedStub;
+    private DistributionRef<Distributable> ref;
+
+    private boolean sequential = true;
 
     public void export() throws Exception {
-        if (exportedStub == null) {
-            exportedStub = JMSRemoteObject.exportObject(source, destination);
-            actualPath = registry.addObject(path, true, (Serializable) exportedStub);
-            System.out.println("Registered as: " + actualPath);
+        if (ref == null) {
+            ref = distributor.register(source, path, true);
+            System.out.println("Registered as: " + ref.getPath());
         }
     }
 
     public void destroy() throws Exception {
-        if (exportedStub != null) {
-            JMSRemoteObject.unexportObject(exportedStub, true);
-            exportedStub = null;
+        if (ref != null) {
+            distributor.unregister(source);
         }
-        if (actualPath != null) {
-            registry.remove(actualPath, true);
-            actualPath = null;
-        }
-    }
-    
-    public void setRegistry(Registry registry) {
-        this.registry = registry;
-    }
-    
-    public Registry getRegistry() {
-        return registry;
     }
 
-    public Remote getSource() {
+    public void setDistributor(Distributor distributor) {
+        this.distributor = distributor;
+    }
+
+    public Distributor getRegistry() {
+        return distributor;
+    }
+
+    public Distributable getSource() {
         return source;
     }
 
-    public void setSource(Remote source) {
+    public void setSource(Distributable source) {
         this.source = source;
+    }
+
+    public Distributable getStub() {
+        if (ref != null) {
+            return ref.getStub();
+        }
+        return null;
     }
 
     public String getPath() {
@@ -85,12 +80,12 @@ public class Exporter {
         this.path = path;
     }
 
-    public Destination getDestination() {
-        return destination;
+    public void setSequential(boolean sequential) {
+        this.sequential = sequential;
     }
 
-    public void setDestination(Destination destination) {
-        this.destination = destination;
+    public boolean getSequential() {
+        return this.sequential;
     }
 
 }

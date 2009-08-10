@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
+import org.fusesource.cloudlaunch.local.ProcessLauncher;
+
 /**
  * @author chirino
  */

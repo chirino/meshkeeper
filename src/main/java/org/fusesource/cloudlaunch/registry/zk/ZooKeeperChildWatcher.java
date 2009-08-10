@@ -55,10 +55,11 @@ class ZooKeeperChildWatcher {
                     case NodeChildrenChanged:
                     {
                         watch();
+                        break;
                     }
                     default:
                     {
-                        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!Got:" + event);
+                        System.out.println("WARNING Got:" + event);
                     }
                     }
                 }

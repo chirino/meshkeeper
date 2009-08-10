@@ -76,17 +76,29 @@ public class ZooKeeperRegistry implements Registry {
     @SuppressWarnings("unchecked")
     public <T> T getObject(String path) throws Exception {
         Stat stat = new Stat();
-        byte[] data = zk.getData(path, false, stat);
-        ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(data));
-        return (T) in.readObject();
+        try
+        {
+            byte[] data = zk.getData(path, false, stat);
+            ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(data));
+            return (T) in.readObject();
+        }
+        catch(NoNodeException nne)
+        {
+            return null;
+        }
     }
 
     public String addData(String path, boolean sequential, byte[] data) throws Exception {
+        if(data.length > 20000)
+        {
+            System.out.println("Warning -- long data length for " + path + ": " + data.length);
+        }
+        //System.out.println("Registering " + path + " length=" + (data != null ? data.length : 0));
         try {
             if (sequential) {
                 return zk.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
             } else {
-                return zk.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                return zk.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
             }
         } catch (NoNodeException nne) {
             createParentPath(path);
@@ -159,6 +171,11 @@ public class ZooKeeperRegistry implements Registry {
                 createParentPath(path);
             }
         }
+    }
+    
+    public String toString()
+    {
+        return "ZooKeeperRegistry: " + zk;
     }
 
 }

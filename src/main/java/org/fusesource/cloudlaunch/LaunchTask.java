@@ -1,5 +1,7 @@
 package org.fusesource.cloudlaunch;
 
+import org.fusesource.cloudlaunch.local.LocalProcess;
+
 /**
  * @author chirino
  */

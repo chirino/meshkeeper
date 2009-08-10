@@ -1,21 +1,14 @@
 package org.fusesource.cloudlaunch.registry.zk;
 
 import org.apache.zookeeper.*;
-import org.apache.zookeeper.data.ACL;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.DisposableBean;
 
 import java.net.URI;
-import java.rmi.Remote;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 
 /**
  * @author chirino

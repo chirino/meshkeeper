@@ -25,10 +25,12 @@ import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.control.ControlServer;
+import org.fusesource.cloudlaunch.control.LaunchClient;
 import org.fusesource.cloudlaunch.registry.zk.ZooKeeperFactory;
+import org.fusesource.cloudlaunch.local.ProcessLauncher;
 import org.fusesource.cloudlaunch.rmi.*;
+import org.fusesource.cloudlaunch.rmi.rmiviajms.RmiViaJmsExporter;
 import org.fusesource.rmiviajms.JMSRemoteObject;
-import org.apache.activemq.command.ActiveMQQueue;
 
 import java.io.IOException;
 import java.io.File;
@@ -42,54 +44,90 @@ import java.util.concurrent.TimeUnit;
  * @author chirino
  */
 public class RemoteClassLoaderTest extends TestCase {
-    
-    ControlServer controlServer;
-    RemoteProcessLauncher agent;
-    RemoteLauncherClient clientRemote;
 
+    ControlServer controlServer;
+    ProcessLauncher agent;
+    LaunchClient launchClient;
 
     protected void setUp() throws Exception {
-        
+
         String dataDir = "target" + File.separator + "remote-classloader-test-data";
-        
-        controlServer = new ControlServer();
-        controlServer.setDataDirectory(dataDir + File.separator + "control-server");
-        controlServer.setJmsConnectUrl("tcp://localhost:61616");
-        controlServer.setZooKeeperConnectUrl("tcp://localhost:2012");
-        controlServer.start();
-        
-        ZooKeeperFactory factory = new ZooKeeperFactory();
-        factory.setConnectUrl(controlServer.getZooKeeperConnectUrl());
-        
-        //Set up a launch agent:
-        agent = new RemoteProcessLauncher();
-        agent.setDataDirectory(new File(dataDir + File.separator + "testrunner-data"));
-        agent.setRegistry(factory.getRegistry());
-        agent.start();
-        agent.purgeResourceRepository();
+        String commonRepo = new File(dataDir + File.separator + "common-repo").toURI().toString();
 
-        clientRemote = new RemoteLauncherClient("client1");
-        clientRemote.bindAgent(agent.getAgentId());
+        try {
+            controlServer = new ControlServer();
+            controlServer.setDataDirectory(dataDir + File.separator + "control-server");
+            controlServer.setJmsConnectUrl("tcp://localhost:61616");
+            controlServer.setZooKeeperConnectUrl("tcp://localhost:2012");
+            controlServer.start();
 
+            ZooKeeperFactory factory = new ZooKeeperFactory();
+            factory.setConnectUrl(controlServer.getZooKeeperConnectUrl());
+
+            RmiViaJmsExporter exporter = new RmiViaJmsExporter();
+            exporter.setConnectUrl("tcp://localhost:61616");
+
+            Distributor distributor = new Distributor();
+            distributor.setRegistry(factory.getRegistry());
+            distributor.setExporter(exporter);
+
+            //Set up a launch agent:
+
+            agent = new ProcessLauncher();
+            agent.setDataDirectory(new File(dataDir + File.separator + "testrunner-data"));
+            agent.setCommonResourceRepoUrl(commonRepo);
+            agent.setDistributor(distributor);
+            agent.start();
+            agent.purgeResourceRepository();
+
+            launchClient = new LaunchClient();
+            launchClient.setBindTimeout(5000);
+            launchClient.setLaunchTimeout(10000);
+            launchClient.setKillTimeout(5000);
+            launchClient.setDistributor(distributor);
+            launchClient.start();
+            launchClient.waitForAvailableAgents(5000);
+            launchClient.bindAgent(agent.getAgentId());
+        } catch (Exception e) {
+            tearDown();
+            throw e;
+        }
     }
 
     protected void tearDown() throws Exception {
-        System.out.println("Shutting down control com");
-        clientRemote.close();
-        System.out.println("Shutting down agent");
-        try {
-            agent.stop();
-        } catch (Exception e) {
-            e.printStackTrace();
+
+        if (launchClient != null) {
+            System.out.println("Closing Launch Client");
+            launchClient.destroy();
         }
-        System.out.println("Shutting down control broker");
-        controlServer.destroy();
+
+        if (agent != null) {
+            System.out.println("Shutting down launch agent");
+            try {
+                agent.stop();
+                agent = null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (launchClient != null) {
+            launchClient.getDistributor().destroy();
+            launchClient = null;
+        }
+
+        if (controlServer != null) {
+            System.out.println("Shutting down control server");
+            controlServer.destroy();
+            controlServer = null;
+            System.out.println("Shut down control server");
+        }
     }
 
     /**
-     * Verify that we can setup a remote launch that does not contain
-     * the Main app.
-     *
+     * Verify that we can setup a remote launch that does not contain the Main
+     * app.
+     * 
      * @throws Exception
      */
     public void testClassNotFound() throws Exception {
@@ -100,7 +138,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        Process process = clientRemote.launchProcess(agent.getAgentId(), ld, exitListener);
+        Process process = launchClient.launchProcess(agent.getAgentId(), ld, exitListener);
         exitListener.assertExitCode(1);
     }
 
@@ -113,15 +151,15 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        Process process = clientRemote.launchProcess(agent.getAgentId(), ld, exitListener);
+        Process process = launchClient.launchProcess(agent.getAgentId(), ld, exitListener);
         exitListener.assertExitCode(2);
         assertTrue(exitListener.getOutAsString().startsWith("Invalid Syntax:"));
     }
 
     public void testLoadRemoteClass() throws Exception {
         ClassLoaderServer server = new ClassLoaderServer(null, DataInputTestApplication.class.getClassLoader());
-        JMSRemoteObject.exportObject(server, new ActiveMQQueue("CLASSLOADER"));
 
+        String path = launchClient.getDistributor().register(server, "/test/classloader", true).getPath();
         LaunchDescription ld = new LaunchDescription();
         ld.add("java");
         ld.add("-cp");
@@ -129,12 +167,14 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(RemoteLoadingMain.class.getName());
         ld.add("--cache-dir");
         ld.add(file("./classloader-cache"));
+        ld.add("--registry-url");
+        ld.add(controlServer.getZooKeeperConnectUrl());
         ld.add("--classloader-url");
-        ld.add("CLASSLOADER");
+        ld.add(path);
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        Process process = clientRemote.launchProcess(agent.getAgentId(), ld, exitListener);
+        Process process = launchClient.launchProcess(agent.getAgentId(), ld, exitListener);
         process.write(Process.FD_STD_IN, "exit: 5\n".getBytes());
 
         try {
@@ -151,7 +191,7 @@ public class RemoteClassLoaderTest extends TestCase {
         for (String file : System.getProperty("java.class.path").split(File.pathSeparator)) {
             File t = new File(file).getCanonicalFile();
             // We want to skip the test classes directory...
-            if( !t.equals(testClassesLocation) ) {
+            if (!t.equals(testClassesLocation)) {
                 files.add(file(file));
             }
         }
@@ -194,9 +234,9 @@ public class RemoteClassLoaderTest extends TestCase {
 
         synchronized public void onProcessOutput(int fd, byte[] output) {
             try {
-                if( fd == Process.FD_STD_OUT ) {
+                if (fd == Process.FD_STD_OUT) {
                     out.write(output);
-                } else if( fd == Process.FD_STD_ERR ) {
+                } else if (fd == Process.FD_STD_ERR) {
                     err.write(output);
                 }
             } catch (IOException e) {
@@ -206,6 +246,7 @@ public class RemoteClassLoaderTest extends TestCase {
         synchronized public String getOutAsString() {
             return new String(out.toByteArray());
         }
+
         synchronized public String getErrAsString() {
             return new String(err.toByteArray());
         }
