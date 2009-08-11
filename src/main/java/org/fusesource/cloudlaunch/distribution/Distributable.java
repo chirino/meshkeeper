@@ -14,34 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fusesource.cloudlaunch;
+package org.fusesource.cloudlaunch.distribution;
 
-import java.io.IOException;
-
-import org.fusesource.cloudlaunch.distribution.Distributable;
-import org.fusesource.cloudlaunch.distribution.Oneway;
 
 /** 
- * Process
+ * Distributable
  * <p>
- * Description:
+ * Description: This class is similar in purpose to the {@link java.rmi.Remote} interface
+ * in that it serves as a marker on an interface to indicate that the interface can be 
+ * used for remote method invocation. However, unlike {@link java.rmi.Remote}, this interface
+ * does not add the constraint that methods throw a {@link java.rmi.RemoteException} which makes
+ * it simpler to convert an interface to a remote interface. Objects whose methods remote method 
+ * invocation result in a failure of the underlying rmi impementation will instead produce a 
+ * {@link RuntimeException}
+ * 
  * </p>
  * @author cmacnaug
  * @version 1.0
  */
-public interface Process extends Distributable {
-    
-    int FD_STD_IN = 0;
-    int FD_STD_OUT = 1;
-    int FD_STD_ERR = 2;
-    
-    public boolean isRunning() throws Exception;
-    
-    public void kill() throws Exception;
-    
-    public void open(int fd) throws IOException;
+public interface Distributable {
 
-    public void write(int fd, byte[] data) throws IOException;
-
-    public void close(int fd) throws IOException;
 }

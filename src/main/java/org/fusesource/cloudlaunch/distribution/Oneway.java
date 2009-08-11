@@ -14,34 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fusesource.cloudlaunch;
+package org.fusesource.cloudlaunch.distribution;
 
-import java.io.IOException;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Documented;
 
-import org.fusesource.cloudlaunch.distribution.Distributable;
-import org.fusesource.cloudlaunch.distribution.Oneway;
-
-/** 
- * Process
- * <p>
- * Description:
- * </p>
- * @author cmacnaug
- * @version 1.0
+/**
+ * Adding this annotation to a method on a {@link Distributable} method indicates
+ * that the operation should be invoked asynchronously. 
+ * 
+ * @author cmacnaug 
  */
-public interface Process extends Distributable {
-    
-    int FD_STD_IN = 0;
-    int FD_STD_OUT = 1;
-    int FD_STD_ERR = 2;
-    
-    public boolean isRunning() throws Exception;
-    
-    public void kill() throws Exception;
-    
-    public void open(int fd) throws IOException;
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@java.lang.annotation.Target( { java.lang.annotation.ElementType.METHOD })
+public @interface Oneway {
 
-    public void write(int fd, byte[] data) throws IOException;
-
-    public void close(int fd) throws IOException;
 }

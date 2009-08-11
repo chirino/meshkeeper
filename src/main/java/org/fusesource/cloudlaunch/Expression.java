@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
-import org.fusesource.cloudlaunch.local.ProcessLauncher;
+import org.fusesource.cloudlaunch.launcher.ProcessLauncher;
 
 /**
  * @author chirino

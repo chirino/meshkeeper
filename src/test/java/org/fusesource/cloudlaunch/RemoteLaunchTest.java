@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.TimeoutException;
 
 import junit.framework.TestCase;
 
@@ -35,12 +36,7 @@ import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.ResourceManager;
 import org.fusesource.cloudlaunch.Expression.FileExpression;
-import org.fusesource.cloudlaunch.control.ControlServer;
-import org.fusesource.cloudlaunch.control.LaunchClient;
-import org.fusesource.cloudlaunch.registry.zk.ZooKeeperFactory;
-import org.fusesource.cloudlaunch.rmi.Distributor;
-import org.fusesource.cloudlaunch.rmi.rmiviajms.RmiViaJmsExporter;
-import org.fusesource.cloudlaunch.local.ProcessLauncher;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * RemoteLaunchTest
@@ -53,49 +49,20 @@ import org.fusesource.cloudlaunch.local.ProcessLauncher;
  */
 public class RemoteLaunchTest extends TestCase {
 
-    ControlServer controlServer;
-    ProcessLauncher agent;
+    ClassPathXmlApplicationContext context;
     LaunchClient launchClient;
     ResourceManager commonResourceManager;
 
     protected void setUp() throws Exception {
 
-        String dataDir = "target" + File.separator + "remote-launch-test-data";
+        String dataDir = "target" + File.separator + "remote-launch-test";
         String commonRepo = new File(dataDir + File.separator + "common-repo").toURI().toString();
-        
-        controlServer = new ControlServer();
-        controlServer.setDataDirectory(dataDir + File.separator + "control-server");
-        controlServer.setJmsConnectUrl("tcp://localhost:61616");
-        controlServer.setZooKeeperConnectUrl("tcp://localhost:2012");
-        controlServer.start();
 
-        ZooKeeperFactory factory = new ZooKeeperFactory();
-        factory.setConnectUrl(controlServer.getZooKeeperConnectUrl());
+        System.setProperty("basedir", dataDir);
+        System.setProperty("common.repo.url", commonRepo);
 
-        RmiViaJmsExporter exporter = new RmiViaJmsExporter();
-        exporter.setConnectUrl("tcp://localhost:61616");
-
-        Distributor distributor = new Distributor();
-        distributor.setRegistry(factory.getRegistry());
-        distributor.setExporter(exporter);
-
-
-        //Set up a launch agent:
-        agent = new ProcessLauncher();
-        agent.setDataDirectory(new File(dataDir + File.separator + "testrunner-data"));
-        agent.setCommonResourceRepoUrl(commonRepo);
-        agent.setDistributor(distributor);
-        agent.start();
-        agent.purgeResourceRepository();
-
-        launchClient = new LaunchClient();
-        launchClient.setBindTimeout(5000);
-        launchClient.setLaunchTimeout(10000);
-        launchClient.setKillTimeout(5000);
-        launchClient.setDistributor(distributor);
-        launchClient.start();
-        launchClient.waitForAvailableAgents(5000);
-        launchClient.bindAgent(agent.getAgentId());
+        context = new ClassPathXmlApplicationContext("cloudlaunch-all-spring.xml");
+        launchClient = (LaunchClient) context.getBean("launch-client");
 
         commonResourceManager = new ResourceManager();
         commonResourceManager.setCommonRepo(commonRepo, null);
@@ -103,19 +70,23 @@ public class RemoteLaunchTest extends TestCase {
     }
 
     protected void tearDown() throws Exception {
-        System.out.println("Shutting down control com");
-        launchClient.destroy();
-        System.out.println("Shutting down agent");
-        try {
-            agent.stop();
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (context != null) {
+            context.destroy();
         }
-        System.out.println("Shutting down control broker");
-        controlServer.destroy();
-        System.out.println("Shut down control broker");
+
+        launchClient = null;
+        if (commonResourceManager != null) {
+            commonResourceManager.close();
+            commonResourceManager = null;
+        }
     }
 
+    private String getAgent() throws InterruptedException, TimeoutException
+    {
+        launchClient.waitForAvailableAgents(5000);
+        return launchClient.getAvailableAgents()[0].getAgentId();
+    }
+    
     public void testDataOutput() throws Exception {
         LaunchDescription ld = new LaunchDescription();
         ld.add("java");
@@ -130,7 +101,7 @@ public class RemoteLaunchTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         DataOutputTester tester = new DataOutputTester();
-        tester.test(launchClient.launchProcess(agent.getAgentId(), ld, tester));
+        tester.test(launchClient.launchProcess(getAgent(), ld, tester));
 
     }
 
@@ -159,7 +130,7 @@ public class RemoteLaunchTest extends TestCase {
         ld.add(resource(resource));
 
         DataFileTester tester = new DataFileTester();
-        tester.test(launchClient.launchProcess(agent.getAgentId(), ld, tester), data);
+        tester.test(launchClient.launchProcess(getAgent(), ld, tester), data);
 
     }
 
@@ -175,22 +146,24 @@ public class RemoteLaunchTest extends TestCase {
         private ByteArrayOutputStream output = new ByteArrayOutputStream();
         private byte[] expected;
 
-        public synchronized void test(Process process, byte[] data) throws Exception {
+        public void test(Process process, byte[] data) throws Exception {
 
             expected = data;
             try {
-                process.write(Process.FD_STD_IN, "echo-data-file\n".getBytes());
-                while (true) {
-                    if (state == FAIL) {
-                        throw failure;
-                    } else if (state == SUCCESS) {
-                        return;
-                    }
+                synchronized (this) {
+                    process.write(Process.FD_STD_IN, "echo-data-file\n".getBytes());
+                    while (true) {
+                        if (state == FAIL) {
+                            throw failure;
+                        } else if (state == SUCCESS) {
+                            return;
+                        }
 
-                    wait(10000);
-                    if (state == TESTING) {
-                        failure = new Exception("Timed out");
-                        state = FAIL;
+                        wait(10000);
+                        if (state == TESTING) {
+                            failure = new Exception("Timed out");
+                            state = FAIL;
+                        }
                     }
                 }
 
@@ -272,41 +245,44 @@ public class RemoteLaunchTest extends TestCase {
         public DataOutputTester() throws RemoteException {
         }
 
-        public synchronized void test(Process process) throws Exception {
+        public void test(Process process) throws Exception {
 
             try {
-                while (true) {
 
-                    switch (state) {
-                    case TEST_OUTPUT: {
-                        System.out.println("Testing output");
-                        process.write(Process.FD_STD_IN, new String("echo:" + EXPECTED_OUTPUT + "\n").getBytes());
-                        break;
-                    }
-                    case TEST_ERROR: {
-                        System.out.println("Testing error");
-                        process.write(Process.FD_STD_IN, new String("error:" + EXPECTED_ERROR + "\n").getBytes());
-                        break;
-                    }
-                    case SUCCESS: {
-                        if (failure != null) {
+                synchronized (this) {
+                    while (true) {
+
+                        switch (state) {
+                        case TEST_OUTPUT: {
+                            System.out.println("Testing output");
+                            process.write(Process.FD_STD_IN, new String("echo:" + EXPECTED_OUTPUT + "\n").getBytes());
+                            break;
+                        }
+                        case TEST_ERROR: {
+                            System.out.println("Testing error");
+                            process.write(Process.FD_STD_IN, new String("error:" + EXPECTED_ERROR + "\n").getBytes());
+                            break;
+                        }
+                        case SUCCESS: {
+                            if (failure != null) {
+                                throw failure;
+                            }
+                            return;
+                        }
+                        case FAIL:
+                        default: {
+                            if (failure == null) {
+                                failure = new Exception();
+                            }
                             throw failure;
                         }
-                        return;
-                    }
-                    case FAIL:
-                    default: {
-                        if (failure == null) {
-                            failure = new Exception();
                         }
-                        throw failure;
-                    }
-                    }
 
-                    int oldState = state;
-                    wait(10000);
-                    if (oldState == state) {
-                        throw new Exception("Timed out in state: " + state);
+                        int oldState = state;
+                        wait(10000);
+                        if (oldState == state) {
+                            throw new Exception("Timed out in state: " + state);
+                        }
                     }
                 }
             } finally {

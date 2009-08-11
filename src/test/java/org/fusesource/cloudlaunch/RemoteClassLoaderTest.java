@@ -24,13 +24,9 @@ import org.fusesource.cloudlaunch.Expression;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
-import org.fusesource.cloudlaunch.control.ControlServer;
-import org.fusesource.cloudlaunch.control.LaunchClient;
-import org.fusesource.cloudlaunch.registry.zk.ZooKeeperFactory;
-import org.fusesource.cloudlaunch.local.ProcessLauncher;
-import org.fusesource.cloudlaunch.rmi.*;
-import org.fusesource.cloudlaunch.rmi.rmiviajms.RmiViaJmsExporter;
-import org.fusesource.rmiviajms.JMSRemoteObject;
+import org.fusesource.cloudlaunch.util.ClassLoaderServer;
+import org.fusesource.cloudlaunch.util.RemoteLoadingMain;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.io.IOException;
 import java.io.File;
@@ -39,89 +35,39 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author chirino
  */
 public class RemoteClassLoaderTest extends TestCase {
 
-    ControlServer controlServer;
-    ProcessLauncher agent;
-    LaunchClient launchClient;
-
+    ClassPathXmlApplicationContext context;
+    LaunchClient client;
+    
     protected void setUp() throws Exception {
 
-        String dataDir = "target" + File.separator + "remote-classloader-test-data";
+        String dataDir = "target" + File.separator + "remote-classloader-test";
         String commonRepo = new File(dataDir + File.separator + "common-repo").toURI().toString();
-
-        try {
-            controlServer = new ControlServer();
-            controlServer.setDataDirectory(dataDir + File.separator + "control-server");
-            controlServer.setJmsConnectUrl("tcp://localhost:61616");
-            controlServer.setZooKeeperConnectUrl("tcp://localhost:2012");
-            controlServer.start();
-
-            ZooKeeperFactory factory = new ZooKeeperFactory();
-            factory.setConnectUrl(controlServer.getZooKeeperConnectUrl());
-
-            RmiViaJmsExporter exporter = new RmiViaJmsExporter();
-            exporter.setConnectUrl("tcp://localhost:61616");
-
-            Distributor distributor = new Distributor();
-            distributor.setRegistry(factory.getRegistry());
-            distributor.setExporter(exporter);
-
-            //Set up a launch agent:
-
-            agent = new ProcessLauncher();
-            agent.setDataDirectory(new File(dataDir + File.separator + "testrunner-data"));
-            agent.setCommonResourceRepoUrl(commonRepo);
-            agent.setDistributor(distributor);
-            agent.start();
-            agent.purgeResourceRepository();
-
-            launchClient = new LaunchClient();
-            launchClient.setBindTimeout(5000);
-            launchClient.setLaunchTimeout(10000);
-            launchClient.setKillTimeout(5000);
-            launchClient.setDistributor(distributor);
-            launchClient.start();
-            launchClient.waitForAvailableAgents(5000);
-            launchClient.bindAgent(agent.getAgentId());
-        } catch (Exception e) {
-            tearDown();
-            throw e;
-        }
+        
+        System.setProperty("basedir", dataDir);
+        System.setProperty("common.repo.url", commonRepo);
+        
+        context = new ClassPathXmlApplicationContext("cloudlaunch-all-spring.xml");
+        client = (LaunchClient) context.getBean("launch-client");
+        
     }
 
     protected void tearDown() throws Exception {
 
-        if (launchClient != null) {
-            System.out.println("Closing Launch Client");
-            launchClient.destroy();
-        }
-
-        if (agent != null) {
-            System.out.println("Shutting down launch agent");
-            try {
-                agent.stop();
-                agent = null;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (launchClient != null) {
-            launchClient.getDistributor().destroy();
-            launchClient = null;
-        }
-
-        if (controlServer != null) {
-            System.out.println("Shutting down control server");
-            controlServer.destroy();
-            controlServer = null;
-            System.out.println("Shut down control server");
-        }
+        context.destroy();
+        client = null;
+    }
+    
+    private String getAgent() throws InterruptedException, TimeoutException
+    {
+        client.waitForAvailableAgents(5000);
+        return client.getAvailableAgents()[0].getAgentId();
     }
 
     /**
@@ -138,7 +84,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        Process process = launchClient.launchProcess(agent.getAgentId(), ld, exitListener);
+        Process process = client.launchProcess(getAgent(), ld, exitListener);
         exitListener.assertExitCode(1);
     }
 
@@ -151,7 +97,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        Process process = launchClient.launchProcess(agent.getAgentId(), ld, exitListener);
+        Process process = client.launchProcess(getAgent(), ld, exitListener);
         exitListener.assertExitCode(2);
         assertTrue(exitListener.getOutAsString().startsWith("Invalid Syntax:"));
     }
@@ -159,7 +105,7 @@ public class RemoteClassLoaderTest extends TestCase {
     public void testLoadRemoteClass() throws Exception {
         ClassLoaderServer server = new ClassLoaderServer(null, DataInputTestApplication.class.getClassLoader());
 
-        String path = launchClient.getDistributor().register(server, "/test/classloader", true).getPath();
+        String path = client.getDistributor().register(server, "/test/classloader", true).getPath();
         LaunchDescription ld = new LaunchDescription();
         ld.add("java");
         ld.add("-cp");
@@ -167,14 +113,14 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(RemoteLoadingMain.class.getName());
         ld.add("--cache-dir");
         ld.add(file("./classloader-cache"));
-        ld.add("--registry-url");
-        ld.add(controlServer.getZooKeeperConnectUrl());
+        ld.add("--distributor-url");
+        ld.add(client.getDistributor().getDistributorUrl());
         ld.add("--classloader-url");
         ld.add(path);
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        Process process = launchClient.launchProcess(agent.getAgentId(), ld, exitListener);
+        Process process = client.launchProcess(getAgent(), ld, exitListener);
         process.write(Process.FD_STD_IN, "exit: 5\n".getBytes());
 
         try {

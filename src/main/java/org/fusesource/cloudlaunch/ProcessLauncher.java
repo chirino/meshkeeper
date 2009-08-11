@@ -16,7 +16,7 @@
  */
 package org.fusesource.cloudlaunch;
 
-import org.fusesource.cloudlaunch.rmi.Distributable;
+import org.fusesource.cloudlaunch.distribution.Distributable;
 
 /** 
  * ProcessLauncher

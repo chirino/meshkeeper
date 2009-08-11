@@ -14,34 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fusesource.cloudlaunch;
-
-import java.io.IOException;
-
-import org.fusesource.cloudlaunch.distribution.Distributable;
-import org.fusesource.cloudlaunch.distribution.Oneway;
+package org.fusesource.cloudlaunch.distribution.registry;
 
 /** 
- * Process
+ * RegistryFactory
  * <p>
  * Description:
+ * Defines the interface for registry factories. 
  * </p>
  * @author cmacnaug
  * @version 1.0
  */
-public interface Process extends Distributable {
-    
-    int FD_STD_IN = 0;
-    int FD_STD_OUT = 1;
-    int FD_STD_ERR = 2;
-    
-    public boolean isRunning() throws Exception;
-    
-    public void kill() throws Exception;
-    
-    public void open(int fd) throws IOException;
-
-    public void write(int fd, byte[] data) throws IOException;
-
-    public void close(int fd) throws IOException;
+public interface RegistryFactory {
+    public Registry createRegistry(String uri) throws Exception;
 }

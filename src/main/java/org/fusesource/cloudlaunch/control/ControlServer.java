@@ -22,19 +22,18 @@ import java.net.URI;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.cloudlaunch.registry.Registry;
-import org.fusesource.cloudlaunch.registry.zk.ZooKeeperFactory;
-import org.fusesource.cloudlaunch.registry.zk.ZooKeeperRegistry;
-import org.fusesource.cloudlaunch.registry.zk.ZooKeeperServer;
-import org.fusesource.cloudlaunch.rmi.IExporter;
+import org.fusesource.cloudlaunch.distribution.registry.Registry;
+import org.fusesource.cloudlaunch.distribution.registry.zk.ZooKeeperFactory;
+import org.fusesource.cloudlaunch.distribution.registry.zk.ZooKeeperServer;
+import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
 import org.fusesource.rmiviajms.JMSRemoteObject;
 import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
 
 /**
  * ControlServer
  * <p>
- * Description: The control server hosts the servers used to facilitate the 
- * distributed test system. 
+ * Description: The control server hosts the servers used to facilitate the
+ * distributed test system.
  * 
  * </p>
  * 
@@ -46,42 +45,42 @@ public class ControlServer {
     Log log = LogFactory.getLog(ControlServer.class);
     BrokerService controlBroker;
     ZooKeeperServer zkServer;
-    ZooKeeperRegistry registry;
-    
+    Registry registry;
+
     private String jmsConnectUrl;
     private String zooKeeperConnectUrl;
     private String dataDirectory = ".";
-   
-    
+
     public void start() throws Exception {
         System.setProperty(ActiveMQRemoteSystem.CONNECT_URL_PROPNAME, jmsConnectUrl);
-        
+
         //TODO should probably store the control broker url in ZooKeeper so that application
         //need only specify one url. 
         //Start up a RMI control broker:
         try {
             if (jmsConnectUrl != null) {
-                log.info("Starting Control Server");
+                log.info("RMI Server");
                 controlBroker = new BrokerService();
                 controlBroker.setBrokerName("CloudLaunchControlBroker");
                 controlBroker.addConnector(jmsConnectUrl);
                 controlBroker.setDataDirectory(dataDirectory + File.separator + "control-broker");
                 controlBroker.setPersistent(false);
                 controlBroker.setDeleteAllMessagesOnStartup(true);
-//                controlBroker.setUseJmx(false);
+                controlBroker.setUseJmx(false);
                 controlBroker.start();
                 log.info("Control Server started");
             }
         } catch (Exception e) {
-            log.error("Error starting control server", e);
+            log.error(e);
+            destroy();
+            throw new Exception("Error starting RMI Server", e);
         }
 
-       
         //Start a zoo-keeper server.
         try {
             if (zooKeeperConnectUrl != null) {
                 URI uri = new URI(zooKeeperConnectUrl);
-                
+
                 log.info("Starting ZooKeeper Server");
                 zkServer = new ZooKeeperServer();
                 zkServer.setDirectory(dataDirectory + File.separator + "zoo-keeper");
@@ -89,29 +88,35 @@ public class ControlServer {
                 zkServer.setPort(uri.getPort());
                 zkServer.start();
                 log.info("ZooKeeper Server started");
-
-                
             }
         } catch (Exception e) {
-            log.error("Error starting control server", e);
+            log.error(e);
+            destroy();
+            throw new Exception("Error starting Zookeeper Server", e);
         }
-        
-        
-        ZooKeeperFactory factory = new ZooKeeperFactory();
-        factory.setConnectUrl(zooKeeperConnectUrl);
-        Registry registry = factory.getRegistry();
-        
-        //Set the exporter connect url (note that we delete first since
-        //in some instances zoo-keeper doesn't shutdown cleanly and hangs
-        //on to file handles so that the registry isn't purged:
-        registry.remove(IExporter.EXPORTER_CONNECT_URL_PATH, true);
-        registry.addObject(IExporter.EXPORTER_CONNECT_URL_PATH, false, new String(jmsConnectUrl));
-        
-        
+
+        try {
+            ZooKeeperFactory factory = new ZooKeeperFactory();
+            Registry registry = factory.createRegistry("zk:" + zooKeeperConnectUrl);
+
+            //Set the exporter connect url (note that we delete first since
+            //in some instances zoo-keeper doesn't shutdown cleanly and hangs
+            //on to file handles so that the registry isn't purged:
+            registry.remove(IExporter.EXPORTER_CONNECT_URL_PATH, true);
+            registry.addObject(IExporter.EXPORTER_CONNECT_URL_PATH, false, new String("rmiviajms:" +jmsConnectUrl));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            destroy();
+            throw new Exception("Error registering control server", e);
+        }
     }
 
     public void destroy() throws Exception {
-        
+
+        if (registry != null) {
+            registry.destroy();
+        }
+
         if (zkServer != null) {
             try {
                 zkServer.destroy();
@@ -119,9 +124,9 @@ public class ControlServer {
                 zkServer = null;
             }
         }
-        
+
         JMSRemoteObject.resetSystem();
-        
+
         if (controlBroker != null) {
             try {
                 controlBroker.stop();
@@ -130,9 +135,7 @@ public class ControlServer {
                 controlBroker = null;
             }
         }
-        
-        
-        
+
     }
 
     public String getJmsConnectUrl() {

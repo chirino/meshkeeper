@@ -1,6 +1,6 @@
 package org.fusesource.cloudlaunch;
 
-import org.fusesource.cloudlaunch.local.LocalProcess;
+import org.fusesource.cloudlaunch.launcher.LocalProcess;
 
 /**
  * @author chirino

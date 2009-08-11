@@ -1,7 +1,7 @@
 package org.fusesource.cloudlaunch;
 
 import org.fusesource.cloudlaunch.Expression;
-import org.fusesource.cloudlaunch.local.LocalProcess;
+import org.fusesource.cloudlaunch.launcher.LocalProcess;
 
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jms="http://servicemix.apache.org/jms/1.0"
+  xmlns:tns="http://a/b/amq/http"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean
+    class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" />
+
+  <!--Create a control server (hosts ZookKeeper and RMI server-->
+  <bean id="control-server" class="org.fusesource.cloudlaunch.control.ControlServer"
+    init-method="start" destroy-method="destroy">
+    <property name="dataDirectory" value="${basedir}/cloudlaunch-controller" />
+    <property name="jmsConnectUrl" value="tcp://localhost:2100" />
+    <property name="zooKeeperConnectUrl" value="tcp://localhost:2101" />
+  </bean>
+
+  <!--Set up a cloudlaunch distributor-->
+  <bean id="distributor" class="org.fusesource.cloudlaunch.distribution.Distributor"
+    factory-method="create" init-method="start" destroy-method="destroy" depends-on="control-server">
+    <constructor-arg value="zk:tcp://localhost:2101"/>
+  </bean>
+
+  <!--Create a remote process launcher-->
+  <bean id="launcher" class="org.fusesource.cloudlaunch.launcher.ProcessLauncher"
+    depends-on="distributor" init-method="start" destroy-method="stop">
+    <property name="distributor" ref="distributor"/>
+    <property name="dataDirectory" value="${basedir}/launcher"/>
+    <property name="commonResourceRepoUrl" value="${common.repo.url}"/>
+  </bean>
+
+  <!--Launch client for launching remote processes-->
+  <bean id="launch-client" class="org.fusesource.cloudlaunch.LaunchClient"
+    depends-on="distributor" init-method="start" destroy-method="destroy">
+    <property name="distributor" ref="distributor"/>
+  </bean>
+
+</beans>
