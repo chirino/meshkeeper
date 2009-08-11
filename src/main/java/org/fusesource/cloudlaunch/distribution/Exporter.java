@@ -16,6 +16,8 @@
  */
 package org.fusesource.cloudlaunch.distribution;
 
+import java.util.Arrays;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.cloudlaunch.distribution.Distributor.DistributionRef;
@@ -32,7 +34,7 @@ import org.fusesource.cloudlaunch.distribution.Distributor.DistributionRef;
 public class Exporter {
 
     Log log = LogFactory.getLog(this.getClass());
-    
+
     Distributor distributor;
     private Distributable source;
     private String path;
@@ -42,8 +44,13 @@ public class Exporter {
 
     public void export() throws Exception {
         if (ref == null) {
-            ref = distributor.register(source, path, true);
-            log.trace("Registered as: " + ref.getPath());
+            if (this.path == null) {
+                ref = distributor.export(source);
+                log.trace("Exported:" + source);
+            } else {
+                ref = distributor.register(source, path, true);
+                log.trace("Registered as: " + ref.getPath() + " implementing: " + Arrays.asList(ref.getStub().getClass().getInterfaces()));
+            }
         }
     }
 
