@@ -29,16 +29,24 @@ sort_info: 1
 .right
   %p
     %b Cloud Launch 
-    is a small utility for executing Java programs which are stored as artifacts like jars or bundles
-    in a Maven repository. 
+    Provides a distributed cloud of process launchers that can be used to launch arbitrary scripts,
+    executables and java processes. 
     
   %p
     %b Cloud Launch
-    automatically deals with the following for you
+    Provides
     %ul
-      %li transitive dependencies
-      %li downloading artifacts from remote repositories and caching them locally
-      %li setting up your classpath
+      %li Distributed resource management. Allows launch agents to download artifacts such as jvms,
+      configuration files, and jars from http, ftp, webdav, and file based repositories.
+      %li Distributed classloaders. When launching java processes you can expose your local classes
+      for the launched java application. This is particularly useful when cloudlaunch is used as a 
+      testing framework as it allows easy access to locall build classes that are not in a repository.
+      %li An easy Distributed Registry API. Cloudlaunch allows you to add both Seriailizable object, or
+      raw data in a tree like structure that all entities in the cloud can access. This flexible mechanism
+      makes sharing of data between launched process a breeze. 
+      %li Built in Remoting support. Cloud Launch provides easy mechanisms for enabling remote method 
+      invocation. While traditional java rmi is supported, Cloud Launch also provides additional mechanisms
+      for distributing objects that don't implement the Remote interface (or its irritating RemoteExceptions)   
     
 .left
   %h1 Launching A Control Server
