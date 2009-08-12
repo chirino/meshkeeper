@@ -39,7 +39,7 @@ class RmiViaJmsExporter extends AbstractExporter {
     String connectUrl;
 
     protected <T> T export(Object obj, Class<?>[] interfaces) throws Exception {
-        return (T) JMSRemoteObject.exportNonRemote(obj, interfaces);
+        return (T) JMSRemoteObject.export(obj, interfaces);
     }
 
     public void unexport(Distributable obj) throws Exception {

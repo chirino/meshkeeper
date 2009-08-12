@@ -34,14 +34,24 @@ public abstract class AbstractExporter implements IExporter {
 
     protected abstract <T> T export(Object obj, Class<?>[] interfaces) throws Exception;
 
+    @SuppressWarnings("unchecked")
     public <T extends Distributable> T export(Distributable obj) throws Exception {
         LinkedHashSet<Class<?>> interfaces = new LinkedHashSet<Class<?>>();
         collectDistributableInterfaces(obj.getClass(), interfaces);
-        Class<?> [] distributable = new Class<?>[interfaces.size()];
-        interfaces.toArray(distributable);
+        if(interfaces.size() == 0 || (interfaces.size() == 1 && interfaces.contains(Distributable.class)))
+        {
+            return (T) export(obj, null);
+        }
+                
+        Class<?>[] distributable = null;
+        if (interfaces.size() > 0) {
+            System.out.println("Found distributable interfaces for: " + obj + ": " + interfaces);
+            distributable = new Class<?>[interfaces.size()];
+            interfaces.toArray(distributable);
+        }
         return (T) export(obj, distributable);
     }
-    
+
     protected static void validateInterface(Class<?> i) {
         if (!i.isInterface()) {
             throw new IllegalArgumentException("Not an interface: " + i);
@@ -55,7 +65,7 @@ public abstract class AbstractExporter implements IExporter {
                 rc.add(interf);
             }
         }
-        
+
         // Also slowOnewayOperations interfaces in the super classes...
         if (clazz.getSuperclass() != null) {
             collectDistributableInterfaces(clazz.getSuperclass(), rc);

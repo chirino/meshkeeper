@@ -86,6 +86,7 @@ public class Distributor {
             return path;
         }
 
+        @SuppressWarnings("unchecked")
         private synchronized D export() throws Exception {
             if (stub == null) {
                 stub = (D) exporter.export(object);
