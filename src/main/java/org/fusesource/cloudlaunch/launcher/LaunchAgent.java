@@ -1,10 +1,15 @@
+/**************************************************************************************
+ * Copyright (C) 2009 Progress Software, Inc. All rights reserved.                    *
+ * http://fusesource.com                                                              *
+ * ---------------------------------------------------------------------------------- *
+ * The software in this package is published under the terms of the AGPL license      *
+ * a copy of which has been included with this distribution in the license.txt file.  *
+ **************************************************************************************/
 package org.fusesource.cloudlaunch.launcher;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -15,11 +20,12 @@ import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.util.internal.FileUtils;
 
 /**
  * @author chirino
  */
-public class ProcessLauncher implements org.fusesource.cloudlaunch.ProcessLauncher {
+public class LaunchAgent implements LaunchAgentService {
     public static final long CLEANUP_TIMEOUT = 60000;
     public static final String LOCAL_REPO_PROP = "org.fusesource.testrunner.localRepoDir";
     Log log = LogFactory.getLog(this.getClass());
@@ -42,7 +48,7 @@ public class ProcessLauncher implements org.fusesource.cloudlaunch.ProcessLaunch
 
     private HostPropertiesImpl properties = new HostPropertiesImpl();
 
-    private ProcessLauncherMonitor monitor = new ProcessLauncherMonitor(this);
+    private Monitor monitor = new Monitor(this);
     private Distributor distributor;
 
     synchronized public void bind(String owner) throws Exception {
@@ -114,9 +120,9 @@ public class ProcessLauncher implements org.fusesource.cloudlaunch.ProcessLaunch
 
         shutdownHook = new Thread(getAgentId() + "-Shutdown") {
             public void run() {
-                log.debug("Executing Shutdown Hook for " + ProcessLauncher.this);
+                log.debug("Executing Shutdown Hook for " + LaunchAgent.this);
                 try {
-                    ProcessLauncher.this.stop();
+                    LaunchAgent.this.stop();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -129,7 +135,7 @@ public class ProcessLauncher implements org.fusesource.cloudlaunch.ProcessLaunch
 
         monitor.start();
 
-        distributor.register(this, ProcessLauncher.REGISTRY_PATH + "/" + getAgentId(), false);
+        distributor.register(this, LaunchAgent.REGISTRY_PATH + "/" + getAgentId(), false);
         
         log.info("PROCESS LAUNCHER " + getAgentId() + " STARTED\n");
 
@@ -271,74 +277,84 @@ public class ProcessLauncher implements org.fusesource.cloudlaunch.ProcessLaunch
         // TODO Auto-generated method stub
         log.error("TODO: ProcessLauncher.checkForRogueProcesses PING NOT YET IMPLEMENTED");
     }
+    
+    private class Monitor implements Runnable
+    {
+        Log log = LogFactory.getLog(this.getClass());
+        private final LaunchAgent processLauncher;
 
-    private static final void showUsage() {
-        System.out.println("Usage:");
-        System.out.println("Args:");
-        System.out.println(" -(h)elp -- this message");
-        System.out.println(" -url <rmi url> -- specifies address of remote broker to connect to.");
-        System.out.println(" -commonRepoUrl <url> -- specifies common resource location.");
-        System.out.println(" -zkUrl <url> -- Specifies the zoo-keeper connect url (required).");
-    }
+        Thread thread;
+        private String tempDirectory;
+        private boolean cleanupRequested = false;
 
-    /*
-     * public static void main()
-     * 
-     * Defines the entry point into this app.
-     */
-    public static void main(String[] args) {
-        String jv = System.getProperty("java.version").substring(0, 3);
-        if (jv.compareTo("1.5") < 0) {
-            System.err.println("The RemoteProcessLauncher requires jdk 1.5 or higher to run, the current java version is " + System.getProperty("java.version"));
-            System.exit(-1);
-            return;
+        public Monitor(LaunchAgent processLauncher) {
+            this.processLauncher = processLauncher;
         }
 
-        Distributor distributor = null;
-        String commonRepoUrl = null;
-        LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
-
-        while (!alist.isEmpty()) {
-            String arg = alist.removeFirst();
-            if (arg.equals("-help") || arg.equals("-h")) {
-                ProcessLauncher.showUsage();
-                return;
-            } else if (arg.equals("-url")) {
-                try
-                {
-                    distributor = Distributor.create(alist.removeFirst());
-                }
-                catch (Exception e)
-                {
-                    System.err.println("Error creating distributor: " + e.getMessage());
-                    e.printStackTrace();
-                    showUsage();
-                    System.exit(-1);
-                }
-            } else if (arg.equals("-commonRepoUrl")) {
-                commonRepoUrl = alist.removeFirst();
-            } else if (arg.equals("-distributorUrl")) {
-            }
+        public void start() {
+            tempDirectory = processLauncher.getDataDirectory() + File.separator + processLauncher.getAgentId() + File.separator + "temp";
+            thread = new Thread(this, processLauncher.getAgentId() + "-Process Monitor");
+            thread.start();
         }
 
-        ProcessLauncher agent = new ProcessLauncher();
-        agent.setCommonResourceRepoUrl(commonRepoUrl);
-        distributor.start();
-        agent.setDistributor(distributor);
-
-        //        agent.setPropFileName(argv[0]);
-        try {
-            agent.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } finally {
+        public void stop() {
+            thread.interrupt();
             try {
-                distributor.destroy();
-            } catch (Exception e) {
-                e.printStackTrace();
+                thread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
-    }
 
+        public void run() {
+            while (true) {
+                synchronized (this) {
+                    try {
+                        wait(LaunchAgent.CLEANUP_TIMEOUT);
+                    } catch (InterruptedException ie) {
+                        cleanupRequested = true;
+                        return;
+                    } finally {
+                        processLauncher.checkForRogueProcesses(15000);
+                        if (cleanupRequested) {
+                            cleanUpTempFiles();
+                            cleanupRequested = false;
+                        }
+                    }
+                }
+
+            }
+        }
+
+
+        public void cleanUpTempFiles() {
+            //If we aren't running anything cleanup: temp parts
+            Map<Integer, LocalProcess> processes = processLauncher.getProcesses();
+            if (processes == null || processes.size() == 0) {
+                File tempDir = new File(tempDirectory);
+                String[] subDirs = tempDir != null ? tempDir.list() : null;
+
+                log.debug("*************Cleaning up temporary parts*************");
+                for (int i = 0; subDirs != null && i < subDirs.length; i++) {
+                    try {
+                        FileUtils.recursiveDelete(tempDir + File.separator + subDirs[i]);
+                    } catch (Exception e) {
+                        log.warn("ERROR cleaning up temporary parts:", e);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Requests cleanup of temporary files
+         */
+        public synchronized void requestCleanup() {
+            cleanupRequested = true;
+            notify();
+        }
+
+        public String getTempDirectory() {
+            return tempDirectory;
+        }
+    }
 }

@@ -42,6 +42,9 @@ import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
  */
 public class ControlServer {
 
+    public static final String DEFAULT_RMI_URL = "tcp://localhost:4041";
+    public static final String DEFAULT_REGISTRY_URL = "tcp://localhost:4040";
+    
     Log log = LogFactory.getLog(ControlServer.class);
     BrokerService controlBroker;
     ZooKeeperServer zkServer;

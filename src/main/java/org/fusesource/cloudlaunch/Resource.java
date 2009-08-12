@@ -29,6 +29,7 @@ import java.io.Serializable;
  */
 public class Resource implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     public static final short FILE = 0;
     public static final short DIRECTORY = 1;
     

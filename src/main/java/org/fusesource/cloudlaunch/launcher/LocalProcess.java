@@ -41,16 +41,16 @@ public class LocalProcess implements Process {
     private OutputStream os;
 
     AtomicBoolean running = new AtomicBoolean();
-    private ProcessLauncher processLauncher;
+    private LaunchAgent processLauncher;
 
-    public LocalProcess(ProcessLauncher processLauncher, LaunchDescription ld, ProcessListener listener, int pid) {
+    public LocalProcess(LaunchAgent processLauncher, LaunchDescription ld, ProcessListener listener, int pid) {
         this.processLauncher = processLauncher;
         this.ld = ld;
         this.listener = listener;
         this.pid = pid;
     }
 
-    public ProcessLauncher getProcessLauncher() {
+    public LaunchAgent getProcessLauncher() {
         return processLauncher;
     }
 

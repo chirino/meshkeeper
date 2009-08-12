@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
-import org.fusesource.cloudlaunch.launcher.ProcessLauncher;
+import org.fusesource.cloudlaunch.launcher.LaunchAgent;
 
 /**
  * @author chirino
@@ -60,7 +60,7 @@ abstract public class Expression implements Serializable {
     }
 
     public static FileExpression resource(Resource resource) {
-        return new FileExpression(append(property(ProcessLauncher.LOCAL_REPO_PROP, string("local-repo")), file(File.separator + resource.getRepoPath())));
+        return new FileExpression(append(property(LaunchAgent.LOCAL_REPO_PROP, string("local-repo")), file(File.separator + resource.getRepoPath())));
     }
 
     public static class StringExpression extends Expression {

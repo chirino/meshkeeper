@@ -29,6 +29,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.cloudlaunch.distribution.Distributor;
 import org.fusesource.cloudlaunch.distribution.registry.RegistryWatcher;
+import org.fusesource.cloudlaunch.launcher.LaunchAgentService;
 
 /**
  * LaunchClient
@@ -48,11 +49,11 @@ public class LaunchClient {
     private long killTimeout = 1000 * 5;
     private long launchTimeout = 1000 * 60;
     private long bindTimeout = 1000 * 10;
-    private HashMap<String, ProcessLauncher> knownAgents = new HashMap<String, ProcessLauncher>();
+    private HashMap<String, LaunchAgentService> knownAgents = new HashMap<String, LaunchAgentService>();
     private HashMap<String, HostProperties> agentProps = new HashMap<String, HostProperties>();
 
     private AtomicBoolean closed = new AtomicBoolean();
-    private final HashMap<String, ProcessLauncher> boundAgents = new HashMap<String, ProcessLauncher>();
+    private final HashMap<String, LaunchAgentService> boundAgents = new HashMap<String, LaunchAgentService>();
     
     private String name;
 
@@ -67,7 +68,7 @@ public class LaunchClient {
                     for (String agentId : children) {
                         if (!knownAgents.containsKey(agentId)) {
                             try {
-                                ProcessLauncher pl = distributor.getRegistry().getObject(path + "/" + agentId);
+                                LaunchAgentService pl = distributor.getRegistry().getObject(path + "/" + agentId);
                                 knownAgents.put(agentId, pl);
                                 HostProperties props = pl.getHostProperties();
                                 agentProps.put(agentId, props);
@@ -85,7 +86,7 @@ public class LaunchClient {
             }
         };
 
-        distributor.getRegistry().addRegistryWatcher(ProcessLauncher.REGISTRY_PATH, agentWatcher);
+        distributor.getRegistry().addRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
     }
 
     public void destroy() throws Exception {
@@ -96,7 +97,7 @@ public class LaunchClient {
             //            listener.onTRException("Error releasing agents.", e);
         }
         distributor.getRegistry().remove(name, false);
-        distributor.getRegistry().removeRegistryWatcher(ProcessLauncher.REGISTRY_PATH, agentWatcher);
+        distributor.getRegistry().removeRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
         knownAgents.clear();
         agentProps.clear();
         closed.set(true);
@@ -119,16 +120,16 @@ public class LaunchClient {
         }
     }
 
-    private ProcessLauncher getAgent(String agentName) throws Exception {
+    private LaunchAgentService getAgent(String agentName) throws Exception {
         agentName = agentName.toUpperCase();
-        ProcessLauncher launcher;
+        LaunchAgentService launcher;
         synchronized (this) {
             launcher = knownAgents.get(agentName);
         }
         
         if(launcher == null)
         {
-            ProcessLauncher pl = distributor.getRegistry().getObject(ProcessLauncher.REGISTRY_PATH + "/" + agentName);
+            LaunchAgentService pl = distributor.getRegistry().getObject(LaunchAgentService.REGISTRY_PATH + "/" + agentName);
             if(pl != null)
             {
                 HostProperties props = pl.getHostProperties();
@@ -161,7 +162,7 @@ public class LaunchClient {
             return;
         }
 
-        ProcessLauncher agent = getAgent(agentName);
+        LaunchAgentService agent = getAgent(agentName);
         agent.bind(name);
     }
 
@@ -174,7 +175,7 @@ public class LaunchClient {
     public void releaseAgent(String agentName) throws Exception {
         checkNotClosed();
         agentName = agentName.toUpperCase();
-        ProcessLauncher agent = boundAgents.remove(agentName);
+        LaunchAgentService agent = boundAgents.remove(agentName);
         if (agent != null) {
             agent.unbind(name);
         }
@@ -184,7 +185,7 @@ public class LaunchClient {
         checkNotClosed();
 
         ArrayList<String> failed = new ArrayList<String>();
-        for (Map.Entry<String, ProcessLauncher> entry : boundAgents.entrySet()) {
+        for (Map.Entry<String, LaunchAgentService> entry : boundAgents.entrySet()) {
             try {
                 entry.getValue().unbind(name);
             } catch (Exception ignore) {
@@ -205,7 +206,7 @@ public class LaunchClient {
     public Process launchProcess(String agentId, final LaunchDescription launch, ProcessListener listener) throws Exception {
         checkNotClosed();
         
-        ProcessLauncher agent = getAgent(agentId);
+        LaunchAgentService agent = getAgent(agentId);
         return agent.launch(launch, (ProcessListener) distributor.export(listener).getStub());
     }
 

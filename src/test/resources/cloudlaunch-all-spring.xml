@@ -24,7 +24,7 @@
   </bean>
 
   <!--Create a remote process launcher-->
-  <bean id="launcher" class="org.fusesource.cloudlaunch.launcher.ProcessLauncher"
+  <bean id="launcher" class="org.fusesource.cloudlaunch.launcher.LaunchAgent"
     depends-on="distributor" init-method="start" destroy-method="stop">
     <property name="distributor" ref="distributor"/>
     <property name="dataDirectory" value="${basedir}/launcher"/>
