@@ -189,12 +189,6 @@ public class RemoteLaunchTest extends TestCase {
             System.out.println("PROCESS INFO: " + message);
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.fusesource.testrunner.ProcessListener#onProcessOutput(int,
-         * byte[])
-         */
         public synchronized void onProcessOutput(int fd, byte[] pOut) {
             if (fd == Process.FD_STD_ERR) {
                 System.err.println(new String(pOut));

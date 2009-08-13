@@ -27,15 +27,11 @@ import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.authentication.AuthenticationInfo;
 import org.apache.maven.wagon.authorization.AuthorizationException;
-import org.apache.maven.wagon.providers.file.FileWagon;
-import org.apache.maven.wagon.providers.ftp.FtpWagon;
-import org.apache.maven.wagon.providers.http.HttpWagon;
-import org.apache.maven.wagon.providers.webdav.WebDavWagon;
 import org.apache.maven.wagon.repository.Repository;
 import org.apache.maven.wagon.shared.http.AbstractHttpClientWagon;
 import org.apache.maven.wagon.shared.http.HttpConfiguration;
 import org.apache.maven.wagon.shared.http.HttpMethodConfiguration;
-import org.codehaus.plexus.util.FileUtils;
+import org.fusesource.cloudlaunch.util.internal.FileUtils;
 
 /**
  * RepositoryManager
@@ -56,10 +52,21 @@ public class ResourceManager {
     private HashMap<String, Wagon> connectedRepos = new HashMap<String, Wagon>();
 
     static {
-        wagonProviders.put("file", FileWagon.class);
-        wagonProviders.put("ftp", FtpWagon.class);
-        wagonProviders.put("http", HttpWagon.class);
-        wagonProviders.put("dav", WebDavWagon.class);
+        registerWagonClass("file", "org.apache.maven.wagon.providers.file.FileWagon");
+        registerWagonClass("ftp", "org.apache.maven.wagon.providers.ftp.FtpWagon");
+        registerWagonClass("http", "org.apache.maven.wagon.providers.http.HttpWagon");
+        registerWagonClass("dav", "org.apache.maven.wagon.providers.webdav.WebDavWagon");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void registerWagonClass(String protocol, String classname) {
+        try {
+            Class<? extends Wagon> clazz = (Class<? extends Wagon>) Thread.currentThread().getContextClassLoader().loadClass(classname);
+            wagonProviders.put(protocol, clazz);
+        } catch (Exception e) {
+
+        }
+
     }
 
     public void setLocalRepoDir(File localRepoDir) throws Exception {
@@ -157,12 +164,12 @@ public class ResourceManager {
             HttpConfiguration hc = new HttpConfiguration();
             HttpMethodConfiguration hmc = new HttpMethodConfiguration();
             hmc.setUseDefaultHeaders(false);
-            hmc.addHeader( "Cache-control", "no-cache" );
-            hmc.addHeader( "Cache-store", "no-store" );
-            hmc.addHeader( "Pragma", "no-cache" );
-            hmc.addHeader( "Expires", "0" );
+            hmc.addHeader("Cache-control", "no-cache");
+            hmc.addHeader("Cache-store", "no-store");
+            hmc.addHeader("Pragma", "no-cache");
+            hmc.addHeader("Expires", "0");
             hc.setAll(hmc);
-            ((AbstractHttpClientWagon)w).setHttpConfiguration(hc);
+            ((AbstractHttpClientWagon) w).setHttpConfiguration(hc);
         }
 
         w.connect(repo, authInfo);
@@ -197,7 +204,7 @@ public class ResourceManager {
     }
 
     public void purgeLocalRepo() throws IOException {
-        FileUtils.cleanDirectory(localWagon.getRepository().getBasedir());
+        FileUtils.recursiveDelete(localWagon.getRepository().getBasedir());
     }
 
     /**

@@ -1,6 +1,6 @@
 echo off
 setlocal
-TITLE CloudLaunch Server
+TITLE CloudLaunch Agent
 
 REM  runagent.bat
 
@@ -29,8 +29,7 @@ goto :END
 CALL setenv.bat
 if ERRORLEVEL 1 goto warn
 
-echo ------- Starting Agent -------
-%JAVA_EXE% %OPTS% -classpath %CLASSPATH% org.fusesource.cloudlaunch.control.Main -dataDir "%CL_HOME%\data" %*
+%JAVA_EXE% %OPTS% -classpath %CLASSPATH% org.fusesource.cloudlaunch.launcher.Main -dataDir "%CL_HOME%\data" %*
 
 :END
 echo Paused to catch any errors. Press any key to continue.

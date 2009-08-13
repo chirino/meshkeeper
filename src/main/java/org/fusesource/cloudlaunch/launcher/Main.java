@@ -7,6 +7,7 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.launcher;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedList;
 
@@ -29,6 +30,7 @@ public class Main {
         System.out.println("Args:");
         System.out.println(" -(h)elp -- this message");
         System.out.println(" -url <rmi url> -- specifies address of remote broker to connect to.");
+        System.out.println(" [-dataDir <directory>] -- specifies data directory for.");
         System.out.println(" -commonRepoUrl <url> -- specifies common resource location.");
     }
 
@@ -48,10 +50,10 @@ public class Main {
         Distributor distributor = null;
         String distributorUrl = null;
         String commonRepoUrl = null;
+        String dataDir = ".";
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
-        try
-        {
+        try {
             while (!alist.isEmpty()) {
                 String arg = alist.removeFirst();
                 if (arg.equals("-help") || arg.equals("-h")) {
@@ -62,21 +64,26 @@ public class Main {
                         throw new Exception("Expected url after -url");
                     }
                     distributorUrl = alist.removeFirst();
-                    
+
+                } else if (arg.equals("-dataDir")) {
+                    if (alist.isEmpty()) {
+                        throw new Exception("Directory expected after -dataDir");
+                    }
+                    dataDir = alist.removeFirst();
                 } else if (arg.equals("-commonRepoUrl")) {
                     commonRepoUrl = alist.removeFirst();
                 } else if (arg.equals("-distributorUrl")) {
                 }
             }
-    
-            if(distributorUrl == null)
-            {
+
+            if (distributorUrl == null) {
                 distributorUrl = "zk:" + ControlServer.DEFAULT_REGISTRY_URL;
             }
-            distributor = Distributor.create(alist.removeFirst());
-            
+            distributor = Distributor.create(distributorUrl);
+
             LaunchAgent agent = new LaunchAgent();
             agent.setCommonResourceRepoUrl(commonRepoUrl);
+            agent.setDataDirectory(new File(dataDir));
             distributor.start();
             agent.setDistributor(distributor);
 
@@ -86,8 +93,7 @@ public class Main {
             System.exit(-1);
         } finally {
             try {
-                if(distributor != null)
-                {
+                if (distributor != null) {
                     distributor.destroy();
                 }
             } catch (Exception e) {

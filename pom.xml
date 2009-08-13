@@ -152,11 +152,13 @@
       <groupId>org.apache.maven.wagon</groupId>
       <artifactId>wagon-http</artifactId>
       <version>1.0-beta-6</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.wagon</groupId>
       <artifactId>wagon-file</artifactId>
       <version>1.0-beta-6</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.wagon</groupId>
@@ -167,11 +169,13 @@
       <groupId>org.apache.maven.wagon</groupId>
       <artifactId>wagon-ftp</artifactId>
       <version>1.0-beta-6</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.wagon</groupId>
       <artifactId>wagon-webdav-jackrabbit</artifactId>
       <version>1.0-beta-6</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -183,6 +187,7 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-jms</artifactId>
       <version>${spring-version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -214,26 +219,27 @@
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
-            <id>copy</id>
-            <phase>generate-resources</phase>
+            <id>copy-compile-dependencies</id>
+            <phase>package</phase>
             <goals>
-              <goal>copy</goal>
+              <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.apache.activemq</groupId>
-                  <artifactId>activemq-all</artifactId>
-                  <outputDirectory>target/dependencies</outputDirectory>
-                  <destFileName>activemq-all.jar</destFileName>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.fusesource.rmiviajms</groupId>
-                  <artifactId>rmiviajms</artifactId>
-                  <outputDirectory>target/dependencies</outputDirectory>
-                  <destFileName>rmiviajms.jar</destFileName>
-                </artifactItem>
-              </artifactItems>
+              <outputDirectory>target/dependencies</outputDirectory>
+              <!-- stripVersion>true</stripVersion-->
+              <includeScope>compile</includeScope>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-runtime-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>target/dependencies</outputDirectory>
+              <!-- stripVersion>true</stripVersion-->
+              <includeScope>runtime</includeScope>
             </configuration>
           </execution>
         </executions>
@@ -272,17 +278,6 @@
               <assemblyId />
             </configuration>
           </execution>
-          <!--
-            execution> <id>unix-src</id> <phase>package</phase> <goals>
-            <goal>single</goal> </goals> <configuration> <descriptors>
-            <descriptor>assembly/src/main/descriptors/unix-src.xml</descriptor>
-            </descriptors> <tarLongFileMode>gnu</tarLongFileMode>
-            </configuration> </execution> <execution>
-            <id>windows-src</id> <phase>package</phase> <goals>
-            <goal>single</goal> </goals> <configuration> <descriptors>
-            <descriptor>assembly/src/main/descriptors/windows-src.xml</descriptor>
-            </descriptors> </configuration> </execution
-          -->
         </executions>
       </plugin>
       <plugin>
@@ -294,11 +289,7 @@
           <childDelegation>false</childDelegation>
           <useFile>true</useFile>
           <argLine>-Xms256m -Xmx768m</argLine>
-          <excludes>
-            <!-- until it is fixed 
-            <exclude>**/RemoteClassLoaderTest.java</exclude>
-            -->
-          </excludes>
+          <excludes></excludes>
         </configuration>
       </plugin>
     </plugins>

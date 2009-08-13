@@ -17,7 +17,12 @@
 package org.fusesource.cloudlaunch.control;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.UnknownHostException;
 
 import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
@@ -42,24 +47,40 @@ import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
  */
 public class ControlServer {
 
+    Log log = LogFactory.getLog(ControlServer.class);
+
     public static final String DEFAULT_RMI_URL = "tcp://localhost:4041";
     public static final String DEFAULT_REGISTRY_URL = "tcp://localhost:4040";
-    
-    Log log = LogFactory.getLog(ControlServer.class);
+
     BrokerService controlBroker;
     ZooKeeperServer zkServer;
     Registry registry;
 
-    private String jmsConnectUrl;
-    private String zooKeeperConnectUrl;
+    private String jmsConnectUrl = DEFAULT_RMI_URL;
+    private String zooKeeperConnectUrl = DEFAULT_REGISTRY_URL;
     private String dataDirectory = ".";
+
+    private Thread shutdownHook;
+
+    private String externalUrl;
 
     public void start() throws Exception {
         System.setProperty(ActiveMQRemoteSystem.CONNECT_URL_PROPNAME, jmsConnectUrl);
 
-        //TODO should probably store the control broker url in ZooKeeper so that application
-        //need only specify one url. 
+        dataDirectory = dataDirectory + File.separator + "control-server";
+        shutdownHook = new Thread("CloudLaunch Control Server Shutdown Hook") {
+            public void run() {
+                log.debug("Executing Shutdown Hook for " + ControlServer.this);
+                try {
+                    ControlServer.this.destroy();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
         //Start up a RMI control broker:
+        log.info("Starting RMI Control Server on " + jmsConnectUrl);
         try {
             if (jmsConnectUrl != null) {
                 log.info("RMI Server");
@@ -80,6 +101,7 @@ public class ControlServer {
         }
 
         //Start a zoo-keeper server.
+        log.info("Starting Control Registry at " + zooKeeperConnectUrl);
         try {
             if (zooKeeperConnectUrl != null) {
                 URI uri = new URI(zooKeeperConnectUrl);
@@ -106,7 +128,8 @@ public class ControlServer {
             //in some instances zoo-keeper doesn't shutdown cleanly and hangs
             //on to file handles so that the registry isn't purged:
             registry.remove(IExporter.EXPORTER_CONNECT_URL_PATH, true);
-            registry.addObject(IExporter.EXPORTER_CONNECT_URL_PATH, false, new String("rmiviajms:" +jmsConnectUrl));
+            String path = registry.addObject(IExporter.EXPORTER_CONNECT_URL_PATH, false, new String("rmiviajms:" + getExternalRMIUrl()));
+            log.info("Registered RMI control server at " + IExporter.EXPORTER_CONNECT_URL_PATH + "=rmiviajms:" + getExternalRMIUrl());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             destroy();
@@ -116,10 +139,16 @@ public class ControlServer {
 
     public void destroy() throws Exception {
 
-        if (registry != null) {
-            registry.destroy();
+        if (Thread.currentThread() != shutdownHook) {
+            Runtime.getRuntime().removeShutdownHook(shutdownHook);
         }
 
+        if (registry != null) {
+            registry.destroy();
+            registry = null;
+        }
+
+        log.info("Shutting down registry server");
         if (zkServer != null) {
             try {
                 zkServer.destroy();
@@ -130,6 +159,7 @@ public class ControlServer {
 
         JMSRemoteObject.resetSystem();
 
+        log.info("Shutting down rmi server");
         if (controlBroker != null) {
             try {
                 controlBroker.stop();
@@ -138,6 +168,25 @@ public class ControlServer {
                 controlBroker = null;
             }
         }
+
+    }
+
+    private String getExternalRMIUrl() {
+        if (externalUrl == null) {
+            try {
+                URI uri = new URI(jmsConnectUrl);
+                String actualHost = InetAddress.getLocalHost().getHostName();
+                if (!actualHost.equalsIgnoreCase(uri.getHost())) {
+                    externalUrl = uri.getScheme() + "://" + actualHost + ":" + uri.getPort();
+                } else {
+                    externalUrl = jmsConnectUrl;
+                }
+            } catch (Exception e) {
+                log.warn("Error computing external rmi connect url will use " + jmsConnectUrl);
+                externalUrl = jmsConnectUrl;
+            }
+        }
+        return externalUrl;
 
     }
 

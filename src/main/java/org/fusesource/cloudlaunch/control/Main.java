@@ -27,6 +27,7 @@ public class Main {
         System.out.println(" -(h)elp -- this message");
         System.out.println(" [-rmi <rmi url>] -- specifies listening address for rmi.");
         System.out.println(" [-registry <registry url>] -- specifies listening address for the regsitry.");
+        System.out.println(" [-dataDir <directory>] -- specifies data directory for.");
     }
 
     /*
@@ -44,6 +45,7 @@ public class Main {
 
         String rmi = ControlServer.DEFAULT_RMI_URL;
         String registry = ControlServer.DEFAULT_REGISTRY_URL;
+        String dataDir = ".";
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
         try {
@@ -58,6 +60,11 @@ public class Main {
                     }
                     rmi = alist.removeFirst();
 
+                }  else if (arg.equals("-dataDir")) {
+                    if (alist.isEmpty()) {
+                        throw new Exception("Directory expected after -dataDir");
+                    }
+                    dataDir = alist.removeFirst();
                 } else if (arg.equals("-registry")) {
                     if (alist.isEmpty()) {
                         throw new Exception("Expected url after -registry");
@@ -69,6 +76,7 @@ public class Main {
 
             ControlServer server = new ControlServer();
             server.setJmsConnectUrl(rmi);
+            server.setDataDirectory(dataDir);
             server.setZooKeeperConnectUrl(registry);
             server.start();
         } catch (Exception e) {

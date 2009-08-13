@@ -274,8 +274,9 @@ public class LaunchAgent implements LaunchAgentService {
      * @param i
      */
     public void checkForRogueProcesses(int timeout) {
-        // TODO Auto-generated method stub
-        log.error("TODO: ProcessLauncher.checkForRogueProcesses PING NOT YET IMPLEMENTED");
+        // TODO Need a mechanism of pinging the launcher
+        // of a process (then kill processes for which
+        // the controller doesn't respond.
     }
     
     private class Monitor implements Runnable

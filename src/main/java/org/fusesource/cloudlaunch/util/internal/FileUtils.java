@@ -30,7 +30,7 @@ import java.io.IOException;
 public class FileUtils {
 
     
-    public static void recursiveDelete(String srcDir) throws IOException, Exception {
+    public static void recursiveDelete(String srcDir) throws IOException {
         //String srcFileName = "";
         String[] fileList;
 
@@ -70,7 +70,7 @@ public class FileUtils {
     }//private void recursiveDelete(String dir)
     
     
-    private static void checkDirectoryDepth(String path, String message, int minDepth) throws Exception {
+    private static void checkDirectoryDepth(String path, String message, int minDepth) throws IOException {
         int depth = 0;
         int index = -1;
         if (path.startsWith(File.separator + File.separator)) {
@@ -89,6 +89,6 @@ public class FileUtils {
         }
 
         if (minDepth > depth)
-            throw new Exception(message);
+            throw new IOException(message);
     }
 }
