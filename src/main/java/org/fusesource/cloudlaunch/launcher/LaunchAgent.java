@@ -9,7 +9,11 @@ package org.fusesource.cloudlaunch.launcher;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -29,7 +33,7 @@ public class LaunchAgent implements LaunchAgentService {
     public static final long CLEANUP_TIMEOUT = 60000;
     public static final String LOCAL_REPO_PROP = "org.fusesource.testrunner.localRepoDir";
     Log log = LogFactory.getLog(this.getClass());
-    
+
     private String exclusiveOwner;
 
     private String agentId; //The unique identifier for this agent (specified in ini file);
@@ -50,6 +54,14 @@ public class LaunchAgent implements LaunchAgentService {
 
     private Monitor monitor = new Monitor(this);
     private Distributor distributor;
+
+    public List<Integer> reserveTcpPorts(int count) throws Exception {
+        return Arrays.asList(PortReserver.reservePorts(PortReserver.TCP, count));
+    }
+    
+    public void releaseTcpPorts(Collection<Integer> ports){
+        PortReserver.releasePorts(PortReserver.TCP, ports);
+    }
 
     synchronized public void bind(String owner) throws Exception {
         if (exclusiveOwner == null) {
@@ -80,7 +92,7 @@ public class LaunchAgent implements LaunchAgentService {
             processes.remove(pid);
             throw e;
         }
-        
+
         return (Process) distributor.export(rc).getStub();
     }
 
@@ -136,7 +148,7 @@ public class LaunchAgent implements LaunchAgentService {
         monitor.start();
 
         distributor.register(this, LaunchAgent.REGISTRY_PATH + "/" + getAgentId(), false);
-        
+
         log.info("PROCESS LAUNCHER " + getAgentId() + " STARTED\n");
 
     }
@@ -278,9 +290,8 @@ public class LaunchAgent implements LaunchAgentService {
         // of a process (then kill processes for which
         // the controller doesn't respond.
     }
-    
-    private class Monitor implements Runnable
-    {
+
+    private class Monitor implements Runnable {
         Log log = LogFactory.getLog(this.getClass());
         private final LaunchAgent processLauncher;
 
@@ -326,7 +337,6 @@ public class LaunchAgent implements LaunchAgentService {
 
             }
         }
-
 
         public void cleanUpTempFiles() {
             //If we aren't running anything cleanup: temp parts

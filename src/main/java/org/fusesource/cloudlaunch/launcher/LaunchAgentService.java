@@ -7,6 +7,10 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.launcher;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import org.fusesource.cloudlaunch.HostProperties;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
@@ -32,6 +36,21 @@ public interface LaunchAgentService extends Distributable {
     public void bind(String owner) throws Exception;
 
     public void unbind(String owner) throws Exception;
+    
+    /**
+     * Request that the agent reserve the specified number of ports. 
+     * 
+     * @param count The number of porst
+     * @return A list of free ports on the agent. 
+     * @throws Exception If the specified number of ports could not be reserved. 
+     */
+    public List<Integer> reserveTcpPorts(int count) throws Exception;
+    
+    /**
+     * Release a list of previously reserved ports.
+     * @param ports The list of ports
+     */
+    public void releaseTcpPorts(Collection<Integer> ports);
 
     public Process launch(LaunchDescription launchDescription, ProcessListener handler) throws Exception;
 

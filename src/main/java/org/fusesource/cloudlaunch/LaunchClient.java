@@ -19,9 +19,12 @@ package org.fusesource.cloudlaunch;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -43,7 +46,7 @@ import org.fusesource.cloudlaunch.launcher.LaunchAgentService;
 public class LaunchClient {
 
     Log log = LogFactory.getLog(this.getClass());
-    
+
     private Distributor distributor;
     RegistryWatcher agentWatcher;
     private long killTimeout = 1000 * 5;
@@ -54,12 +57,11 @@ public class LaunchClient {
 
     private AtomicBoolean closed = new AtomicBoolean();
     private final HashMap<String, LaunchAgentService> boundAgents = new HashMap<String, LaunchAgentService>();
-    
+    private final HashMap<String, HashSet<Integer>> reservedPorts = new HashMap<String, HashSet<Integer>>();
     private String name;
 
     public void start() throws Exception {
         name = distributor.getRegistry().addObject("/launchclients/" + System.getProperty("user.name"), true, null);
-
 
         agentWatcher = new RegistryWatcher() {
 
@@ -89,7 +91,67 @@ public class LaunchClient {
         distributor.getRegistry().addRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
     }
 
-    public void destroy() throws Exception {
+    /**
+     * Requests the specified number of tcp ports from the specified process
+     * launcher.
+     * 
+     * @param agentName
+     *            The name of the process launcher
+     * @param count
+     *            The number of ports.
+     * @return The reserved ports
+     * @throws Exception
+     *             If there is an error reserving the requested number of ports.
+     */
+    public synchronized List<Integer> reserveTcpPorts(String agentName, int count) throws Exception {
+        agentName = agentName.toUpperCase();
+        LaunchAgentService agent = getAgent(agentName);
+
+        List<Integer> ports = agent.reserveTcpPorts(count);
+        HashSet<Integer> reserved = reservedPorts.get(agentName);
+        if (reserved == null) {
+            reserved = new HashSet<Integer>();
+            reservedPorts.put(agentName, reserved);
+        }
+        reserved.addAll(ports);
+        return ports;
+    }
+
+    /**
+     * Releases previously reserved ports at the launcher.
+     */
+    public synchronized void releasePorts(String agentName, Collection<Integer> ports) throws Exception {
+        agentName = agentName.toUpperCase();
+        HashSet<Integer> reserved = reservedPorts.get(agentName);
+        if (reserved != null) {
+            reserved.removeAll(ports);
+            if (reserved.isEmpty()) {
+                reservedPorts.remove(agentName);
+            }
+        }
+        LaunchAgentService agent = getAgent(agentName);
+        agent.releaseTcpPorts(ports);
+
+    }
+
+    /**
+     * Releases all ports that have been reserved on the specified launcher.
+     */
+    public synchronized void releaseAllPorts(String agentName) throws Exception {
+        agentName = agentName.toUpperCase();
+        HashSet<Integer> reserved = reservedPorts.remove(agentName);
+        if (reserved != null) {
+            getAgent(agentName).releaseTcpPorts(reserved);
+        }
+    }
+
+    public synchronized void destroy() throws Exception {
+
+        //Release reserved ports:
+        for (String agentName : reservedPorts.keySet()) {
+            releaseAllPorts(agentName);
+        }
+
         try {
             releaseAll();
         } catch (Exception e) {
@@ -126,18 +188,14 @@ public class LaunchClient {
         synchronized (this) {
             launcher = knownAgents.get(agentName);
         }
-        
-        if(launcher == null)
-        {
+
+        if (launcher == null) {
             LaunchAgentService pl = distributor.getRegistry().getObject(LaunchAgentService.REGISTRY_PATH + "/" + agentName);
-            if(pl != null)
-            {
+            if (pl != null) {
                 HostProperties props = pl.getHostProperties();
-                synchronized(this)
-                {
+                synchronized (this) {
                     launcher = knownAgents.get(agentName);
-                    if(launcher == null)
-                    {
+                    if (launcher == null) {
                         launcher = pl;
                         knownAgents.put(agentName, pl);
                         agentProps.put(agentName, props);
@@ -146,12 +204,12 @@ public class LaunchClient {
                 }
             }
         }
-        
+
         if (launcher == null) {
             throw new Exception("Agent not found:" + agentName);
         }
         return launcher;
-       
+
     }
 
     public void bindAgent(String agentName) throws Exception {
@@ -205,7 +263,7 @@ public class LaunchClient {
 
     public Process launchProcess(String agentId, final LaunchDescription launch, ProcessListener listener) throws Exception {
         checkNotClosed();
-        
+
         LaunchAgentService agent = getAgent(agentId);
         return agent.launch(launch, (ProcessListener) distributor.export(listener).getStub());
     }
@@ -219,7 +277,7 @@ public class LaunchClient {
             e.printStackTrace();
         }
     }
-    
+
     public long getBindTimeout() {
         return bindTimeout;
     }
