@@ -36,7 +36,7 @@ public class EventTest extends TestCase {
 
     protected void setUp() throws Exception {
 
-        String dataDir = "target" + File.separator + "remote-classloader-test";
+        String dataDir = "target" + File.separator + "event-test";
         String commonRepo = new File(dataDir + File.separator + "common-repo").toURI().toString();
 
         System.setProperty("basedir", dataDir);
