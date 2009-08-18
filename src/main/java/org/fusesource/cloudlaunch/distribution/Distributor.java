@@ -22,6 +22,9 @@ import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.fusesource.cloudlaunch.control.ControlServer;
+import org.fusesource.cloudlaunch.distribution.event.EventClient;
+import org.fusesource.cloudlaunch.distribution.event.EventClientFactory;
 import org.fusesource.cloudlaunch.distribution.registry.Registry;
 import org.fusesource.cloudlaunch.distribution.registry.RegistryFactory;
 import org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory;
@@ -42,33 +45,39 @@ public class Distributor {
     private Log log = LogFactory.getLog(this.getClass());
     private static final FactoryFinder REGISTRY_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/registry/");
     private static final FactoryFinder EXPORTER_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/exporter/");
+    private static final FactoryFinder EVENT_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/event/");
 
-    public static Distributor create(String registryUri) throws Exception
-    {
+    public static Distributor create(String registryUri) throws Exception {
         URI uri = new URI(registryUri);
-        
+
         RegistryFactory rf = (RegistryFactory) REGISTRY_FACTORY_FINDER.newInstance(uri.getScheme());
         Registry registry = rf.createRegistry(registryUri);
         registry.start();
-        
-        String exporterUrl = (String) registry.getObject(IExporter.EXPORTER_CONNECT_URL_PATH);
-        URI exporterUri = new URI(exporterUrl);
+
+        URI exporterUri = new URI((String) registry.getObject(ControlServer.EXPORTER_CONNECT_URI_PATH));
         ExporterFactory ef = (ExporterFactory) EXPORTER_FACTORY_FINDER.newInstance(exporterUri.getScheme());
-        IExporter exporter = ef.createExporter(exporterUrl);
-        
+        IExporter exporter = ef.createExporter(exporterUri.toString());
+
+        URI eventUri = new URI((String) registry.getObject(ControlServer.EVENT_CONNECT_URI_PATH));
+        EventClientFactory ecf = (EventClientFactory) EVENT_FACTORY_FINDER.newInstance(eventUri.getScheme());
+        EventClient eventClient = ecf.createEventClient(eventUri.toString());
+
         Distributor ret = new Distributor();
         ret.setDistributorUrl(registryUri);
         ret.setExporter(exporter);
         ret.setRegistry(registry);
+        ret.setEventClient(eventClient);
+
         ret.start();
         ret.log.info("Created: " + ret);
         return ret;
     }
-    
+
     private IExporter exporter;
     private Registry registry;
+    private EventClient eventClient;
     private String distributorUrl;
-    
+
     public class DistributionRef<D extends Distributable> {
         private Distributable object;
         private D stub;
@@ -126,8 +135,6 @@ public class Distributor {
 
     }
 
-    
-    
     private <T extends Distributable> DistributionRef<T> getRef(Distributable object, boolean create) {
         DistributionRef<T> ref = null;
         synchronized (distributed) {
@@ -225,6 +232,7 @@ public class Distributor {
             ref.unregister();
         }
         registry.destroy();
+        eventClient.close();
     }
 
     synchronized void setExporter(IExporter exporter) {
@@ -247,10 +255,18 @@ public class Distributor {
         return registry;
     }
 
+    public EventClient getEventClient() {
+        return eventClient;
+    }
+
+    public void setEventClient(EventClient eventClient) {
+        this.eventClient = eventClient;
+    }
+
     public void setDistributorUrl(String distributorUrl) {
         this.distributorUrl = distributorUrl;
     }
-    
+
     public String getDistributorUrl() {
         return distributorUrl;
     }

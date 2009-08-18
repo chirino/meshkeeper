@@ -28,7 +28,6 @@ import org.fusesource.cloudlaunch.distribution.Distributable;
  */
 public interface IExporter {
 
-    public static final String EXPORTER_CONNECT_URL_PATH = "/control/exporter-url";
     public <T extends Distributable> T export(Distributable obj) throws Exception;
     
     public void unexport(Distributable obj) throws Exception;

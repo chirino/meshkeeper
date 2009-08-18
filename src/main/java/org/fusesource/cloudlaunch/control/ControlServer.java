@@ -51,7 +51,9 @@ public class ControlServer {
 
     public static final String DEFAULT_RMI_URL = "tcp://localhost:4041";
     public static final String DEFAULT_REGISTRY_URL = "tcp://localhost:4040";
-
+    public static final String EXPORTER_CONNECT_URI_PATH = "/control/exporter-url";
+    public static final String EVENT_CONNECT_URI_PATH = "/control/event-url";
+    
     BrokerService controlBroker;
     ZooKeeperServer zkServer;
     Registry registry;
@@ -127,9 +129,14 @@ public class ControlServer {
             //Set the exporter connect url (note that we delete first since
             //in some instances zoo-keeper doesn't shutdown cleanly and hangs
             //on to file handles so that the registry isn't purged:
-            registry.remove(IExporter.EXPORTER_CONNECT_URL_PATH, true);
-            String path = registry.addObject(IExporter.EXPORTER_CONNECT_URL_PATH, false, new String("rmiviajms:" + getExternalRMIUrl()));
-            log.info("Registered RMI control server at " + IExporter.EXPORTER_CONNECT_URL_PATH + "=rmiviajms:" + getExternalRMIUrl());
+            registry.remove(EXPORTER_CONNECT_URI_PATH, true);
+            String path = registry.addObject(EXPORTER_CONNECT_URI_PATH, false, new String("rmiviajms:" + getExternalRMIUrl()));
+            log.info("Registered RMI control server at " + EXPORTER_CONNECT_URI_PATH + "=rmiviajms:" + getExternalRMIUrl());
+            
+            registry.remove(EVENT_CONNECT_URI_PATH, true);
+            path = registry.addObject(EVENT_CONNECT_URI_PATH, false, new String("jms:" + getExternalRMIUrl()));
+            log.info("Registered event server at " + EVENT_CONNECT_URI_PATH + "=jms:" + getExternalRMIUrl());
+            
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             destroy();
