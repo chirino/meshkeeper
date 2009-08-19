@@ -60,4 +60,9 @@ public class Event implements Serializable {
     public void setAttachment(Object attachment) {
         this.attachment = attachment;
     }
+    
+    public String toString()
+    {
+        return "Event: [" + type + "] from " + source + " attachment: " + attachment;
+    }
 }

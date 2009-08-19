@@ -1,28 +1,15 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/**************************************************************************************
+ * Copyright (C) 2009 Progress Software, Inc. All rights reserved.                    *
+ * http://fusesource.com                                                              *
+ * ---------------------------------------------------------------------------------- *
+ * The software in this package is published under the terms of the AGPL license      *
+ * a copy of which has been included with this distribution in the license.txt file.  *
+ **************************************************************************************/
 package org.fusesource.cloudlaunch.control;
 
 import java.io.File;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.UnknownHostException;
 
 import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
@@ -30,7 +17,6 @@ import org.apache.commons.logging.LogFactory;
 import org.fusesource.cloudlaunch.distribution.registry.Registry;
 import org.fusesource.cloudlaunch.distribution.registry.zk.ZooKeeperFactory;
 import org.fusesource.cloudlaunch.distribution.registry.zk.ZooKeeperServer;
-import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
 import org.fusesource.rmiviajms.JMSRemoteObject;
 import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
 
@@ -130,11 +116,11 @@ public class ControlServer {
             //in some instances zoo-keeper doesn't shutdown cleanly and hangs
             //on to file handles so that the registry isn't purged:
             registry.remove(EXPORTER_CONNECT_URI_PATH, true);
-            String path = registry.addObject(EXPORTER_CONNECT_URI_PATH, false, new String("rmiviajms:" + getExternalRMIUrl()));
+            registry.addObject(EXPORTER_CONNECT_URI_PATH, false, new String("rmiviajms:" + getExternalRMIUrl()));
             log.info("Registered RMI control server at " + EXPORTER_CONNECT_URI_PATH + "=rmiviajms:" + getExternalRMIUrl());
             
             registry.remove(EVENT_CONNECT_URI_PATH, true);
-            path = registry.addObject(EVENT_CONNECT_URI_PATH, false, new String("jms:" + getExternalRMIUrl()));
+            registry.addObject(EVENT_CONNECT_URI_PATH, false, new String("jms:" + getExternalRMIUrl()));
             log.info("Registered event server at " + EVENT_CONNECT_URI_PATH + "=jms:" + getExternalRMIUrl());
             
         } catch (Exception e) {
