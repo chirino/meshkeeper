@@ -9,19 +9,29 @@ package org.fusesource.cloudlaunch.distribution.event;
 
 import java.io.Serializable;
 
-
-/** 
+/**
  * Event
  * <p>
- * Defines a generic event. 
+ * Defines a generic event.
  * </p>
+ * 
  * @author cmacnaug
  * @version 1.0
  */
-public class Event implements Serializable{
+public class Event implements Serializable {
 
     private static final long serialVersionUID = 1;
-    
+
+    public Event() {
+
+    }
+
+    public Event(int type, String source, Object attachment) {
+        this.type = type;
+        this.source = source;
+        this.attachment = attachment;
+    }
+
     private int type;
     private String source;
     private Object attachment;
@@ -29,24 +39,24 @@ public class Event implements Serializable{
     public int getType() {
         return type;
     }
-    
+
     public void setType(int type) {
         this.type = type;
     }
-    
+
     public String getSource() {
         return source;
     }
-    
+
     public void setSource(String source) {
         this.source = source;
     }
-    
+
     @SuppressWarnings("unchecked")
     public <T> T getAttachment() {
         return (T) attachment;
     }
-    
+
     public void setAttachment(Object attachment) {
         this.attachment = attachment;
     }

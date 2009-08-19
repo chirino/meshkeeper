@@ -49,11 +49,11 @@ public class JMSEventClient implements EventClient {
     JMSEventClient(JMSProvider provider, URI uri) throws JMSException {
         this.provider = provider;
         this.connection = provider.getConnection(this, uri);
-        this.sendSession = connection.createSession(false, Session.DUPS_OK_ACKNOWLEDGE);
+        this.sendSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         this.sender = sendSession.createProducer(null);
         sender.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
         sender.setTimeToLive(120000);
-        this.listenerSession = connection.createSession(false, Session.DUPS_OK_ACKNOWLEDGE);
+        this.listenerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
     }
 
     public synchronized void closeEventListener(EventListener listener, String topic) throws Exception {
