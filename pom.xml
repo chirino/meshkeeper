@@ -1,12 +1,12 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <description>A distributed process launching framework</description>
   <url>http://fusesource.com/forge/projects/cloudlaunch</url>
 
   <groupId>org.fusesource.cloudlaunch</groupId>
   <artifactId>cloudlaunch</artifactId>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>cloudlaunch</name>
   <organization>
@@ -25,6 +25,9 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  <modules>
+    <module>cloudlaunch-rmi-rmiviajms</module>
+  </modules>
 
   <repositories>
     <!-- for the rmiviajms dependency -->
@@ -275,7 +278,7 @@
               </descriptors>
               <finalName>${pom.artifactId}-${pom.version}</finalName>
               <appendAssemblyId>true</appendAssemblyId>
-              <assemblyId />
+              <assemblyId/>
             </configuration>
           </execution>
         </executions>
@@ -289,7 +292,7 @@
           <childDelegation>false</childDelegation>
           <useFile>true</useFile>
           <argLine>-Xms256m -Xmx768m</argLine>
-          <excludes></excludes>
+          <excludes/>
         </configuration>
       </plugin>
     </plugins>
