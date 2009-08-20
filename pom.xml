@@ -5,7 +5,7 @@
   <url>http://fusesource.com/forge/projects/cloudlaunch</url>
 
   <groupId>org.fusesource.cloudlaunch</groupId>
-  <artifactId>cloudlaunch</artifactId>
+  <artifactId>cloudlaunch-parent</artifactId>
   <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>cloudlaunch</name>
@@ -27,6 +27,7 @@
   </licenses>
   <modules>
     <module>cloudlaunch-rmi-rmiviajms</module>
+    <module>cloudlaunch-api</module>
   </modules>
 
   <repositories>
