@@ -7,6 +7,10 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.resource;
 
+import java.net.URI;
+
+import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
+
 /**
  * ResourceManagerFactory
  * <p>
@@ -16,11 +20,16 @@ package org.fusesource.cloudlaunch.distribution.resource;
  * @author cmacnaug
  * @version 1.0
  */
-public interface ResourceManagerFactory {
+public abstract class ResourceManagerFactory {
 
-    public ResourceManager createResourceManager() throws Exception;
+    private static final FactoryFinder RESOURCE_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/resource/");
 
-    public void setCommonRepoUrl(String url);
+    public static final ResourceManager create(String uri) throws Exception
+    {
+        URI providerUri = new URI(uri);
+        return ((ResourceManagerFactory)RESOURCE_FACTORY_FINDER.newInstance(providerUri.getScheme())).createResourceManager(uri);
+    }
+    
+    protected abstract ResourceManager createResourceManager(String uri) throws Exception;
 
-    public void setLocalRepoDir(String directory);
 }

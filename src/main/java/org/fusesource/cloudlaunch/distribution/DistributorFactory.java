@@ -8,7 +8,6 @@
 package org.fusesource.cloudlaunch.distribution;
 
 import java.io.File;
-import java.net.URI;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,7 +20,6 @@ import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManagerFactory;
 import org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory;
 import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
-import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
 
 /**
  * DistributorFactory
@@ -35,11 +33,7 @@ import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
 public class DistributorFactory {
 
     private Log log = LogFactory.getLog(DistributorFactory.class);
-    private static final FactoryFinder REGISTRY_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/registry/");
-    private static final FactoryFinder EXPORTER_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/exporter/");
-    private static final FactoryFinder EVENT_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/event/");
-    private static final FactoryFinder RESOURCE_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/resource/");
-
+    
     private static String DEFAULT_RESOURCE_MANAGER_PROVIDER = "wagon";
     private static String DEFAULT_DATA_DIR = ".";
     private static String DEFAULT_REGISTRY_URI = ControlServer.DEFAULT_REGISTRY_URI;
@@ -83,9 +77,7 @@ public class DistributorFactory {
     public Distributor create() throws Exception {
 
         //Create Registry:
-        URI registryUri = new URI(registryProviderUri);
-        RegistryFactory rf = (RegistryFactory) REGISTRY_FACTORY_FINDER.newInstance(registryUri.getScheme());
-        Registry registry = rf.createRegistry(registryUri.toString());
+        Registry registry = RegistryFactory.create(registryProviderUri);
         registry.start();
 
         //Create Exporter:
@@ -95,9 +87,7 @@ public class DistributorFactory {
                 rmiProviderUri = ControlServer.DEFAULT_RMI_URI;
             }
         }
-        URI rmiUri = new URI(rmiProviderUri);
-        ExporterFactory ef = (ExporterFactory) EXPORTER_FACTORY_FINDER.newInstance(rmiUri.getScheme());
-        IExporter exporter = ef.createExporter(rmiUri.toString());
+        IExporter exporter = ExporterFactory.create(rmiProviderUri);
 
         //Create Event Client:
         if (eventProviderUri == null) {
@@ -106,18 +96,15 @@ public class DistributorFactory {
                 eventProviderUri = ControlServer.DEFAULT_EVENT_URI;
             }
         }
-        URI eventUri = new URI(eventProviderUri);
-        EventClientFactory ecf = (EventClientFactory) EVENT_FACTORY_FINDER.newInstance(eventUri.getScheme());
-        EventClient eventClient = ecf.createEventClient(eventUri.toString());
+        EventClient eventClient = EventClientFactory.create(eventProviderUri);
 
         //Create ResourceManager:
-        ResourceManagerFactory rmf = (ResourceManagerFactory) RESOURCE_FACTORY_FINDER.newInstance(resourceManagerProvider);
+        ResourceManager resourceManager = ResourceManagerFactory.create(resourceManagerProvider);
         String commonRepoUrl = registry.getObject(ControlServer.COMMON_REPO_URL_PATH);
         if (commonRepoUrl != null) {
-            rmf.setCommonRepoUrl(commonRepoUrl);
+            resourceManager.setCommonRepoUrl(commonRepoUrl, null);
         }
-        rmf.setLocalRepoDir(dataDirectory + File.separator + "local-repo");
-        ResourceManager resourceManager = rmf.createResourceManager();
+        resourceManager.setLocalRepoDir(dataDirectory + File.separator + "local-repo");
 
         Distributor ret = new Distributor();
         ret.setExporter(exporter);

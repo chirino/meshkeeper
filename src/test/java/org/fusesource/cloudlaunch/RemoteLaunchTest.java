@@ -67,7 +67,7 @@ public class RemoteLaunchTest extends TestCase {
         launchClient = (LaunchClient) context.getBean("launch-client");
 
         commonResourceManager = new WagonResourceManager();
-        commonResourceManager.setCommonRepo(commonRepo, null);
+        commonResourceManager.setCommonRepoUrl(commonRepo, null);
 
     }
 

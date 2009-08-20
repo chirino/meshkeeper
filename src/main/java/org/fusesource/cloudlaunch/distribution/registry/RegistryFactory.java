@@ -7,15 +7,28 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.registry;
 
-/** 
+import java.net.URI;
+
+import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
+
+/**
  * RegistryFactory
  * <p>
- * Description:
- * Defines the interface for registry factories. 
+ * Description: Defines the interface for registry factories.
  * </p>
+ * 
  * @author cmacnaug
  * @version 1.0
  */
-public interface RegistryFactory {
-    public Registry createRegistry(String uri) throws Exception;
+public abstract class RegistryFactory {
+
+    public static final FactoryFinder FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/registry/");
+
+    public static final Registry create(String uri) throws Exception {
+        URI registryUri = new URI(uri);
+        RegistryFactory rf = (RegistryFactory) RegistryFactory.FACTORY_FINDER.newInstance(registryUri.getScheme());
+        return rf.createRegistry(uri);
+    }
+
+    protected abstract Registry createRegistry(String uri) throws Exception;
 }

@@ -23,12 +23,13 @@ import org.fusesource.cloudlaunch.util.internal.URISupport;
  * @author cmacnaug
  * @version 1.0
  */
-public class RmiViaJmsExporterFactory implements ExporterFactory {
+public class RmiViaJmsExporterFactory extends ExporterFactory {
 
     /* (non-Javadoc)
      * @see org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory#createExporter(java.lang.String)
      */
     public IExporter createExporter(String uri) throws Exception {
+        
         URI connectUri = new URI(URISupport.stripPrefix(uri, "rmiviajms:"));
 
         RmiViaJmsExporter exporter = new RmiViaJmsExporter();

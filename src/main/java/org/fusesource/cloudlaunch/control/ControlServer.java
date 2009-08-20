@@ -17,9 +17,6 @@ import org.apache.commons.logging.LogFactory;
 import org.fusesource.cloudlaunch.distribution.registry.Registry;
 import org.fusesource.cloudlaunch.distribution.registry.zk.ZooKeeperFactory;
 import org.fusesource.cloudlaunch.distribution.registry.zk.ZooKeeperServer;
-import org.fusesource.rmiviajms.JMSRemoteObject;
-import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
-
 /**
  * ControlServer
  * <p>
@@ -59,8 +56,7 @@ public class ControlServer {
     private String commonRepoUrl;
 
     public void start() throws Exception {
-        System.setProperty(ActiveMQRemoteSystem.CONNECT_URL_PROPNAME, jmsConnectUrl);
-
+        
         dataDirectory = dataDirectory + File.separator + "control-server";
         shutdownHook = new Thread("CloudLaunch Control Server Shutdown Hook") {
             public void run() {
@@ -115,6 +111,7 @@ public class ControlServer {
         }
 
         try {
+            
             ZooKeeperFactory factory = new ZooKeeperFactory();
             Registry registry = factory.createRegistry("zk:" + zooKeeperConnectUrl);
 
@@ -161,8 +158,6 @@ public class ControlServer {
                 zkServer = null;
             }
         }
-
-        JMSRemoteObject.resetSystem();
 
         log.info("Shutting down rmi server");
         if (controlBroker != null) {

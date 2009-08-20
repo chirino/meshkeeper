@@ -22,7 +22,7 @@ import org.fusesource.cloudlaunch.distribution.resource.ResourceManagerFactory;
  * @author cmacnaug
  * @version 1.0
  */
-public class WagonResourceManagerFactory implements ResourceManagerFactory {
+public class WagonResourceManagerFactory extends ResourceManagerFactory {
 
     String localRepoDir;
     String commonRepoUrl;
@@ -35,10 +35,12 @@ public class WagonResourceManagerFactory implements ResourceManagerFactory {
      * org.fusesource.cloudlaunch.distribution.resource.ResourceManagerFactory
      * #createResourceManager()
      */
-    public ResourceManager createResourceManager() throws Exception {
+    public ResourceManager createResourceManager(String uri) throws Exception {
         WagonResourceManager wrm = new WagonResourceManager();
-        wrm.setLocalRepoDir(new File(localRepoDir));
-        wrm.setCommonRepo(commonRepoUrl, authInfo);
+        if (localRepoDir != null) {
+            wrm.setLocalRepoDir(localRepoDir);
+        }
+        wrm.setCommonRepoUrl(commonRepoUrl, authInfo);
         return wrm;
     }
 

@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * @author chirino
  */
-public class ZooKeeperFactory implements RegistryFactory {
+public class ZooKeeperFactory extends RegistryFactory {
 
     public Registry createRegistry(String uri) throws Exception {
         URI connectUri = new URI(URISupport.stripPrefix(uri, "zk:"));

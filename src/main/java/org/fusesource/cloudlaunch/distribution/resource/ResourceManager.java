@@ -22,6 +22,17 @@ import java.io.IOException;
 public interface ResourceManager {
 
     /**
+     * Set the location of the common repo
+     * @param url The url to common repo. 
+     */
+    public void setCommonRepoUrl(String url, AuthenticationInfo authInfo) throws Exception ;
+
+    /**
+     * Set the location of the local repository
+     */
+    public void setLocalRepoDir(String directory) throws Exception ;
+    
+    /**
      * Factory method for creating a resource.
      * @return An empty resource. 
      */

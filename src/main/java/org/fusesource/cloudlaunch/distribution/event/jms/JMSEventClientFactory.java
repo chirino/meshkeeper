@@ -22,7 +22,7 @@ import org.fusesource.cloudlaunch.util.internal.URISupport;
  * @author cmacnaug
  * @version 1.0
  */
-public class JMSEventClientFactory implements EventClientFactory {
+public class JMSEventClientFactory extends EventClientFactory {
 
     public static final String JMS_PROVIDER_CLASS = System.getProperty("org.fusesource.distribution.event.jms.PROVIDER_CLASS", "org.fusesource.cloudlaunch.distribution.event.jms.ActiveMQProvider");
 
@@ -35,7 +35,7 @@ public class JMSEventClientFactory implements EventClientFactory {
      * org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory#createExporter
      * (java.lang.String)
      */
-    public EventClient createEventClient(String uri) throws Exception {
+    protected EventClient createEventClient(String uri) throws Exception {
         URI connectUri = new URI(URISupport.stripPrefix(uri, "jms:"));
         return new JMSEventClient(getJMSProvider(), connectUri);
     }

@@ -71,10 +71,11 @@ public class WagonResourceManager implements ResourceManager {
         return new WagonResource();
     }
 
-    public void setLocalRepoDir(File localRepoDir) throws Exception {
-        Repository localRepo = new Repository("local", localRepoDir.toURI().toString());
-        if (!localRepoDir.exists()) {
-            localRepoDir.mkdir();
+    public void setLocalRepoDir(String localRepoDir) throws Exception {
+        File dir = new File(localRepoDir);
+        Repository localRepo = new Repository("local", dir.toURI().toString());
+        if (!dir.exists()) {
+            dir.mkdirs();
         }
         localWagon = connectWagon(localRepo, null);
     }
@@ -83,11 +84,11 @@ public class WagonResourceManager implements ResourceManager {
         return new File(localWagon.getRepository().getBasedir());
     }
 
-    public void setCommonRepo(String url, AuthenticationInfo authInfo) throws Exception {
+    public void setCommonRepoUrl(String url, AuthenticationInfo authInfo) throws Exception {
         Repository remoteRepo = new Repository("common", url);
         connectWagon(remoteRepo, authInfo);
     }
-
+    
     public void locateResource(Resource resource) throws Exception {
         Wagon w = null;
         long timestamp = 0;
@@ -240,6 +241,8 @@ public class WagonResourceManager implements ResourceManager {
             return rc;
         }
     }
+
+    
 
 
 }

@@ -12,7 +12,6 @@ import java.rmi.Remote;
 import org.fusesource.cloudlaunch.distribution.Distributable;
 import org.fusesource.cloudlaunch.distribution.Oneway;
 import org.fusesource.cloudlaunch.distribution.rmi.AbstractExporter;
-import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
 import org.fusesource.rmiviajms.JMSRemoteObject;
 import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
 

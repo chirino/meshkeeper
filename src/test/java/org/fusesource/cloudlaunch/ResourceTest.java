@@ -47,7 +47,7 @@ public class ResourceTest extends TestCase {
 
         WagonResourceManager rm = new WagonResourceManager();
         File localDir = new File("target" + File.separator + "test-repo");
-        rm.setLocalRepoDir(localDir);
+        rm.setLocalRepoDir(localDir.getCanonicalPath());
         log.info("Deleting local resource directory: " + localDir);
         rm.purgeLocalRepo();
         log.info("Deleted local resource directory: " + localDir);
@@ -56,7 +56,7 @@ public class ResourceTest extends TestCase {
         AuthenticationInfo authInfo = new AuthenticationInfo();
         authInfo.setUserName("fusemqtest");
         authInfo.setPassword("fusemqtestpw");
-        rm.setCommonRepo(remoteRepo, authInfo);
+        rm.setCommonRepoUrl(remoteRepo, authInfo);
 
         Resource resource = rm.createResource();
         resource.setRepoName("common");
@@ -74,13 +74,13 @@ public class ResourceTest extends TestCase {
     public void testFileResourceManager() throws Exception {
         WagonResourceManager rm = new WagonResourceManager();
         File localDir = new File("target" + File.separator + "test-repo");
-        rm.setLocalRepoDir(localDir);
+        rm.setLocalRepoDir(localDir.getCanonicalPath());
         log.info("Deleting local resource directory: " + localDir);
         rm.purgeLocalRepo();
         log.info("Deleted local resource directory: " + localDir);
 
         File remoteDir = new File("test-file-repo");
-        rm.setCommonRepo(remoteDir.toURI().toString(), null);
+        rm.setCommonRepoUrl(remoteDir.toURI().toString(), null);
 
         String resourcePath = "testfolder";
         Resource resource = rm.createResource();

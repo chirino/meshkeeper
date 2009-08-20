@@ -7,6 +7,10 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.rmi;
 
+import java.net.URI;
+
+import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
+
 /** 
  * ExporterFactory
  * <p>
@@ -16,8 +20,27 @@ package org.fusesource.cloudlaunch.distribution.rmi;
  * @author cmacnaug
  * @version 1.0
  */
-public interface ExporterFactory {
+public abstract class ExporterFactory {
 
-    public IExporter createExporter(String uri) throws Exception;
+    private static final FactoryFinder EXPORTER_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/exporter/");
+    
+    public static final IExporter create(String uri) throws Exception
+    {
+        ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
+        try
+        {
+            ClassLoader cl = originalLoader;
+            Thread.currentThread().setContextClassLoader(cl);
+            URI rmiUri = new URI(uri);
+            ExporterFactory ef = (ExporterFactory) EXPORTER_FACTORY_FINDER.newInstance(rmiUri.getScheme());
+            return ef.createExporter(rmiUri.toString());
+        }
+        finally
+        {
+            Thread.currentThread().setContextClassLoader(originalLoader);
+        }
+    }
+    
+    protected abstract IExporter createExporter(String uri) throws Exception;
     
 }
