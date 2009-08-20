@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
 import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.distribution.DistributorFactory;
 
 
 /**
@@ -30,9 +31,8 @@ public class RemoteLoadingMain {
     private String mainClass;
     private String[] args;
     private int depth = 100;
-    private String registryUrl;
     private Distributor distributor;
-    private String distributorUrl;
+    private String distributorUri;
 
     static class SyntaxException extends Exception {
         private static final long serialVersionUID = 4997524790367555614L;
@@ -61,9 +61,9 @@ public class RemoteLoadingMain {
                     } catch (Exception e) {
                         throw new SyntaxException("Expected a directoy after the --cache-dir option.");
                     }
-                } else if (arg.equals("--distributor-url")) {
+                } else if (arg.equals("--distributor-uri")) {
                     try {
-                        main.setDistributorUrl(alist.removeFirst());
+                        main.setDistributorUri(alist.removeFirst());
                     } catch (Exception e) {
                         throw new SyntaxException("Expected a url after the --registry-url option.");
                     }
@@ -105,7 +105,7 @@ public class RemoteLoadingMain {
             if (main.getClassLoaderURI() == null) {
                 throw new SyntaxException("ClassLoader URL not specified.");
             }
-            if (main.getDistributorUrl() == null) {
+            if (main.getDistributorUri() == null) {
                 throw new SyntaxException("distributor-url not specified.");
             }
 
@@ -120,7 +120,8 @@ public class RemoteLoadingMain {
 
     private void execute() throws Throwable {
         
-        distributor = Distributor.create(distributorUrl);
+        DistributorFactory.setDefaultRegistryUri(distributorUri);
+        distributor = DistributorFactory.createDefaultDistributor();
         
         ClassLoader mainCl = loadMainClassLoader();
         Class<?> clazz = mainCl.loadClass(mainClass);
@@ -166,13 +167,13 @@ public class RemoteLoadingMain {
 
 
 
-    public void setDistributorUrl(String url) {
-        distributorUrl = url;
+    public void setDistributorUri(String uri) {
+        distributorUri = uri;
     }
     
-    public String getDistributorUrl()
+    public String getDistributorUri()
     {
-        return distributorUrl;
+        return distributorUri;
     }
     
     public void setClassLoaderURI(String classLoaderURI) {

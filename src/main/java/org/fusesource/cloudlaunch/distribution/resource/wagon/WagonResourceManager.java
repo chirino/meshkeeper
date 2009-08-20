@@ -5,7 +5,7 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch;
+package org.fusesource.cloudlaunch.distribution.resource.wagon;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,12 +16,14 @@ import java.util.Iterator;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.Wagon;
-import org.apache.maven.wagon.authentication.AuthenticationInfo;
 import org.apache.maven.wagon.authorization.AuthorizationException;
 import org.apache.maven.wagon.repository.Repository;
 import org.apache.maven.wagon.shared.http.AbstractHttpClientWagon;
 import org.apache.maven.wagon.shared.http.HttpConfiguration;
 import org.apache.maven.wagon.shared.http.HttpMethodConfiguration;
+import org.fusesource.cloudlaunch.distribution.resource.AuthenticationInfo;
+import org.fusesource.cloudlaunch.distribution.resource.Resource;
+import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.util.internal.FileUtils;
 
 /**
@@ -33,7 +35,7 @@ import org.fusesource.cloudlaunch.util.internal.FileUtils;
  * @author cmacnaug
  * @version 1.0
  */
-public class ResourceManager {
+public class WagonResourceManager implements ResourceManager {
 
     //Access to our local repo:
     private Wagon localWagon;
@@ -60,12 +62,25 @@ public class ResourceManager {
 
     }
 
+    /**
+     * Factory method for creating a resource.
+     * 
+     * @return An empty resource.
+     */
+    public Resource createResource() {
+        return new WagonResource();
+    }
+
     public void setLocalRepoDir(File localRepoDir) throws Exception {
         Repository localRepo = new Repository("local", localRepoDir.toURI().toString());
         if (!localRepoDir.exists()) {
             localRepoDir.mkdir();
         }
         localWagon = connectWagon(localRepo, null);
+    }
+    
+    public File getLocalRepoDirectory() {
+        return new File(localWagon.getRepository().getBasedir());
     }
 
     public void setCommonRepo(String url, AuthenticationInfo authInfo) throws Exception {
@@ -106,8 +121,7 @@ public class ResourceManager {
                 throw new Exception("Resource not found: " + resource.getRepoPath());
             }
         }
-
-        resource.setResolvedPath(localWagon.getRepository().getBasedir() + File.separator + resource.getRepoPath());
+        resource.setLocalPath(localWagon.getRepository().getBasedir() + File.separator + resource.getRepoPath());
     }
 
     /**
@@ -163,7 +177,7 @@ public class ResourceManager {
             ((AbstractHttpClientWagon) w).setHttpConfiguration(hc);
         }
 
-        w.connect(repo, authInfo);
+        w.connect(repo, convertAuthInfo(authInfo));
         connectedRepos.put(repo.getName(), w);
         return w;
     }
@@ -213,5 +227,19 @@ public class ResourceManager {
         }
         connectedRepos.clear();
     }
+
+    private static org.apache.maven.wagon.authentication.AuthenticationInfo convertAuthInfo(AuthenticationInfo info) {
+        if (info == null) {
+            return null;
+        } else {
+            org.apache.maven.wagon.authentication.AuthenticationInfo rc = new org.apache.maven.wagon.authentication.AuthenticationInfo();
+            rc.setPassphrase(info.getPassphrase());
+            rc.setPassword(info.getPassword());
+            rc.setPrivateKey(info.getPrivateKey());
+            rc.setUserName(info.getUserName());
+            return rc;
+        }
+    }
+
 
 }

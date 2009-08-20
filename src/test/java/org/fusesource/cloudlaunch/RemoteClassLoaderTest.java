@@ -113,8 +113,8 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(RemoteLoadingMain.class.getName());
         ld.add("--cache-dir");
         ld.add(file("./classloader-cache"));
-        ld.add("--distributor-url");
-        ld.add(client.getDistributor().getDistributorUrl());
+        ld.add("--distributor-uri");
+        ld.add(client.getDistributor().getRegistryUri());
         ld.add("--classloader-url");
         ld.add(path);
         ld.add(DataInputTestApplication.class.getName());

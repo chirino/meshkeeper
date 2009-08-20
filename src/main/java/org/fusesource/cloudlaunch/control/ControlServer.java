@@ -35,22 +35,28 @@ public class ControlServer {
 
     Log log = LogFactory.getLog(ControlServer.class);
 
-    public static final String DEFAULT_RMI_URL = "tcp://localhost:4041";
-    public static final String DEFAULT_REGISTRY_URL = "tcp://localhost:4040";
-    public static final String EXPORTER_CONNECT_URI_PATH = "/control/exporter-url";
-    public static final String EVENT_CONNECT_URI_PATH = "/control/event-url";
+    public static final String DEFAULT_JMS_URL = "tcp://localhost:4041";
+    public static final String DEFAULT_ZOOKEEPER_URL = "tcp://localhost:4040";
+    public static final String DEFAULT_RMI_URI = "rmiviajms:" + DEFAULT_JMS_URL;
+    public static final String DEFAULT_REGISTRY_URI = "zk:" + DEFAULT_ZOOKEEPER_URL;
+    public static final String DEFAULT_EVENT_URI = "jms:" + DEFAULT_JMS_URL;
+    public static final String EXPORTER_CONNECT_URI_PATH = "/control/exporter-uri";
+    public static final String EVENT_CONNECT_URI_PATH = "/control/event-uri";
+    public static final String COMMON_REPO_URL_PATH = "/control/common-repo-url";
     
     BrokerService controlBroker;
     ZooKeeperServer zkServer;
     Registry registry;
 
-    private String jmsConnectUrl = DEFAULT_RMI_URL;
-    private String zooKeeperConnectUrl = DEFAULT_REGISTRY_URL;
+    private String jmsConnectUrl = DEFAULT_JMS_URL;
+    private String zooKeeperConnectUrl = DEFAULT_ZOOKEEPER_URL;
     private String dataDirectory = ".";
 
     private Thread shutdownHook;
 
-    private String externalUrl;
+    private String externalJMSUrl;
+
+    private String commonRepoUrl;
 
     public void start() throws Exception {
         System.setProperty(ActiveMQRemoteSystem.CONNECT_URL_PROPNAME, jmsConnectUrl);
@@ -112,16 +118,22 @@ public class ControlServer {
             ZooKeeperFactory factory = new ZooKeeperFactory();
             Registry registry = factory.createRegistry("zk:" + zooKeeperConnectUrl);
 
-            //Set the exporter connect url (note that we delete first since
+            //Register the control services:
+            
+            //(note that we delete these first since
             //in some instances zoo-keeper doesn't shutdown cleanly and hangs
             //on to file handles so that the registry isn't purged:
             registry.remove(EXPORTER_CONNECT_URI_PATH, true);
-            registry.addObject(EXPORTER_CONNECT_URI_PATH, false, new String("rmiviajms:" + getExternalRMIUrl()));
-            log.info("Registered RMI control server at " + EXPORTER_CONNECT_URI_PATH + "=rmiviajms:" + getExternalRMIUrl());
+            registry.addObject(EXPORTER_CONNECT_URI_PATH, false, new String("rmiviajms:" + getExternalJMSUrl()));
+            log.info("Registered RMI control server at " + EXPORTER_CONNECT_URI_PATH + "=rmiviajms:" + getExternalJMSUrl());
             
             registry.remove(EVENT_CONNECT_URI_PATH, true);
-            registry.addObject(EVENT_CONNECT_URI_PATH, false, new String("jms:" + getExternalRMIUrl()));
-            log.info("Registered event server at " + EVENT_CONNECT_URI_PATH + "=jms:" + getExternalRMIUrl());
+            registry.addObject(EVENT_CONNECT_URI_PATH, false, new String("jms:" + getExternalJMSUrl()));
+            log.info("Registered event server at " + EVENT_CONNECT_URI_PATH + "=jms:" + getExternalJMSUrl());
+            
+            registry.remove(COMMON_REPO_URL_PATH, true);
+            registry.addObject(COMMON_REPO_URL_PATH, false, commonRepoUrl);
+            log.info("Registered common repo url at " + COMMON_REPO_URL_PATH + "=" + commonRepoUrl);
             
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -164,25 +176,33 @@ public class ControlServer {
 
     }
 
-    private String getExternalRMIUrl() {
-        if (externalUrl == null) {
+    private String getExternalJMSUrl() {
+        if (externalJMSUrl == null) {
             try {
                 URI uri = new URI(jmsConnectUrl);
                 String actualHost = InetAddress.getLocalHost().getHostName();
                 if (!actualHost.equalsIgnoreCase(uri.getHost())) {
-                    externalUrl = uri.getScheme() + "://" + actualHost + ":" + uri.getPort();
+                    externalJMSUrl = uri.getScheme() + "://" + actualHost + ":" + uri.getPort();
                 } else {
-                    externalUrl = jmsConnectUrl;
+                    externalJMSUrl = jmsConnectUrl;
                 }
             } catch (Exception e) {
                 log.warn("Error computing external rmi connect url will use " + jmsConnectUrl);
-                externalUrl = jmsConnectUrl;
+                externalJMSUrl = jmsConnectUrl;
             }
         }
-        return externalUrl;
+        return externalJMSUrl;
 
     }
 
+    public void setCommonRepoUrl(String commonRepoUrl) {
+        this.commonRepoUrl = commonRepoUrl;
+    }
+    
+    public String getCommonRepoUrl() {
+        return commonRepoUrl;
+    }
+    
     public String getJmsConnectUrl() {
         return jmsConnectUrl;
     }

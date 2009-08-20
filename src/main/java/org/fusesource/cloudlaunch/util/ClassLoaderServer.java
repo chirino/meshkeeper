@@ -10,7 +10,6 @@ package org.fusesource.cloudlaunch.util;
 import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -33,15 +32,15 @@ public class ClassLoaderServer implements IClassLoaderServer {
         elements = createElements(classLoader);
     }
 
-    public IClassLoaderServer getParent() throws RemoteException {
+    public IClassLoaderServer getParent() {
         return parent;
     }
 
-    public List<PathElement> getPathElements() throws RemoteException {
+    public List<PathElement> getPathElements() {
         return elements;
     }
 
-    public byte[] download(URL url) throws RemoteException, IOException {
+    public byte[] download(URL url) throws IOException {
         for (PathElement element : elements) {
             if( element.url.equals(url) ) {
                 return read(url.openStream());
@@ -50,7 +49,7 @@ public class ClassLoaderServer implements IClassLoaderServer {
         return null;
     }
 
-    public byte[] findResource(String name) throws RemoteException {
+    public byte[] findResource(String name) {
         InputStream is = classLoader.getResourceAsStream(name);
         if( is ==null )
             return null;

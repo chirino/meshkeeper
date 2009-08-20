@@ -19,6 +19,7 @@ import org.fusesource.cloudlaunch.distribution.Distributable;
 */
 public interface IClassLoaderServer extends Distributable {
     public static class PathElement implements Serializable {
+        private static final long serialVersionUID = 1L;
         URL url;
         long jarFileChecksum;
         long jarFileSize;

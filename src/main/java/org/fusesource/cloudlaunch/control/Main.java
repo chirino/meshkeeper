@@ -27,7 +27,8 @@ public class Main {
         System.out.println(" -(h)elp -- this message");
         System.out.println(" [-rmi <rmi url>] -- specifies listening address for rmi.");
         System.out.println(" [-registry <registry url>] -- specifies listening address for the regsitry.");
-        System.out.println(" [-dataDir <directory>] -- specifies data directory for.");
+        System.out.println(" [-dataDir <directory>] -- specifies data directory used by control server.");
+        System.out.println(" [-commonRepoUrl <url>] -- specifies a url to a centralized common repository.");
     }
 
     /*
@@ -43,8 +44,9 @@ public class Main {
             return;
         }
 
-        String rmi = ControlServer.DEFAULT_RMI_URL;
-        String registry = ControlServer.DEFAULT_REGISTRY_URL;
+        String rmi = ControlServer.DEFAULT_RMI_URI;
+        String registry = ControlServer.DEFAULT_REGISTRY_URI;
+        String commonRepoUrl = null;
         String dataDir = ".";
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
@@ -70,12 +72,17 @@ public class Main {
                         throw new Exception("Expected url after -registry");
                     }
                     registry = alist.removeFirst();
-                } else if (arg.equals("-distributorUrl")) {
+                } else if (arg.equals("-commonRepoUrl")) {
+                    if (alist.isEmpty()) {
+                        throw new Exception("Expected url after -commonRepoUrl");
+                    }
+                    commonRepoUrl = alist.removeFirst();
                 }
             }
 
             ControlServer server = new ControlServer();
             server.setJmsConnectUrl(rmi);
+            server.setCommonRepoUrl(commonRepoUrl);
             server.setDataDirectory(dataDir);
             server.setZooKeeperConnectUrl(registry);
             server.start();

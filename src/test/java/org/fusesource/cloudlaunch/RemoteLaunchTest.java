@@ -31,11 +31,12 @@ import java.util.concurrent.TimeoutException;
 import junit.framework.TestCase;
 
 import org.fusesource.cloudlaunch.LaunchDescription;
-import org.fusesource.cloudlaunch.Resource;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
-import org.fusesource.cloudlaunch.ResourceManager;
 import org.fusesource.cloudlaunch.Expression.FileExpression;
+import org.fusesource.cloudlaunch.distribution.resource.Resource;
+import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
+import org.fusesource.cloudlaunch.distribution.resource.wagon.WagonResourceManager;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
@@ -51,7 +52,7 @@ public class RemoteLaunchTest extends TestCase {
 
     ClassPathXmlApplicationContext context;
     LaunchClient launchClient;
-    ResourceManager commonResourceManager;
+    WagonResourceManager commonResourceManager;
 
     protected void setUp() throws Exception {
 
@@ -60,11 +61,12 @@ public class RemoteLaunchTest extends TestCase {
 
         System.setProperty("basedir", dataDir);
         System.setProperty("common.repo.url", commonRepo);
-
+        System.setProperty("local.repo.url", dataDir + File.separator + "local-repo");
+        
         context = new ClassPathXmlApplicationContext("cloudlaunch-all-spring.xml");
         launchClient = (LaunchClient) context.getBean("launch-client");
 
-        commonResourceManager = new ResourceManager();
+        commonResourceManager = new WagonResourceManager();
         commonResourceManager.setCommonRepo(commonRepo, null);
 
     }
@@ -118,7 +120,7 @@ public class RemoteLaunchTest extends TestCase {
         ld.add(path(files));
         ld.add(DataInputTestApplication.class.getName());
 
-        Resource resource = new Resource();
+        Resource resource = launchClient.getDistributor().getResourceManager().createResource();
         resource.setType(Resource.FILE);
         resource.setRepoName("common");
         resource.setRepoPath("test/file.dat");

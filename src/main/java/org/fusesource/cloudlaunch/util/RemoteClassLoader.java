@@ -10,7 +10,6 @@ package org.fusesource.cloudlaunch.util;
 import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.CRC32;
@@ -40,7 +39,6 @@ public class RemoteClassLoader extends ClassLoader {
      * @param depth
      * @param parent
      * @return
-     * @throws RemoteException
      */
     public static ClassLoader createRemoteClassLoader(IClassLoaderServer cle, File cacheDir, int depth, ClassLoader parent) throws Exception {
 

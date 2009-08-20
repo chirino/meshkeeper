@@ -23,9 +23,10 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.maven.wagon.authentication.AuthenticationInfo;
-import org.fusesource.cloudlaunch.Resource;
-import org.fusesource.cloudlaunch.ResourceManager;
+import org.fusesource.cloudlaunch.distribution.resource.AuthenticationInfo;
+import org.fusesource.cloudlaunch.distribution.resource.Resource;
+import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
+import org.fusesource.cloudlaunch.distribution.resource.wagon.WagonResourceManager;
 
 import junit.framework.TestCase;
 
@@ -44,7 +45,7 @@ public class ResourceTest extends TestCase {
 
     public void testWebDavResourceManager() throws Exception {
 
-        ResourceManager rm = new ResourceManager();
+        WagonResourceManager rm = new WagonResourceManager();
         File localDir = new File("target" + File.separator + "test-repo");
         rm.setLocalRepoDir(localDir);
         log.info("Deleting local resource directory: " + localDir);
@@ -57,21 +58,21 @@ public class ResourceTest extends TestCase {
         authInfo.setPassword("fusemqtestpw");
         rm.setCommonRepo(remoteRepo, authInfo);
 
-        Resource resource = new Resource();
+        Resource resource = rm.createResource();
         resource.setRepoName("common");
         resource.setRepoPath("testfolder");
         resource.setType(Resource.DIRECTORY);
 
         rm.locateResource(resource);
 
-        assertEquals(new File("test-file-repo", resource.getRepoPath()), new File(resource.getResolvedPath()));
+        assertEquals(new File("test-file-repo", resource.getRepoPath()), new File(resource.getLocalPath()));
 
         rm.close();
 
     }
 
     public void testFileResourceManager() throws Exception {
-        ResourceManager rm = new ResourceManager();
+        WagonResourceManager rm = new WagonResourceManager();
         File localDir = new File("target" + File.separator + "test-repo");
         rm.setLocalRepoDir(localDir);
         log.info("Deleting local resource directory: " + localDir);
@@ -82,14 +83,14 @@ public class ResourceTest extends TestCase {
         rm.setCommonRepo(remoteDir.toURI().toString(), null);
 
         String resourcePath = "testfolder";
-        Resource resource = new Resource();
+        Resource resource = rm.createResource();
         resource.setRepoName("common");
         resource.setRepoPath(resourcePath);
         resource.setType(Resource.DIRECTORY);
 
         rm.locateResource(resource);
 
-        assertEquals(new File("test-file-repo", resource.getRepoPath()), new File(resource.getResolvedPath()));
+        assertEquals(new File("test-file-repo", resource.getRepoPath()), new File(resource.getLocalPath()));
 
         rm.close();
     }

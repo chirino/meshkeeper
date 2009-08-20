@@ -7,7 +7,12 @@
   http://www.springframework.org/schema/beans/spring-beans.xsd">
 
   <bean
-    class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" />
+    class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE" />
+    <property name="locations">
+      <value>classpath:cloudlaunch.default.properties</value>
+    </property>
+  </bean>
 
   <!--Create a control server (hosts ZookKeeper and RMI server-->
   <bean id="control-server" class="org.fusesource.cloudlaunch.control.ControlServer"
@@ -15,26 +20,33 @@
     <property name="dataDirectory" value="${basedir}/cloudlaunch-controller" />
     <property name="jmsConnectUrl" value="tcp://localhost:2100" />
     <property name="zooKeeperConnectUrl" value="tcp://localhost:2101" />
+    <property name="commonRepoUrl" value="${common.repo.url}" />
   </bean>
 
   <!--Set up a cloudlaunch distributor-->
   <bean id="distributor" class="org.fusesource.cloudlaunch.distribution.Distributor"
-    factory-method="create" init-method="start" destroy-method="destroy" depends-on="control-server">
-    <constructor-arg value="zk:tcp://localhost:2101"/>
+    init-method="start" destroy-method="destroy" depends-on="control-server"
+    factory-bean="distributorFactory" factory-method="create">
+  </bean>
+
+  <bean id="distributorFactory"
+    class="org.fusesource.cloudlaunch.distribution.DistributorFactory"
+    depends-on="control-server">
+    <property name="registryProviderUri" value="zk:tcp://localhost:2101" />
+    <property name="dataDirectory" value="${basedir}" />
   </bean>
 
   <!--Create a remote process launcher-->
   <bean id="launcher" class="org.fusesource.cloudlaunch.launcher.LaunchAgent"
     depends-on="distributor" init-method="start" destroy-method="stop">
-    <property name="distributor" ref="distributor"/>
-    <property name="dataDirectory" value="${basedir}/launcher"/>
-    <property name="commonResourceRepoUrl" value="${common.repo.url}"/>
+    <property name="distributor" ref="distributor" />
+    <property name="dataDirectory" value="${basedir}/launcher" />
   </bean>
 
   <!--Launch client for launching remote processes-->
   <bean id="launch-client" class="org.fusesource.cloudlaunch.LaunchClient"
     depends-on="distributor" init-method="start" destroy-method="destroy">
-    <property name="distributor" ref="distributor"/>
+    <property name="distributor" ref="distributor" />
   </bean>
 
 </beans>

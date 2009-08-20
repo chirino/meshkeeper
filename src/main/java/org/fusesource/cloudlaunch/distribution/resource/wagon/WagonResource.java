@@ -5,20 +5,19 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch;
+package org.fusesource.cloudlaunch.distribution.resource.wagon;
 
-import java.io.Serializable;
+import org.fusesource.cloudlaunch.distribution.resource.Resource;
 
-/**
- * Resource
+/** 
+ * WagonResource
  * <p>
  * Description:
  * </p>
- * 
  * @author cmacnaug
  * @version 1.0
  */
-public class Resource implements Serializable {
+public class WagonResource implements Resource{
 
     private static final long serialVersionUID = 1L;
     public static final short FILE = 0;
@@ -96,11 +95,17 @@ public class Resource implements Serializable {
         this.type = type;
     }
 
-    void setResolvedPath(String resolvedPath) {
-        this.resolvedPath = resolvedPath;
+    /* (non-Javadoc)
+     * @see org.fusesource.cloudlaunch.distribution.resource.Resource#getLocalPath()
+     */
+    public String getLocalPath() {
+        return resolvedPath;
     }
 
-    public String getResolvedPath() {
-        return resolvedPath;
+    /* (non-Javadoc)
+     * @see org.fusesource.cloudlaunch.distribution.resource.Resource#setLocalPath(java.lang.String)
+     */
+    public void setLocalPath(String resolvedPath) {
+        this.resolvedPath = resolvedPath;
     }
 }

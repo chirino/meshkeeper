@@ -8,7 +8,6 @@
 package org.fusesource.cloudlaunch;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -258,7 +257,7 @@ public class LaunchClient {
         return agent.launch(launch, (ProcessListener) distributor.export(listener).getStub());
     }
 
-    public static void println(Process process, String line) throws RemoteException {
+    public static void println(Process process, String line) {
         byte[] data = (line + "\n").getBytes();
         try {
             process.write(Process.FD_STD_IN, data);

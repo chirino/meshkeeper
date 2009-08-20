@@ -11,8 +11,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import org.fusesource.cloudlaunch.control.ControlServer;
 import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.distribution.DistributorFactory;
 
 /**
  * Main
@@ -29,9 +29,8 @@ public class Main {
         System.out.println("Usage:");
         System.out.println("Args:");
         System.out.println(" -(h)elp -- this message");
-        System.out.println(" -url <rmi url> -- specifies address of remote broker to connect to.");
-        System.out.println(" [-dataDir <directory>] -- specifies data directory for.");
-        System.out.println(" -commonRepoUrl <url> -- specifies common resource location.");
+        System.out.println(" -uri <registry uri> -- specifies the uri of a control server registry.");
+        System.out.println(" [-dataDir <directory>] -- specifies data directory used by the Launcher.");
     }
 
     /*
@@ -48,8 +47,7 @@ public class Main {
         }
 
         Distributor distributor = null;
-        String distributorUrl = null;
-        String commonRepoUrl = null;
+        String distributorUri = null;
         String dataDir = ".";
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
@@ -59,30 +57,25 @@ public class Main {
                 if (arg.equals("-help") || arg.equals("-h")) {
                     showUsage();
                     return;
-                } else if (arg.equals("-url")) {
+                } else if (arg.equals("-uri")) {
                     if (alist.isEmpty()) {
                         throw new Exception("Expected url after -url");
                     }
-                    distributorUrl = alist.removeFirst();
+                    distributorUri = alist.removeFirst();
 
                 } else if (arg.equals("-dataDir")) {
                     if (alist.isEmpty()) {
                         throw new Exception("Directory expected after -dataDir");
                     }
                     dataDir = alist.removeFirst();
-                } else if (arg.equals("-commonRepoUrl")) {
-                    commonRepoUrl = alist.removeFirst();
-                } else if (arg.equals("-distributorUrl")) {
-                }
+                } 
             }
 
-            if (distributorUrl == null) {
-                distributorUrl = "zk:" + ControlServer.DEFAULT_REGISTRY_URL;
-            }
-            distributor = Distributor.create(distributorUrl);
-
+            DistributorFactory.setDefaultDataDirectory(dataDir);
+            DistributorFactory.setDefaultRegistryUri(distributorUri);
+            distributor = DistributorFactory.createDefaultDistributor();
+            
             LaunchAgent agent = new LaunchAgent();
-            agent.setCommonResourceRepoUrl(commonRepoUrl);
             agent.setDataDirectory(new File(dataDir));
             distributor.start();
             agent.setDistributor(distributor);

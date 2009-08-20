@@ -9,7 +9,6 @@ package org.fusesource.cloudlaunch.launcher;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,8 +21,8 @@ import org.fusesource.cloudlaunch.HostProperties;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
-import org.fusesource.cloudlaunch.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.util.internal.FileUtils;
 
 /**
@@ -39,16 +38,11 @@ public class LaunchAgent implements LaunchAgentService {
     private String agentId; //The unique identifier for this agent (specified in ini file);
     private boolean started = false;
     private File dataDirectory = new File(".");
-    private File localRepoDirectory;
 
     //ProcessHandlers:
     private final Map<Integer, LocalProcess> processes = new HashMap<Integer, LocalProcess>();
     int pidCounter = 0;
     private Thread shutdownHook;
-
-    private ResourceManager resourceManager;
-
-    private String commonResourceRepoUrl;
 
     private HostPropertiesImpl properties = new HostPropertiesImpl();
 
@@ -105,18 +99,7 @@ public class LaunchAgent implements LaunchAgentService {
             return;
         }
 
-        if (localRepoDirectory == null) {
-            localRepoDirectory = new File(dataDirectory, "local-repo");
-            System.getProperties().setProperty(LOCAL_REPO_PROP, localRepoDirectory.getCanonicalPath());
-        }
-
-        if (resourceManager == null) {
-            resourceManager = new ResourceManager();
-            resourceManager.setLocalRepoDir(localRepoDirectory);
-            if (commonResourceRepoUrl != null) {
-                resourceManager.setCommonRepo(commonResourceRepoUrl, null);
-            }
-        }
+        System.getProperties().setProperty(LOCAL_REPO_PROP, distributor.getResourceManager().getLocalRepoDirectory().getCanonicalPath());
 
         started = true;
         if (agentId == null) {
@@ -173,14 +156,6 @@ public class LaunchAgent implements LaunchAgentService {
         }
         processes.clear();
 
-        if (resourceManager != null) {
-            try {
-                resourceManager.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
         monitor.requestCleanup();
         monitor.stop();
 
@@ -188,7 +163,7 @@ public class LaunchAgent implements LaunchAgentService {
     }
 
     public ResourceManager getResourceManager() {
-        return resourceManager;
+        return distributor.getResourceManager();
     }
 
     /**
@@ -198,28 +173,7 @@ public class LaunchAgent implements LaunchAgentService {
      *             If there is an error purging the cache.
      */
     public void purgeResourceRepository() throws IOException {
-        if (resourceManager != null) {
-            resourceManager.purgeLocalRepo();
-        }
-    }
-
-    /**
-     * Sets the url of common resources accessible to this agent. This can be
-     * used to pull down things like jvm images from a central location.
-     * 
-     * @param url
-     */
-    public void setCommonResourceRepoUrl(String url) {
-        commonResourceRepoUrl = url;
-    }
-
-    /**
-     * Gets the url of common resources accessible to this agent.
-     * 
-     * @return
-     */
-    public String getCommonResourceRepoUrl() {
-        return commonResourceRepoUrl;
+        distributor.getResourceManager().purgeLocalRepo();
     }
 
     /**
