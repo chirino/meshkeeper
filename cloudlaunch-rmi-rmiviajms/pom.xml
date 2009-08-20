@@ -10,6 +10,33 @@
   <name>cloudlaunch-rmi-rmiviajms</name>
   <version>1.0-SNAPSHOT</version>
   <url>http://maven.apache.org</url>
+  
+  <repositories>
+    <!-- for the rmiviajms dependency -->
+    <repository>
+      <id>rmiviajms.release.m2</id>
+      <name>rmiviajms Release Repository</name>
+      <url>http://rmiviajms.fusesource.org/repo/release</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+    <repository>
+      <id>rmiviajms.snapshot.m2</id>
+      <name>rmiviajms Release Repository</name>
+      <url>http://rmiviajms.fusesource.org/repo/snapshot</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+    </repositories>
+  
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -18,10 +45,14 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+    	<groupId>org.fusesource.rmiviajms</groupId>
+    	<artifactId>rmiviajms</artifactId>
+    	<version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
     	<groupId>org.fusesource.cloudlaunch</groupId>
     	<artifactId>cloudlaunch-api</artifactId>
     	<version>1.0-SNAPSHOT</version>
-    	<type>pom</type>
     </dependency>
   </dependencies>
 </project>
