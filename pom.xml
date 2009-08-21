@@ -34,6 +34,7 @@
     <module>cloudlaunch-resource-wagon</module>
     <module>cloudlaunch-event-jms</module>
     <module>cloudlaunch-jms-activemq</module>
+    <module>assembly</module>
   </modules>
 
   <repositories>
@@ -118,9 +119,9 @@
       </exclusions>
     </dependency>
     <dependency>
-    	<groupId>commons-logging</groupId>
-    	<artifactId>commons-logging</artifactId>
-    	<version>1.1.1</version>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1.1</version>
     </dependency>
   </dependencies>
 
@@ -177,25 +178,6 @@
           </execution>
         </executions>
       </plugin>
-      <!--
-        plugin> <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.2-beta-3</version> <executions> <execution>
-        <id>unix-bin</id> <phase>package</phase> <goals>
-        <goal>single</goal> </goals> <configuration> <descriptors>
-        <descriptor>assembly/src/main/descriptors/unix-bin.xml</descriptor>
-        </descriptors>
-        <finalName>${pom.artifactId}-${pom.version}</finalName>
-        <tarLongFileMode>gnu</tarLongFileMode> </configuration>
-        </execution> <execution> <id>windows-bin</id>
-        <phase>package</phase> <goals> <goal>single</goal> </goals>
-        <configuration> <descriptors>
-        <descriptor>assembly/src/main/descriptors/windows-bin.xml</descriptor>
-        </descriptors>
-        <finalName>${pom.artifactId}-${pom.version}</finalName>
-        <appendAssemblyId>true</appendAssemblyId> <assemblyId/>
-        </configuration> </execution> </executions> </plugin
-      -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>

@@ -1,0 +1,60 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <artifactId>cloudlaunch-parent</artifactId>
+    <groupId>org.fusesource.cloudlaunch</groupId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+  
+  <groupId>org.fusesource.cloudlaunch</groupId>
+  <artifactId>assembly</artifactId>
+  <packaging>pom</packaging>
+  <name>Cloud Launch Images</name>
+  <version>1.0-SNAPSHOT</version>
+
+<!--
+  <build>
+    <defaultGoal>install</defaultGoal>
+    <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-assembly-plugin</artifactId>
+      <version>2.2-beta-3</version>
+      <executions>
+        <execution>
+          <id>unix-bin</id>
+          <phase>package</phase>
+          <goals>
+            <goal>single</goal>
+          </goals>
+          <configuration>
+            <descriptors>
+              <descriptor>assembly/src/main/descriptors/unix-bin.xml</descriptor>
+            </descriptors>
+            <finalName>${pom.artifactId}-${pom.version}</finalName>
+            <tarLongFileMode>gnu</tarLongFileMode>
+          </configuration>
+        </execution>
+        <execution>
+          <id>windows-bin</id>
+          <phase>package</phase>
+          <goals>
+            <goal>single</goal>
+          </goals>
+          <configuration>
+            <descriptors>
+              <descriptor>assembly/src/main/descriptors/windows-bin.xml</descriptor>
+            </descriptors>
+            <finalName>${pom.artifactId}-${pom.version}</finalName>
+            <appendAssemblyId>true</appendAssemblyId>
+            <assemblyId />
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+    </plugins>
+  </build>
+-->
+</project>
