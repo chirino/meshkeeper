@@ -40,7 +40,9 @@ public class WagonResourceManagerFactory extends ResourceManagerFactory {
         if (localRepoDir != null) {
             wrm.setLocalRepoDir(localRepoDir);
         }
-        wrm.setCommonRepoUrl(commonRepoUrl, authInfo);
+        if (commonRepoUrl != null) {
+            wrm.setCommonRepoUrl(commonRepoUrl, authInfo);
+        }
         return wrm;
     }
 
@@ -63,8 +65,8 @@ public class WagonResourceManagerFactory extends ResourceManagerFactory {
      * org.fusesource.cloudlaunch.distribution.resource.ResourceManagerFactory
      * #setLocalRepoDir(java.lang.String)
      */
-    public void setCommonRepoAuthInfo(String localRepoDir) {
-        this.localRepoDir = localRepoDir;
+    public void setCommonRepoAuthInfo(AuthenticationInfo authInfo) {
+        this.authInfo = authInfo;
     }
 
     /*

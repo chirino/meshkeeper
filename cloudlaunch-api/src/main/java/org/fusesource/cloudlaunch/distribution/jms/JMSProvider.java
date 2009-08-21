@@ -5,7 +5,7 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch.distribution.event.jms;
+package org.fusesource.cloudlaunch.distribution.jms;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -13,6 +13,7 @@ import java.util.HashSet;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
 import javax.jms.JMSException;
 
 /**
@@ -29,9 +30,13 @@ public abstract class JMSProvider {
     private HashMap<String, SharedConnection> connectionByHostPort = new HashMap<String, SharedConnection>();
     private HashMap<Connection, SharedConnection> connections = new HashMap<Connection, SharedConnection>();
 
-    protected abstract ConnectionFactory createConnectionFactory(URI uri);
+    public abstract ConnectionFactory createConnectionFactory(URI uri);
 
-    public synchronized Connection getConnection(JMSEventClient client, URI uri) throws JMSException {
+    public abstract Destination createQueue(String name);
+    
+    public abstract Destination createTopic(String name);
+    
+    public synchronized Connection getConnection(Object ref, URI uri) throws JMSException {
         String hostPort = uri.getHost() + ":" + uri.getPort();
 
         SharedConnection sc = connectionByHostPort.get(hostPort);
@@ -47,14 +52,14 @@ public abstract class JMSProvider {
         return sc.connection;
     }
 
-    public synchronized void releaseConnnection(Connection c, JMSEventClient client) {
+    public synchronized void releaseConnnection(Connection c, Object ref) {
 
         SharedConnection sc = connections.get(c);
         if (sc == null) {
             return;
         }
 
-        sc.users.remove(client);
+        sc.users.remove(ref);
         if (sc.users.isEmpty()) {
             connections.remove(c);
             connectionByHostPort.remove(sc.hostPort);
@@ -71,8 +76,7 @@ public abstract class JMSProvider {
     private class SharedConnection {
         String hostPort;
         Connection connection;
-        HashSet<JMSEventClient> users = new HashSet<JMSEventClient>(1);
-
+        HashSet<Object> users = new HashSet<Object>(1);
     }
 
 }

@@ -33,8 +33,8 @@ import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
 public class DistributorFactory {
 
     private Log log = LogFactory.getLog(DistributorFactory.class);
-    
-    private static String DEFAULT_RESOURCE_MANAGER_PROVIDER = "wagon";
+
+    private static String DEFAULT_RESOURCE_MANAGER_PROVIDER_URI = "wagon";
     private static String DEFAULT_DATA_DIR = ".";
     private static String DEFAULT_REGISTRY_URI = ControlServer.DEFAULT_REGISTRY_URI;
     static {
@@ -46,7 +46,7 @@ public class DistributorFactory {
         DEFAULT_DATA_DIR = repoDir;
     }
 
-    private String resourceManagerProvider = DEFAULT_RESOURCE_MANAGER_PROVIDER;
+    private String resourceManagerProvider = DEFAULT_RESOURCE_MANAGER_PROVIDER_URI;
     private String registryProviderUri = DEFAULT_REGISTRY_URI;
     private String dataDirectory = DEFAULT_DATA_DIR;
     private String eventProviderUri;
@@ -69,7 +69,7 @@ public class DistributorFactory {
     public static void setDefaultDataDirectory(String dataDirectory) {
         DEFAULT_DATA_DIR = dataDirectory;
     }
-    
+
     public static void setDefaultRegistryUri(String defaultRegistryUri) {
         DEFAULT_REGISTRY_URI = defaultRegistryUri;
     }
@@ -88,6 +88,7 @@ public class DistributorFactory {
             }
         }
         IExporter exporter = ExporterFactory.create(rmiProviderUri);
+        
 
         //Create Event Client:
         if (eventProviderUri == null) {

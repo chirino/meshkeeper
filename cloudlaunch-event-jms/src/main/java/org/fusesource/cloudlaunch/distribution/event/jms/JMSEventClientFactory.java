@@ -11,6 +11,8 @@ import java.net.URI;
 
 import org.fusesource.cloudlaunch.distribution.event.EventClient;
 import org.fusesource.cloudlaunch.distribution.event.EventClientFactory;
+import org.fusesource.cloudlaunch.distribution.jms.JMSClientFactory;
+import org.fusesource.cloudlaunch.distribution.jms.JMSProvider;
 import org.fusesource.cloudlaunch.util.internal.URISupport;
 
 /**
@@ -24,8 +26,6 @@ import org.fusesource.cloudlaunch.util.internal.URISupport;
  */
 public class JMSEventClientFactory extends EventClientFactory {
 
-    public static final String JMS_PROVIDER_CLASS = System.getProperty("org.fusesource.distribution.event.jms.PROVIDER_CLASS", "org.fusesource.cloudlaunch.distribution.event.jms.ActiveMQProvider");
-
     private static JMSProvider provider;
 
     /*
@@ -36,13 +36,16 @@ public class JMSEventClientFactory extends EventClientFactory {
      * (java.lang.String)
      */
     protected EventClient createEventClient(String uri) throws Exception {
-        URI connectUri = new URI(URISupport.stripPrefix(uri, "jms:"));
-        return new JMSEventClient(getJMSProvider(), connectUri);
+        URI providerUri = new URI(uri);
+        getJMSProvider(providerUri);
+        URI connectUri = URISupport.stripScheme(providerUri);
+        return new JMSEventClient(provider, connectUri);
     }
 
-    private static final JMSProvider getJMSProvider() throws Exception {
+    private static final JMSProvider getJMSProvider(URI providerUri) throws Exception {
         if (provider == null) {
-            provider = (JMSProvider) JMSProvider.class.getClassLoader().loadClass(JMS_PROVIDER_CLASS).newInstance();
+            provider = JMSClientFactory.create(providerUri.toString());
+            ;
         }
         return provider;
     }

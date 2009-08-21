@@ -21,6 +21,8 @@ public interface ControlService {
     public String getName();
 
     public String getServiceUri();
+    
+    public void setDataDirectory(String directory);
 
     public void start() throws Exception;
 

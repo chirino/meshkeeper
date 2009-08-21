@@ -3,6 +3,7 @@ package org.fusesource.cloudlaunch.distribution.jms;
 import java.net.URI;
 
 import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
 
 import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
 
@@ -25,13 +26,13 @@ import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
  */
 public abstract class JMSClientFactory {
 
-    private static final FactoryFinder RESOURCE_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/jms/client");
+    private static final FactoryFinder RESOURCE_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/jms/client/");
 
     
-    public static final ConnectionFactory create(String uri) throws Exception {
+    public static final JMSProvider create(String uri) throws Exception {
         URI providerUri = new URI(uri);
-        return ((JMSClientFactory)RESOURCE_FACTORY_FINDER.newInstance(providerUri.getScheme())).createConnectionFactory(uri);
+        return ((JMSClientFactory)RESOURCE_FACTORY_FINDER.newInstance(providerUri.getScheme())).createJMSProvider(uri);
     }
     
-    protected abstract ConnectionFactory createConnectionFactory(String uri) throws Exception;
+    protected abstract JMSProvider createJMSProvider(String uri) throws Exception;
 }

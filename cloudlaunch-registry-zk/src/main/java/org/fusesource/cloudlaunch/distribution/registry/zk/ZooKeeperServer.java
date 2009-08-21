@@ -28,17 +28,12 @@ public class ZooKeeperServer implements ControlService {
     private int port = 2181;
     private String userid = "guest";
     private String password = "";
-    private String directory = "zookeeper-data";
+    private String directory = "zookeeper-server-data";
     private boolean purge;
     private String serviceUri;
     int tick = 10000;
 
     private NIOServerCnxn.Factory serverFactory;
-
-    public void afterPropertiesSet() throws Exception {
-
-        start();
-    }
 
     public void start() throws Exception {
         ServerStats.registerAsConcrete();
@@ -69,6 +64,7 @@ public class ZooKeeperServer implements ControlService {
             serverFactory = null;
         }
         ServerStats.unregister();
+        log.info("Destroyed");
     }
 
     public String getUserid() {
@@ -91,7 +87,7 @@ public class ZooKeeperServer implements ControlService {
         return directory;
     }
 
-    public void setDirectory(String directory) {
+    public void setDataDirectory(String directory) {
         this.directory = directory;
     }
 
@@ -122,4 +118,6 @@ public class ZooKeeperServer implements ControlService {
     public String getServiceUri() {
         return serviceUri;
     }
+
+    
 }

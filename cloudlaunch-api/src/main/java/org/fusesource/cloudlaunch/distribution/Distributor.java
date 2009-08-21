@@ -130,15 +130,18 @@ public class Distributor {
     }
 
     public void start() {
-
+        
     }
 
     public void destroy() throws Exception {
+        log.info("Shutting down");
+        eventClient.close();
         for (DistributionRef<?> ref : distributed.values()) {
             ref.unregister();
         }
+        exporter.destroy();
         registry.destroy();
-        eventClient.close();
+        log.info("Shut down");
     }
 
     synchronized void setExporter(IExporter exporter) {

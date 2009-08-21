@@ -7,6 +7,10 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.jms;
 
+import java.net.URI;
+
+import org.fusesource.cloudlaunch.control.ControlService;
+
 
 /** 
  * ActiveMQServerFactory
@@ -16,6 +20,14 @@ package org.fusesource.cloudlaunch.distribution.jms;
  * @author cmacnaug
  * @version 1.0
  */
-public class ActiveMQServerFactory {
+public class ActiveMQServerFactory extends JMSServerFactory {
+
+    /* (non-Javadoc)
+     * @see org.fusesource.cloudlaunch.distribution.jms.JMSServerFactory#createJMSControlService(java.net.URI)
+     */
+    @Override
+    protected ControlService createJMSControlService(URI uri) throws Exception {
+        return ActiveMQControlService.create(uri);
+    }
 
 }

@@ -18,8 +18,8 @@
   <bean id="control-server" class="org.fusesource.cloudlaunch.control.ControlServer"
     init-method="start" destroy-method="destroy">
     <property name="dataDirectory" value="${basedir}/cloudlaunch-controller" />
-    <property name="jmsConnectUrl" value="tcp://localhost:2100" />
-    <property name="zooKeeperConnectUrl" value="tcp://localhost:2101" />
+    <property name="jmsProviderUri" value="jms:activemq:tcp://localhost:2100" />
+    <property name="registryProviderUri" value="zk:tcp://localhost:2101" />
     <property name="commonRepoUrl" value="${common.repo.url}" />
   </bean>
 

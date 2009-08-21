@@ -10,6 +10,7 @@ package org.fusesource.cloudlaunch.control;
 import java.net.URI;
 
 import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
+import org.fusesource.cloudlaunch.util.internal.URISupport;
 
 /**
  * ControlServiceFactory
@@ -26,8 +27,8 @@ public abstract class ControlServiceFactory {
 
     public static final ControlService create(String uri) throws Exception {
         URI providerUri = new URI(uri);
-        return ((ControlServiceFactory)RESOURCE_FACTORY_FINDER.newInstance(providerUri.getScheme())).createControlService(uri);
+        return ((ControlServiceFactory)RESOURCE_FACTORY_FINDER.newInstance(providerUri.getScheme())).createControlService(URISupport.stripScheme(providerUri));
     }
 
-    protected abstract ControlService createControlService(String uri) throws Exception;
+    protected abstract ControlService createControlService(URI uri) throws Exception;
 }

@@ -13,7 +13,6 @@ import org.fusesource.cloudlaunch.distribution.Distributable;
 import org.fusesource.cloudlaunch.distribution.Oneway;
 import org.fusesource.cloudlaunch.distribution.rmi.AbstractExporter;
 import org.fusesource.rmiviajms.JMSRemoteObject;
-import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
 
 /**
  * RmiViaJmsExporter
@@ -26,7 +25,7 @@ import org.fusesource.rmiviajms.internal.ActiveMQRemoteSystem;
  */
 class RmiViaJmsExporter extends AbstractExporter {
 
-    String connectUrl;
+    String providerUri;
 
     protected <T> T export(Object obj, Class<?>[] interfaces) throws Exception {
         return (T) JMSRemoteObject.export(obj, interfaces);
@@ -38,23 +37,22 @@ class RmiViaJmsExporter extends AbstractExporter {
         }
     }
 
-    public void setConnectUrl(String connectUrl) {
-        this.connectUrl = connectUrl;
-        System.setProperty("org.fusesource.rmiviajms.CONNECT_URL", connectUrl);
+    public void setProviderUri(String providerUri) {
+        this.providerUri = providerUri;
     }
 
-    public void start()
-    {
+    public void start() {
+        System.setProperty("org.fusesource.rmiviajms.REMOTE_SYSTEM_CLASS", CloudLaunchRemoteJMSSystem.class.getName());
+        CloudLaunchRemoteJMSSystem.PROVIDER_URI = providerUri;
         JMSRemoteObject.addOneWayAnnotation(Oneway.class);
     }
-    
+
     public void destroy() throws InterruptedException, Exception {
         JMSRemoteObject.resetSystem();
     }
-    
-    public String toString()
-    {
-        return "RmiViaJmsExporter at " + ActiveMQRemoteSystem.CONNECT_URL;
+
+    public String toString() {
+        return "RmiViaJmsExporter at " + CloudLaunchRemoteJMSSystem.PROVIDER_URI;
     }
 
 }

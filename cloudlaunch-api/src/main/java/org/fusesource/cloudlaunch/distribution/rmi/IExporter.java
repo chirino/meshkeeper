@@ -23,4 +23,6 @@ public interface IExporter {
     
     public void unexport(Distributable obj) throws Exception;
     
+    public void destroy() throws Exception;
+    
 }

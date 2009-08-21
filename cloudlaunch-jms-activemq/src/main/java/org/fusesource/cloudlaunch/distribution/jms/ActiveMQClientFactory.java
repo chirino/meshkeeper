@@ -7,10 +7,6 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.jms;
 
-import javax.jms.ConnectionFactory;
-
-import org.apache.activemq.ActiveMQConnectionFactory;
-
 /** 
  * ActiveMQClientFactory
  * <p>
@@ -25,8 +21,8 @@ public class ActiveMQClientFactory extends JMSClientFactory{
      * @see org.fusesource.cloudlaunch.distribution.jms.JMSClientFactory#createConnectionFactory(java.lang.String)
      */
     @Override
-    protected ConnectionFactory createConnectionFactory(String uri) throws Exception {
-        return new ActiveMQConnectionFactory(uri);
+    protected JMSProvider createJMSProvider(String uri) throws Exception {
+        return new ActiveMQProvider();
     }
 
 }

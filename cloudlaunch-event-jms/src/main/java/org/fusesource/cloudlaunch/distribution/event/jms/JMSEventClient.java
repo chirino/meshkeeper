@@ -24,6 +24,7 @@ import javax.jms.Session;
 import org.fusesource.cloudlaunch.distribution.event.Event;
 import org.fusesource.cloudlaunch.distribution.event.EventClient;
 import org.fusesource.cloudlaunch.distribution.event.EventListener;
+import org.fusesource.cloudlaunch.distribution.jms.JMSProvider;
 
 /**
  * JMSEventClient

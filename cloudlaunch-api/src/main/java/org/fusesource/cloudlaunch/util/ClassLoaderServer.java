@@ -15,10 +15,9 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-
 /**
  * @author chirino
-*/
+ */
 public class ClassLoaderServer implements IClassLoaderServer {
 
     private final IClassLoaderServer parent;
@@ -42,7 +41,7 @@ public class ClassLoaderServer implements IClassLoaderServer {
 
     public byte[] download(URL url) throws IOException {
         for (PathElement element : elements) {
-            if( element.url.equals(url) ) {
+            if (element.url.equals(url)) {
                 return read(url.openStream());
             }
         }
@@ -51,12 +50,13 @@ public class ClassLoaderServer implements IClassLoaderServer {
 
     public byte[] findResource(String name) {
         InputStream is = classLoader.getResourceAsStream(name);
-        if( is ==null )
+        if (is == null)
             return null;
         return read(is);
     }
+
     static List<PathElement> createElements(ClassLoader classLoader) throws IOException {
-        if( !(classLoader instanceof URLClassLoader) ) {
+        if (!(classLoader instanceof URLClassLoader)) {
             return null;
         }
         URLClassLoader ucl = (URLClassLoader) classLoader;
@@ -66,15 +66,19 @@ public class ClassLoaderServer implements IClassLoaderServer {
         for (URL url : urls) {
             PathElement element = new PathElement();
             element.url = url;
-            if( "file".equals(url.getProtocol()) ) {
+            if ("file".equals(url.getProtocol())) {
                 File file = new File(url.getFile());
 
-                if( !file.exists() ) {
+                if (!file.exists()) {
                     continue;
                 }
 
                 // We have to jar up dirs..
-                if( file.isDirectory() ) {
+                if (file.isDirectory()) {
+                    if (file.list().length <= 0) {
+                        continue;
+                    }
+
                     file = jar(file);
                     file.deleteOnExit();
                     element.url = file.toURI().toURL();
@@ -100,16 +104,16 @@ public class ClassLoaderServer implements IClassLoaderServer {
 
     private static void recusiveAdd(ZipOutputStream os, File source, String jarpath) throws IOException {
         String prefix = "";
-        if( jarpath!=null ) {
+        if (jarpath != null) {
             ZipEntry entry = new ZipEntry(jarpath);
-            entry.setTime(source.lastModified()+ROUNDUP_MILLIS);
+            entry.setTime(source.lastModified() + ROUNDUP_MILLIS);
             os.putNextEntry(entry);
-            prefix = jarpath+"/";
+            prefix = jarpath + "/";
         }
 
-        if ( source.isDirectory() ) {
+        if (source.isDirectory()) {
             for (File file : source.listFiles()) {
-                recusiveAdd(os, file, prefix+file.getName());
+                recusiveAdd(os, file, prefix + file.getName());
             }
         } else {
             FileInputStream is = new FileInputStream(source);
@@ -140,9 +144,9 @@ public class ClassLoaderServer implements IClassLoaderServer {
     }
 
     private static void copy(InputStream is, OutputStream os) throws IOException {
-        byte buffer[] = new byte[1024*4];
+        byte buffer[] = new byte[1024 * 4];
         int c;
-        while( (c=is.read(buffer)) > 0 ) {
+        while ((c = is.read(buffer)) > 0) {
             os.write(buffer, 0, c);
         }
     }

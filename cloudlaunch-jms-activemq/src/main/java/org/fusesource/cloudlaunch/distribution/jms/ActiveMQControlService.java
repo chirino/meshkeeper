@@ -8,11 +8,12 @@
 package org.fusesource.cloudlaunch.distribution.jms;
 
 import java.net.URI;
+import java.util.List;
 
 import org.apache.activemq.broker.BrokerFactory;
 import org.apache.activemq.broker.BrokerService;
+import org.apache.activemq.broker.TransportConnector;
 import org.fusesource.cloudlaunch.control.ControlService;
-import org.fusesource.cloudlaunch.util.internal.URISupport;
 
 /**
  * ActiveMQControlService
@@ -27,6 +28,16 @@ public class ActiveMQControlService implements ControlService {
 
     BrokerService controlBroker;
     String serviceUrl;
+    String dataDirectory = "activemq-control-service";
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.fusesource.cloudlaunch.control.ControlService#setDataDirectory()
+     */
+    public void setDataDirectory(String path) {
+        this.dataDirectory = path;
+    }
 
     /*
      * (non-Javadoc)
@@ -34,10 +45,10 @@ public class ActiveMQControlService implements ControlService {
      * @see org.fusesource.cloudlaunch.control.ControlService#start()
      */
     public void start() throws Exception {
-
+        controlBroker.setDataDirectory(dataDirectory);
         controlBroker.start();
-        controlBroker.getTransportConnectorURIs();
-        serviceUrl = "activemq:" + controlBroker.getTransportConnectorURIs()[0];
+        List<TransportConnector> connectors = controlBroker.getTransportConnectors();
+        serviceUrl = "activemq:" + connectors.get(0).getConnectUri();
     }
 
     /*
@@ -72,10 +83,21 @@ public class ActiveMQControlService implements ControlService {
         return serviceUrl;
     }
 
-    static ActiveMQControlService create(String uri) throws Exception {
-        URI connectUri = new URI(URISupport.stripPrefix(uri, "activemq:"));
+    static ActiveMQControlService create(URI uri) throws Exception {
         ActiveMQControlService rc = new ActiveMQControlService();
-        rc.controlBroker = BrokerFactory.createBroker(connectUri);
+        BrokerService controlBroker = null;
+        try {
+            controlBroker = BrokerFactory.createBroker(uri);
+        } catch (Exception e) {
+            controlBroker = new BrokerService();
+            controlBroker.setBrokerName("CloudLaunchControlBroker");
+            controlBroker.addConnector(uri.toString());
+            //controlBroker.setPersistent(false);
+            controlBroker.setDeleteAllMessagesOnStartup(true);
+            controlBroker.setUseJmx(false);
+        }
+        rc.controlBroker = controlBroker;
         return rc;
     }
+
 }

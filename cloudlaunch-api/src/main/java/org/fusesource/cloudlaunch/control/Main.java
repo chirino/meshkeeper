@@ -58,7 +58,7 @@ public class Main {
                     return;
                 } else if (arg.equals("-rmi")) {
                     if (alist.isEmpty()) {
-                        throw new Exception("Expected url after -rmi");
+                        throw new Exception("Expected uri after -rmi");
                     }
                     rmi = alist.removeFirst();
 
@@ -69,7 +69,7 @@ public class Main {
                     dataDir = alist.removeFirst();
                 } else if (arg.equals("-registry")) {
                     if (alist.isEmpty()) {
-                        throw new Exception("Expected url after -registry");
+                        throw new Exception("Expected uri after -registry");
                     }
                     registry = alist.removeFirst();
                 } else if (arg.equals("-commonRepoUrl")) {
@@ -81,10 +81,10 @@ public class Main {
             }
 
             ControlServer server = new ControlServer();
-            server.setJmsConnectUrl(rmi);
+            server.setJmsProviderUri(rmi);
             server.setCommonRepoUrl(commonRepoUrl);
             server.setDataDirectory(dataDir);
-            server.setZooKeeperConnectUrl(registry);
+            server.setRegistryProviderUri(registry);
             server.start();
         } catch (Exception e) {
             e.printStackTrace();

@@ -24,12 +24,15 @@ public abstract class ResourceManagerFactory {
 
     private static final FactoryFinder RESOURCE_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/resource/");
 
-    public static final ResourceManager create(String uri) throws Exception
-    {
+    public static final ResourceManager create(String uri) throws Exception {
         URI providerUri = new URI(uri);
-        return ((ResourceManagerFactory)RESOURCE_FACTORY_FINDER.newInstance(providerUri.getScheme())).createResourceManager(uri);
+        String scheme = providerUri.getScheme();
+        if (scheme == null) {
+            scheme = providerUri.getSchemeSpecificPart();
+        }
+        return ((ResourceManagerFactory) RESOURCE_FACTORY_FINDER.newInstance(scheme)).createResourceManager(uri);
     }
-    
+
     protected abstract ResourceManager createResourceManager(String uri) throws Exception;
 
 }

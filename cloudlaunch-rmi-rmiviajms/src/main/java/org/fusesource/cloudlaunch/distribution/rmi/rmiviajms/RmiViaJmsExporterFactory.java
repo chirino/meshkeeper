@@ -15,21 +15,26 @@ import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
 import org.fusesource.cloudlaunch.util.internal.IntrospectionSupport;
 import org.fusesource.cloudlaunch.util.internal.URISupport;
 
-/** 
+/**
  * RMIViaJmsExporterFactory
  * <p>
  * Description:
  * </p>
+ * 
  * @author cmacnaug
  * @version 1.0
  */
 public class RmiViaJmsExporterFactory extends ExporterFactory {
 
-    /* (non-Javadoc)
-     * @see org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory#createExporter(java.lang.String)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory#createExporter
+     * (java.lang.String)
      */
     public IExporter createExporter(String uri) throws Exception {
-        
+
         URI connectUri = new URI(URISupport.stripPrefix(uri, "rmiviajms:"));
 
         RmiViaJmsExporter exporter = new RmiViaJmsExporter();
@@ -41,7 +46,8 @@ public class RmiViaJmsExporterFactory extends ExporterFactory {
             //Add back unused query props:
             connectUri = URISupport.createRemainingURI(connectUri, props);
         }
-        exporter.setConnectUrl(connectUri.toString());
+        exporter.setProviderUri(connectUri.toString());
+        exporter.start();
         return exporter;
     }
 

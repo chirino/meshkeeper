@@ -8,8 +8,6 @@
 package org.fusesource.cloudlaunch.control;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.URI;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -32,11 +30,11 @@ public class ControlServer {
 
     Log log = LogFactory.getLog(ControlServer.class);
 
-    public static final String DEFAULT_JMS_URL = "tcp://localhost:4041";
-    public static final String DEFAULT_ZOOKEEPER_URL = "tcp://localhost:4040";
-    public static final String DEFAULT_RMI_URI = "rmiviajms:" + DEFAULT_JMS_URL;
-    public static final String DEFAULT_REGISTRY_URI = "zk:" + DEFAULT_ZOOKEEPER_URL;
-    public static final String DEFAULT_EVENT_URI = "jms:" + DEFAULT_JMS_URL;
+    public static final String DEFAULT_JMS_PROVIDER_URI= "activemq:tcp://localhost:4041";
+    public static final String DEFAULT_REGISTRY_PROVIDER_URI = "zk:tcp://localhost:4040";
+    public static final String DEFAULT_RMI_URI = "rmiviajms:" + DEFAULT_JMS_PROVIDER_URI;
+    public static final String DEFAULT_REGISTRY_URI = DEFAULT_REGISTRY_PROVIDER_URI;
+    public static final String DEFAULT_EVENT_URI = "jms:" + DEFAULT_JMS_PROVIDER_URI;
     public static final String EXPORTER_CONNECT_URI_PATH = "/control/exporter-uri";
     public static final String EVENT_CONNECT_URI_PATH = "/control/event-uri";
     public static final String COMMON_REPO_URL_PATH = "/control/common-repo-url";
@@ -45,15 +43,11 @@ public class ControlServer {
     ControlService registryServer;
     Registry registry;
 
-    private String jmsConnectUrl = DEFAULT_JMS_URL;
-    private String zooKeeperConnectUrl = DEFAULT_ZOOKEEPER_URL;
+    private String jmsProviderUri = DEFAULT_JMS_PROVIDER_URI;
+    private String registryProviderUri = DEFAULT_REGISTRY_PROVIDER_URI;
     private String dataDirectory = ".";
-
-    private Thread shutdownHook;
-
-    private String externalJMSUrl;
-
     private String commonRepoUrl;
+    private Thread shutdownHook;
 
     public void start() throws Exception {
         
@@ -69,44 +63,25 @@ public class ControlServer {
             }
         };
 
-        //Start the registry server:
-        log.info("Creating RMI Server at " + zooKeeperConnectUrl);
+        //Start the jms server:
+        log.info("Creating JMS Server at " + jmsProviderUri);
         try {
-            ControlService registryServer = ControlServiceFactory.create(zooKeeperConnectUrl);
-            registryServer.start();
-            log.info("Registry Server started: " + registryServer.getName());
+            rmiServer = ControlServiceFactory.create(jmsProviderUri);
+            rmiServer.setDataDirectory(dataDirectory + File.separator + "jms");
+            rmiServer.start();
+            log.info("JMS Server started: " + rmiServer.getName());
             
         } catch (Exception e) {
             log.error(e);
             destroy();
-            throw new Exception("Error starting Registry Server", e);
+            throw new Exception("Error starting JMS Server", e);
         }
         
-//        //Start up a RMI control broker:
-//        log.info("Starting RMI Control Server on " + jmsConnectUrl);
-//        try {
-//            if (jmsConnectUrl != null) {
-//                log.info("RMI Server");
-//                controlBroker = new BrokerService();
-//                controlBroker.setBrokerName("CloudLaunchControlBroker");
-//                controlBroker.addConnector(jmsConnectUrl);
-//                controlBroker.setDataDirectory(dataDirectory + File.separator + "control-broker");
-//                controlBroker.setPersistent(false);
-//                controlBroker.setDeleteAllMessagesOnStartup(true);
-//                controlBroker.setUseJmx(false);
-//                controlBroker.start();
-//                log.info("Control Server started");
-//            }
-//        } catch (Exception e) {
-//            log.error(e);
-//            destroy();
-//            throw new Exception("Error starting RMI Server", e);
-//        }
-//
         //Start the registry server:
-        log.info("Creating Registry Server at " + zooKeeperConnectUrl);
+        log.info("Creating Registry Server at " + registryProviderUri);
         try {
-            ControlService registryServer = ControlServiceFactory.create(zooKeeperConnectUrl);
+            registryServer = ControlServiceFactory.create(registryProviderUri);
+            registryServer.setDataDirectory(dataDirectory + File.separator + "registry");
             registryServer.start();
             log.info("Registry Server started: " + registryServer.getName());
             
@@ -119,7 +94,7 @@ public class ControlServer {
         //Connect to the registry and publish service connection info:
         try {
             
-            Registry registry = RegistryFactory.create("zk:" + zooKeeperConnectUrl);
+            registry = RegistryFactory.create("zk:" + registryProviderUri);
 
             //Register the control services:
             
@@ -176,25 +151,6 @@ public class ControlServer {
 
     }
 
-    private String getExternalJMSUrl() {
-        if (externalJMSUrl == null) {
-            try {
-                URI uri = new URI(jmsConnectUrl);
-                String actualHost = InetAddress.getLocalHost().getHostName();
-                if (!actualHost.equalsIgnoreCase(uri.getHost())) {
-                    externalJMSUrl = uri.getScheme() + "://" + actualHost + ":" + uri.getPort();
-                } else {
-                    externalJMSUrl = jmsConnectUrl;
-                }
-            } catch (Exception e) {
-                log.warn("Error computing external rmi connect url will use " + jmsConnectUrl);
-                externalJMSUrl = jmsConnectUrl;
-            }
-        }
-        return externalJMSUrl;
-
-    }
-
     public void setCommonRepoUrl(String commonRepoUrl) {
         this.commonRepoUrl = commonRepoUrl;
     }
@@ -203,20 +159,20 @@ public class ControlServer {
         return commonRepoUrl;
     }
     
-    public String getJmsConnectUrl() {
-        return jmsConnectUrl;
+    public String getJmsProviderUri() {
+        return jmsProviderUri;
     }
 
-    public void setJmsConnectUrl(String jmsConnectUrl) {
-        this.jmsConnectUrl = jmsConnectUrl;
+    public void setJmsProviderUri(String jmsProviderUri) {
+        this.jmsProviderUri = jmsProviderUri;
     }
 
-    public String getZooKeeperConnectUrl() {
-        return zooKeeperConnectUrl;
+    public String getRegistryProviderUri() {
+        return registryProviderUri;
     }
 
-    public void setZooKeeperConnectUrl(String zooKeeperConnectUrl) {
-        this.zooKeeperConnectUrl = zooKeeperConnectUrl;
+    public void setRegistryProviderUri(String registryProviderUri) {
+        this.registryProviderUri = registryProviderUri;
     }
 
     public void setDataDirectory(String dataDirectory) {
