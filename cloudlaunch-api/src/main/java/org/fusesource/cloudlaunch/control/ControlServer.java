@@ -11,12 +11,12 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.URI;
 
-import org.apache.activemq.broker.BrokerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.cloudlaunch.distribution.registry.Registry;
-import org.fusesource.cloudlaunch.distribution.registry.zk.ZooKeeperFactory;
-import org.fusesource.cloudlaunch.distribution.registry.zk.ZooKeeperServer;
+import org.fusesource.cloudlaunch.distribution.registry.RegistryFactory;
+
+
 /**
  * ControlServer
  * <p>
@@ -41,8 +41,8 @@ public class ControlServer {
     public static final String EVENT_CONNECT_URI_PATH = "/control/event-uri";
     public static final String COMMON_REPO_URL_PATH = "/control/common-repo-url";
     
-    BrokerService controlBroker;
-    ZooKeeperServer zkServer;
+    ControlService rmiServer;
+    ControlService registryServer;
     Registry registry;
 
     private String jmsConnectUrl = DEFAULT_JMS_URL;
@@ -69,51 +69,57 @@ public class ControlServer {
             }
         };
 
-        //Start up a RMI control broker:
-        log.info("Starting RMI Control Server on " + jmsConnectUrl);
+        //Start the registry server:
+        log.info("Creating RMI Server at " + zooKeeperConnectUrl);
         try {
-            if (jmsConnectUrl != null) {
-                log.info("RMI Server");
-                controlBroker = new BrokerService();
-                controlBroker.setBrokerName("CloudLaunchControlBroker");
-                controlBroker.addConnector(jmsConnectUrl);
-                controlBroker.setDataDirectory(dataDirectory + File.separator + "control-broker");
-                controlBroker.setPersistent(false);
-                controlBroker.setDeleteAllMessagesOnStartup(true);
-                controlBroker.setUseJmx(false);
-                controlBroker.start();
-                log.info("Control Server started");
-            }
+            ControlService registryServer = ControlServiceFactory.create(zooKeeperConnectUrl);
+            registryServer.start();
+            log.info("Registry Server started: " + registryServer.getName());
+            
         } catch (Exception e) {
             log.error(e);
             destroy();
-            throw new Exception("Error starting RMI Server", e);
+            throw new Exception("Error starting Registry Server", e);
         }
-
-        //Start a zoo-keeper server.
-        log.info("Starting Control Registry at " + zooKeeperConnectUrl);
+        
+//        //Start up a RMI control broker:
+//        log.info("Starting RMI Control Server on " + jmsConnectUrl);
+//        try {
+//            if (jmsConnectUrl != null) {
+//                log.info("RMI Server");
+//                controlBroker = new BrokerService();
+//                controlBroker.setBrokerName("CloudLaunchControlBroker");
+//                controlBroker.addConnector(jmsConnectUrl);
+//                controlBroker.setDataDirectory(dataDirectory + File.separator + "control-broker");
+//                controlBroker.setPersistent(false);
+//                controlBroker.setDeleteAllMessagesOnStartup(true);
+//                controlBroker.setUseJmx(false);
+//                controlBroker.start();
+//                log.info("Control Server started");
+//            }
+//        } catch (Exception e) {
+//            log.error(e);
+//            destroy();
+//            throw new Exception("Error starting RMI Server", e);
+//        }
+//
+        //Start the registry server:
+        log.info("Creating Registry Server at " + zooKeeperConnectUrl);
         try {
-            if (zooKeeperConnectUrl != null) {
-                URI uri = new URI(zooKeeperConnectUrl);
-
-                log.info("Starting ZooKeeper Server");
-                zkServer = new ZooKeeperServer();
-                zkServer.setDirectory(dataDirectory + File.separator + "zoo-keeper");
-                zkServer.setPurge(true);
-                zkServer.setPort(uri.getPort());
-                zkServer.start();
-                log.info("ZooKeeper Server started");
-            }
+            ControlService registryServer = ControlServiceFactory.create(zooKeeperConnectUrl);
+            registryServer.start();
+            log.info("Registry Server started: " + registryServer.getName());
+            
         } catch (Exception e) {
             log.error(e);
             destroy();
-            throw new Exception("Error starting Zookeeper Server", e);
+            throw new Exception("Error starting Registry Server", e);
         }
 
+        //Connect to the registry and publish service connection info:
         try {
             
-            ZooKeeperFactory factory = new ZooKeeperFactory();
-            Registry registry = factory.createRegistry("zk:" + zooKeeperConnectUrl);
+            Registry registry = RegistryFactory.create("zk:" + zooKeeperConnectUrl);
 
             //Register the control services:
             
@@ -121,12 +127,12 @@ public class ControlServer {
             //in some instances zoo-keeper doesn't shutdown cleanly and hangs
             //on to file handles so that the registry isn't purged:
             registry.remove(EXPORTER_CONNECT_URI_PATH, true);
-            registry.addObject(EXPORTER_CONNECT_URI_PATH, false, new String("rmiviajms:" + getExternalJMSUrl()));
-            log.info("Registered RMI control server at " + EXPORTER_CONNECT_URI_PATH + "=rmiviajms:" + getExternalJMSUrl());
+            registry.addObject(EXPORTER_CONNECT_URI_PATH, false, new String("rmiviajms:" + rmiServer.getServiceUri()));
+            log.info("Registered RMI control server at " + EXPORTER_CONNECT_URI_PATH + "=rmiviajms:" + rmiServer.getServiceUri());
             
             registry.remove(EVENT_CONNECT_URI_PATH, true);
-            registry.addObject(EVENT_CONNECT_URI_PATH, false, new String("jms:" + getExternalJMSUrl()));
-            log.info("Registered event server at " + EVENT_CONNECT_URI_PATH + "=jms:" + getExternalJMSUrl());
+            registry.addObject(EVENT_CONNECT_URI_PATH, false, new String("jms:" + rmiServer.getServiceUri()));
+            log.info("Registered event server at " + EVENT_CONNECT_URI_PATH + "=jms:" + rmiServer.getServiceUri());
             
             registry.remove(COMMON_REPO_URL_PATH, true);
             registry.addObject(COMMON_REPO_URL_PATH, false, commonRepoUrl);
@@ -151,21 +157,20 @@ public class ControlServer {
         }
 
         log.info("Shutting down registry server");
-        if (zkServer != null) {
+        if (registryServer != null) {
             try {
-                zkServer.destroy();
+                registryServer.destroy();
             } finally {
-                zkServer = null;
+                registryServer = null;
             }
         }
 
         log.info("Shutting down rmi server");
-        if (controlBroker != null) {
+        if (rmiServer != null) {
             try {
-                controlBroker.stop();
-                controlBroker.waitUntilStopped();
+                rmiServer.destroy();
             } finally {
-                controlBroker = null;
+                rmiServer = null;
             }
         }
 

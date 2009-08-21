@@ -12,14 +12,16 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.fusesource.cloudlaunch.control.ControlService;
 import org.fusesource.cloudlaunch.util.internal.FileUtils;
 
 import java.io.File;
+import java.net.InetAddress;
 
 /**
  * @author chirino
  */
-public class ZooKeeperServer {
+public class ZooKeeperServer implements ControlService {
 
     Log log = LogFactory.getLog(this.getClass());
 
@@ -28,6 +30,7 @@ public class ZooKeeperServer {
     private String password = "";
     private String directory = "zookeeper-data";
     private boolean purge;
+    private String serviceUri;
     int tick = 10000;
 
     private NIOServerCnxn.Factory serverFactory;
@@ -55,6 +58,9 @@ public class ZooKeeperServer {
         org.apache.zookeeper.server.ZooKeeperServer zs = new org.apache.zookeeper.server.ZooKeeperServer(file, file, tick);
         serverFactory = new NIOServerCnxn.Factory(port);
         serverFactory.startup(zs);
+        
+        String actualHost = InetAddress.getLocalHost().getHostName();
+        serviceUri = "zk:tcp://" + actualHost + ":" + zs.getClientPort();
     }
 
     public void destroy() throws Exception {
@@ -103,5 +109,17 @@ public class ZooKeeperServer {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public String getName() {
+        return toString();
+    }
+
+    public String toString() {
+        return "Zoo Keeper Registry Server";
+    }
+
+    public String getServiceUri() {
+        return serviceUri;
     }
 }

@@ -21,18 +21,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import org.apache.activemq.command.ActiveMQDestination;
-
-
-
 
 public final class IntrospectionSupport {
 	
 	static {
 		// Add Spring and ActiveMQ specific property editors
 		String[] additionalPath = new String[] {
-				"org.springframework.beans.propertyeditors",
-				"org.apache.activemq.util" };
+				"org.springframework.beans.propertyeditors" };
 		synchronized (PropertyEditorManager.class) {
 		    String[] existingSearchPath = PropertyEditorManager.getEditorSearchPath();
 		    String[] newSearchPath = (String[]) Array.newInstance(String.class,
@@ -267,12 +262,7 @@ public final class IntrospectionSupport {
     }
 
     protected static void appendToString(StringBuffer buffer, Object value) {
-        if (value instanceof ActiveMQDestination) {
-            ActiveMQDestination destination = (ActiveMQDestination)value;
-            buffer.append(destination.getQualifiedName());
-        } else {
-            buffer.append(value);
-        }
+        buffer.append(value);
     }
 
     public static String simpleName(Class clazz) {
