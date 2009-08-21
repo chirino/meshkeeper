@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <parent>
+    <artifactId>cloudlaunch-parent</artifactId>
+    <groupId>org.fusesource.cloudlaunch</groupId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.fusesource.cloudlaunch</groupId>
+  <artifactId>cloudlaunch-jms-activemq</artifactId>
+  <name>cloudlaunch-jms-activemq</name>
+  <version>1.0-SNAPSHOT</version>
+  <url>http://maven.apache.org</url>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+        <dependency>
+      <groupId>org.fusesource.cloudlaunch</groupId>
+      <artifactId>cloudlaunch-api</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>activemq-all</artifactId>
+      <version>5.2.0</version>
+    </dependency>
+  </dependencies>
+</project>
