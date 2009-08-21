@@ -44,8 +44,8 @@ public class Main {
             return;
         }
 
-        String rmi = ControlServer.DEFAULT_RMI_URI;
-        String registry = ControlServer.DEFAULT_REGISTRY_URI;
+        String rmi = ControlServer.DEFAULT_JMS_PROVIDER_URI;
+        String registry = ControlServer.DEFAULT_REGISTRY_PROVIDER_URI;
         String commonRepoUrl = null;
         String dataDir = ".";
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));

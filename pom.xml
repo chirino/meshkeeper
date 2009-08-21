@@ -6,7 +6,7 @@
   <url>http://fusesource.com/forge/projects/cloudlaunch</url>
 
   <groupId>org.fusesource.cloudlaunch</groupId>
-  <artifactId>cloudlaunch-parent</artifactId>
+  <artifactId>cloudlaunch</artifactId>
   <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>cloudlaunch</name>
@@ -59,11 +59,6 @@
       <releases>
         <enabled>false</enabled>
       </releases>
-    </repository>
-    <repository>
-      <id>chirino-zk-repo</id>
-      <name>Private ZooKeeper Repo</name>
-      <url>http://people.apache.org/~chirino/zk-repo/</url>
     </repository>
   </repositories>
 
@@ -145,36 +140,6 @@
             <goals>
               <goal>resources</goal>
             </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-compile-dependencies</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>target/dependencies</outputDirectory>
-              <!-- stripVersion>true</stripVersion-->
-              <includeScope>compile</includeScope>
-            </configuration>
-          </execution>
-          <execution>
-            <id>copy-runtime-dependencies</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>target/dependencies</outputDirectory>
-              <!-- stripVersion>true</stripVersion-->
-              <includeScope>runtime</includeScope>
-            </configuration>
           </execution>
         </executions>
       </plugin>
