@@ -110,12 +110,19 @@ class ZooKeeperRegistry implements Registry {
 
     @SuppressWarnings("unchecked")
     public <T> T getObject(String path) throws Exception {
+        byte[] data = getData(path);
+        if (data == null) {
+            return null;
+        }
+        ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(data));
+        return (T) in.readObject();
+    }
+
+    public byte [] getData(String path) throws Exception {
         checkConnected();
         Stat stat = new Stat();
         try {
-            byte[] data = zk.getData(path, false, stat);
-            ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(data));
-            return (T) in.readObject();
+            return zk.getData(path, false, stat);
         } catch (NoNodeException nne) {
             return null;
         }
