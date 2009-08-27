@@ -7,11 +7,16 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.util.internal;
 
+import org.fusesource.mop.MOP;
+import org.fusesource.mop.MOPRepository;
+import org.fusesource.mop.support.ArtifactId;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.net.URLClassLoader;
 
 public class FactoryFinder {
 
@@ -30,64 +35,74 @@ public class FactoryFinder {
      * @return a newly created instance
      */
     public Object newInstance(String key) throws IllegalAccessException, InstantiationException, IOException, ClassNotFoundException {
-        return newInstance(key, null);
-    }
-
-    public Object newInstance(String key, String propertyPrefix) throws IllegalAccessException, InstantiationException, IOException, ClassNotFoundException {
-        if (propertyPrefix == null) {
-            propertyPrefix = "";
-        }
-
-        Class clazz = classMap.get(propertyPrefix + key);
+        Class clazz = classMap.get( key);
         if (clazz == null) {
-            clazz = newInstance(doFindFactoryProperies(key), propertyPrefix);
-            classMap.put(propertyPrefix + key, clazz);
+            clazz = loadClass(key);
+            classMap.put(key, clazz);
         }
         return clazz.newInstance();
     }
 
-    private Class newInstance(Properties properties, String propertyPrefix) throws ClassNotFoundException, IOException {
+    private Class loadClass(String key) throws ClassNotFoundException, IOException {
 
-        String className = properties.getProperty(propertyPrefix + "class");
-        if (className == null) {
-            throw new IOException("Expected property is missing: " + propertyPrefix + "class");
-        }
-        Class clazz = null;
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        if (loader != null) {
-            try {
-                clazz = loader.loadClass(className);
-            } catch (ClassNotFoundException e) {
-                // ignore
-            }
-        }
-        if (clazz == null) {
-            clazz = FactoryFinder.class.getClassLoader().loadClass(className);
+        ClassLoader childCL=null;
+        ClassLoader systemCL = Thread.currentThread().getContextClassLoader();
+        if ( systemCL ==null ) {
+            systemCL = FactoryFinder.class.getClassLoader();
         }
 
-        return clazz;
-    }
-
-    private Properties doFindFactoryProperies(String key) throws IOException {
         String uri = path + key;
 
-        // lets try the thread context class loader first
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        if (classLoader == null) {
-            classLoader = getClass().getClassLoader();
-        }
-        InputStream in = classLoader.getResourceAsStream(uri);
-        if (in == null) {
-            in = FactoryFinder.class.getClassLoader().getResourceAsStream(uri);
-            if (in == null) {
-                throw new IOException("Could not find factory class for resource: " + uri);
+        Properties properties = loadProperties(uri, systemCL);
+        if( properties == null ) {
+            // Not found in the system class loaders.. lets try to dynamically
+            // load the module via mop.
+            childCL = getPluginClassLoader(systemCL, key);
+            if( childCL!=null ) {
+                properties = loadProperties(uri, childCL);
             }
+        }
+
+        if( properties==null ) {
+            throw new IOException("Could not find factory class for resource: " + uri);
+        }
+
+        String className = properties.getProperty("class");
+        if (className == null) {
+            throw new IOException("Expected property is missing: class");
+        }
+        
+        // First try to load it from the system classloader....
+        try {
+            return systemCL.loadClass(className);
+        } catch (ClassNotFoundException e) {
+        }
+        
+        // Looks like we need to try to use a dynamic one...
+        
+        // The properties file can point us to the artifact to use...
+        String mavenArtifact = properties.getProperty("maven.artifact");
+        if( mavenArtifact!=null ) {
+            childCL = getArtifactClassLoader(systemCL, mavenArtifact);
+        }
+
+        if ( childCL == null ) {
+            throw new ClassNotFoundException(className);
+        }
+
+        // Now  try to load it from the child classloader....
+        return childCL.loadClass(className);
+    }
+
+    private Properties loadProperties(String uri, ClassLoader loaders) throws IOException {
+        InputStream in = loaders.getResourceAsStream(uri);
+        if (in == null) {
+            return null;
         }
 
         // lets load the file
-        BufferedInputStream reader = null;
+        BufferedInputStream reader = new BufferedInputStream(in);
         try {
-            reader = new BufferedInputStream(in);
             Properties properties = new Properties();
             properties.load(reader);
             return properties;
@@ -98,4 +113,34 @@ public class FactoryFinder {
             }
         }
     }
+
+    private ClassLoader getPluginClassLoader(ClassLoader parent, String key) {
+        return getArtifactClassLoader(parent, "org.fusesource.cloudlaunch:cloudlaunch-" + key + "-plugin");
+    }
+
+    // Use a WeakHashMap so that the classes can get GCed..
+    private static WeakHashMap<ClassLoader, String> CLASSLOADER_CACHE = new WeakHashMap<ClassLoader, String>();
+
+    static synchronized private ClassLoader getArtifactClassLoader(ClassLoader parent, String mavenArtifact) {
+        try {
+            // Perhaps we already have class loader for it...
+            for (Map.Entry<ClassLoader, String> entry : CLASSLOADER_CACHE.entrySet()) {
+                // Yeah to bad the weak reference is the key.. not the value.
+                if( mavenArtifact.equals(entry.getValue()) ) {
+                    return entry.getKey();
+                }
+            }
+
+            MOPRepository repo = new MOPRepository();
+            repo.setOnline(true);
+            URLClassLoader cl = repo.createArtifactClassLoader(parent, ArtifactId.parse(mavenArtifact));
+
+            CLASSLOADER_CACHE.put(cl, mavenArtifact);
+            return cl;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
 }
