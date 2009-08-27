@@ -7,8 +7,8 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.fusesource.cloudlaunch</groupId>
-  <artifactId>cloudlaunch-rmi-rmiviajms</artifactId>
-  <name>cloudlaunch-rmi-rmiviajms</name>
+  <artifactId>cloudlaunch-rmiviajms-plugin</artifactId>
+  <name>cloudlaunch-rmiviajms-plugin</name>
   <version>1.0-SNAPSHOT</version>
   <url>http://maven.apache.org</url>
 

@@ -34,31 +34,31 @@
     </dependency>
     <dependency>
       <groupId>org.fusesource.cloudlaunch</groupId>
-      <artifactId>cloudlaunch-rmi-rmiviajms</artifactId>
+      <artifactId>cloudlaunch-rmiviajms-plugin</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.fusesource.cloudlaunch</groupId>
-      <artifactId>cloudlaunch-resource-wagon</artifactId>
+      <artifactId>cloudlaunch-wagon-plugin</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.fusesource.cloudlaunch</groupId>
-      <artifactId>cloudlaunch-event-jms</artifactId>
+      <artifactId>cloudlaunch-jms-plugin</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.fusesource.cloudlaunch</groupId>
-      <artifactId>cloudlaunch-registry-zk</artifactId>
+      <artifactId>cloudlaunch-zk-plugin</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.fusesource.cloudlaunch</groupId>
-      <artifactId>cloudlaunch-jms-activemq</artifactId>
+      <artifactId>cloudlaunch-activemq-plugin</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>runtime</scope>
     </dependency>

@@ -7,8 +7,8 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.fusesource.cloudlaunch</groupId>
-  <artifactId>cloudlaunch-resource-wagon</artifactId>
-  <name>cloudlaunch-resource-wagon</name>
+  <artifactId>cloudlaunch-wagon-plugin</artifactId>
+  <name>cloudlaunch-wagon-plugin</name>
   <version>1.0-SNAPSHOT</version>
   <url>http://maven.apache.org</url>
   <dependencies>

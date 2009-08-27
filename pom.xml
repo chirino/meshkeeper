@@ -27,13 +27,13 @@
     </license>
   </licenses>
   <modules>
-    <module>cloudlaunch-rmi-rmiviajms</module>
     <module>cloudlaunch-api</module>
+    <module>cloudlaunch-rmiviajms-plugin</module>
+    <module>cloudlaunch-zk-plugin</module>
+    <module>cloudlaunch-wagon-plugin</module>
+    <module>cloudlaunch-jms-plugin</module>
+    <module>cloudlaunch-activemq-plugin</module>
     <module>cloudlaunch-all</module>
-    <module>cloudlaunch-registry-zk</module>
-    <module>cloudlaunch-resource-wagon</module>
-    <module>cloudlaunch-event-jms</module>
-    <module>cloudlaunch-jms-activemq</module>
     <module>assembly</module>
   </modules>
 
