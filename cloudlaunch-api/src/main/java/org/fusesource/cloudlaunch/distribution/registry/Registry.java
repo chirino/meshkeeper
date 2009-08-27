@@ -55,6 +55,14 @@ public interface Registry {
     public <T> T getObject(String path) throws Exception;
     
     /**
+     * Gets the data at the specified node.
+     * @param path The path of the data. 
+     * @return The data at the given node. 
+     * @throws Exception If the object couldn't be retrieved. 
+     */
+    public byte [] getData(String path) throws Exception;
+    
+    /**
      * Removes a node from the registry.
      * 
      * @param path The path to remove.
