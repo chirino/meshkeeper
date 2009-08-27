@@ -21,6 +21,11 @@ import org.fusesource.cloudlaunch.distribution.resource.ResourceManagerFactory;
 import org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory;
 import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * DistributorFactory
  * <p>
@@ -37,6 +42,8 @@ public class DistributorFactory {
     private static String DEFAULT_RESOURCE_MANAGER_PROVIDER_URI = "wagon";
     private static String DEFAULT_DATA_DIR = ".";
     private static String DEFAULT_REGISTRY_URI = ControlServer.DEFAULT_REGISTRY_URI;
+    private static final ScheduledExecutorService EXECUTOR;
+    private static final AtomicInteger EXECUTOR_COUNT = new AtomicInteger(0);
     static {
         String repoDir = null;
         try {
@@ -44,6 +51,13 @@ public class DistributorFactory {
         } catch (SecurityException se) {
         }
         DEFAULT_DATA_DIR = repoDir;
+        
+        EXECUTOR = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory(){
+
+            public Thread newThread(Runnable r) {
+                return new Thread(r, "CloudLaunchExecutor-" + EXECUTOR_COUNT.incrementAndGet());
+            }
+        });
     }
 
     private String resourceManagerProvider = DEFAULT_RESOURCE_MANAGER_PROVIDER_URI;
@@ -52,6 +66,7 @@ public class DistributorFactory {
     private String eventProviderUri;
     private String rmiProviderUri;
     private String commonRepoUrl;
+    
 
     /**
      * This convenience method creates a Distributor by connecting to a control
@@ -72,6 +87,11 @@ public class DistributorFactory {
 
     public static void setDefaultRegistryUri(String defaultRegistryUri) {
         DEFAULT_REGISTRY_URI = defaultRegistryUri;
+    }
+    
+    public static ScheduledExecutorService getExecutorService()
+    {
+        return EXECUTOR;
     }
 
     public Distributor create() throws Exception {
