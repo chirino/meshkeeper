@@ -11,13 +11,15 @@ import java.io.IOException;
 import java.io.File;
 import java.util.List;
 
+import org.fusesource.cloudlaunch.distribution.Distributable;
+
 /**
  * A ClassLoaderServer allows to create ClassLoaderFactory objects which will
  * can be used by remote JVMs to download the remote classes from this server.
  *
  * @author chirino
  */
-public interface ClassLoaderServer {
+public interface ClassLoaderServer extends Distributable {
 
     /**
      * Exposes the specified classloader so it can be downloaded remotely.
