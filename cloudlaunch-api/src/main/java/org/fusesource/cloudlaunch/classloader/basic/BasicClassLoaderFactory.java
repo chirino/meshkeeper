@@ -8,19 +8,19 @@
 
 package org.fusesource.cloudlaunch.classloader.basic;
 
-import org.fusesource.cloudlaunch.classloader.ClassLoaderFactory;
-import org.fusesource.mop.db.util.HexSupport;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.fusesource.cloudlaunch.classloader.ClassLoaderFactory;
+import org.fusesource.cloudlaunch.util.internal.HexSupport;
 
 import java.io.*;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author chirino
