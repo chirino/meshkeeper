@@ -98,5 +98,5 @@ public interface Registry {
      * @param path The path on which the listener was listening.
      * @param watcher The watcher
      */
-    public void removeRegistryWatcher(String path, RegistryWatcher watcher);
+    public void removeRegistryWatcher(String path, RegistryWatcher watcher) throws Exception;
 }

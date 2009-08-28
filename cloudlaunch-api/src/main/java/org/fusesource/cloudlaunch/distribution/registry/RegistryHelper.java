@@ -88,7 +88,11 @@ public class RegistryHelper {
                     }
                 }
             } finally {
-                registry.removeRegistryWatcher(path, this);
+                try {
+                    registry.removeRegistryWatcher(path, this);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
             return map;

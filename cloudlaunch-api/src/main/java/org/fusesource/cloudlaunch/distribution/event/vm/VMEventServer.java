@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.fusesource.cloudlaunch.control.ControlService;
 import org.fusesource.cloudlaunch.distribution.DistributorFactory;
 import org.fusesource.cloudlaunch.distribution.event.Event;
 import org.fusesource.cloudlaunch.distribution.event.EventListener;
@@ -27,11 +28,10 @@ import org.fusesource.cloudlaunch.distribution.event.EventListener;
  * @author cmacnaug
  * @version 1.0
  */
-public class VMEventServer {
+public class VMEventServer implements ControlService{
 
     private final HashMap<String, EventQueue> EVENT_QUEUES = new HashMap<String, EventQueue>();
     private final ExecutorService EXECUTOR = DistributorFactory.getExecutorService();
-
     /*
      * (non-Javadoc)
      * 
@@ -151,4 +151,49 @@ public class VMEventServer {
             }
         }
     }
+
+    //////////////////////////////////////////////////////////////////////
+    //Control Service Implementation
+    //////////////////////////////////////////////////////////////////////
+    
+    /* (non-Javadoc)
+     * @see org.fusesource.cloudlaunch.control.ControlService#start()
+     */
+    public void start() throws Exception {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    /* (non-Javadoc)
+     * @see org.fusesource.cloudlaunch.control.ControlService#destroy()
+     */
+    public void destroy() throws Exception {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.fusesource.cloudlaunch.control.ControlService#getName()
+     */
+    public String getName() {
+        // TODO Auto-generated method stub
+        return "VMEventServer";
+    }
+
+    /* (non-Javadoc)
+     * @see org.fusesource.cloudlaunch.control.ControlService#getServiceUri()
+     */
+    public String getServiceUri() {
+        // TODO Auto-generated method stub
+        return "vm:" + getName();
+    }
+
+    /* (non-Javadoc)
+     * @see org.fusesource.cloudlaunch.control.ControlService#setDataDirectory(java.lang.String)
+     */
+    public void setDataDirectory(String directory) {
+        //Noop
+    }
+
+
 }
