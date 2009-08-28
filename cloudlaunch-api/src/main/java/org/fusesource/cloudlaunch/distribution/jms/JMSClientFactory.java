@@ -2,9 +2,6 @@ package org.fusesource.cloudlaunch.distribution.jms;
 
 import java.net.URI;
 
-import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
-
 import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
 
 /**************************************************************************************
@@ -31,7 +28,7 @@ public abstract class JMSClientFactory {
     
     public static final JMSProvider create(String uri) throws Exception {
         URI providerUri = new URI(uri);
-        return ((JMSClientFactory)RESOURCE_FACTORY_FINDER.newInstance(providerUri.getScheme())).createJMSProvider(uri);
+        return ((JMSClientFactory)RESOURCE_FACTORY_FINDER.create(providerUri.getScheme())).createJMSProvider(uri);
     }
     
     protected abstract JMSProvider createJMSProvider(String uri) throws Exception;

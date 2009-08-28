@@ -32,7 +32,7 @@ public abstract class ExporterFactory {
             ClassLoader cl = originalLoader;
             Thread.currentThread().setContextClassLoader(cl);
             URI rmiUri = new URI(uri);
-            ExporterFactory ef = (ExporterFactory) EXPORTER_FACTORY_FINDER.newInstance(rmiUri.getScheme());
+            ExporterFactory ef = (ExporterFactory) EXPORTER_FACTORY_FINDER.create(rmiUri.getScheme());
             return ef.createExporter(rmiUri.toString());
         }
         finally

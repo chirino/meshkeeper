@@ -72,8 +72,6 @@ public class DistributorFactory {
      * This convenience method creates a Distributor by connecting to a control
      * server registry and pulls down
      * 
-     * @param registryProviderUri
-     *            The provider uri for a control server registry.
      * @return
      */
     public static Distributor createDefaultDistributor() throws Exception {

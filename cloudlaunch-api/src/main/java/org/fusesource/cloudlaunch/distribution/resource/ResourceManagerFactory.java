@@ -30,7 +30,7 @@ public abstract class ResourceManagerFactory {
         if (scheme == null) {
             scheme = providerUri.getSchemeSpecificPart();
         }
-        return ((ResourceManagerFactory) RESOURCE_FACTORY_FINDER.newInstance(scheme)).createResourceManager(uri);
+        return ((ResourceManagerFactory) RESOURCE_FACTORY_FINDER.create(scheme)).createResourceManager(uri);
     }
 
     protected abstract ResourceManager createResourceManager(String uri) throws Exception;

@@ -28,26 +28,36 @@ public class FactoryFinder {
     }
 
     /**
-     * Creates a new instance of the given key
+     * Creates a new instance of the the class associated with the specified key
      * 
-     * @param key is the key to add to the path to find a text file containing
-     *                the factory name
+     * @param key is the key to add to the path to find a text file containing the factory class name
      * @return a newly created instance
      */
-    public Object newInstance(String key) throws IllegalAccessException, InstantiationException, IOException, ClassNotFoundException {
-        Class clazz = classMap.get( key);
+    public <T> T create(String key) throws IllegalAccessException, InstantiationException, IOException, ClassNotFoundException {
+        Class<T> clazz = find(key);
+        return clazz.newInstance();
+    }
+
+    /**
+     * Creates a new instance of the the class associated with the specified key
+     * 
+     * @param key is the key to add to the path to find a text file containing the factory class name
+     * @return a newly created instance
+     */
+    public <T> Class<T> find(String key) throws ClassNotFoundException, IOException {
+        Class clazz = classMap.get(key);
         if (clazz == null) {
             clazz = loadClass(key);
             classMap.put(key, clazz);
         }
-        return clazz.newInstance();
+        return clazz;
     }
 
     private Class loadClass(String key) throws ClassNotFoundException, IOException {
 
         ClassLoader childCL=null;
         ClassLoader systemCL = Thread.currentThread().getContextClassLoader();
-        if ( systemCL ==null ) {
+        if ( systemCL == null ) {
             systemCL = FactoryFinder.class.getClassLoader();
         }
 
@@ -64,7 +74,7 @@ public class FactoryFinder {
         }
 
         if( properties==null ) {
-            throw new IOException("Could not find factory class for resource: " + uri);
+            throw new IOException("Could not find factory properties: " + uri);
         }
 
         String className = properties.getProperty("class");

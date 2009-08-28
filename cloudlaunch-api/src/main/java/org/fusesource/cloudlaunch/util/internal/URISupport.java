@@ -23,7 +23,6 @@ import java.util.Map;
  * @version $Revision$
  */
 public class URISupport {
-
     public static class CompositeData {
         private String host;
         private String scheme;
@@ -154,7 +153,6 @@ public class URISupport {
      * @param uri
      * @param rc
      * @param ssp
-     * @param p
      * @throws URISyntaxException
      */
     private static void parseComposite(URI uri, CompositeData rc, String ssp) throws URISyntaxException {
@@ -204,7 +202,7 @@ public class URISupport {
     }
 
     /**
-     * @param componentString
+     * @param str
      * @return
      */
     private static String[] splitComponents(String str) {
@@ -323,5 +321,15 @@ public class URISupport {
 
         return result;
     }
+
+    public static String[] extractScheme(String uri) throws URISyntaxException {
+        String[] rc = uri.split(":", 2);
+        if( rc.length != 2 ) {
+            throw new URISyntaxException(uri, "scheme missing.");
+        }
+        rc[1] = stripPrefix(rc[1].trim(), "//");
+        return rc;
+    }
+
 
 }

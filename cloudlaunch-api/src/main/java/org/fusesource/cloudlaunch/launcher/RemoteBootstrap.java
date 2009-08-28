@@ -5,7 +5,10 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch.util;
+package org.fusesource.cloudlaunch.launcher;
+
+import org.fusesource.cloudlaunch.LaunchDescription;
+import static org.fusesource.cloudlaunch.Expression.file;
 
 import java.util.LinkedList;
 import java.util.Arrays;
@@ -16,23 +19,21 @@ import java.net.URLClassLoader;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
-import org.fusesource.cloudlaunch.distribution.Distributor;
-import org.fusesource.cloudlaunch.distribution.DistributorFactory;
-
 
 /**
+ * Java main class that be be used to bootstrap the classpath
+ * via remote classpath downloading of another main class.
+ *
  * @author chirino
  */
-public class RemoteLoadingMain {
+public class RemoteBootstrap {
 
     private File classLoaderLibs;
-    private File cacheDirectory;
-    private String classLoaderURI;
+    private File cache;
+    private String classLoader;
     private String mainClass;
     private String[] args;
-    private int depth = 100;
-    private Distributor distributor;
-    private String distributorUri;
+    private String distributor;
 
     static class SyntaxException extends Exception {
         private static final long serialVersionUID = 4997524790367555614L;
@@ -41,11 +42,10 @@ public class RemoteLoadingMain {
             super(message);
         }
     }
-
+    
     public static void main(String args[]) throws Throwable {
 
-        RemoteLoadingMain main = new RemoteLoadingMain();
-
+        RemoteBootstrap main = new RemoteBootstrap();
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
         try {
@@ -55,35 +55,29 @@ public class RemoteLoadingMain {
                 if (arg.equals("--help")) {
                     showUsage();
                     return;
-                } else if (arg.equals("--cache-dir")) {
+                } else if (arg.equals("--cache")) {
                     try {
-                        main.setCacheDirectory(new File(alist.removeFirst()).getCanonicalFile());
+                        main.setCache(new File(alist.removeFirst()).getCanonicalFile());
                     } catch (Exception e) {
-                        throw new SyntaxException("Expected a directoy after the --cache-dir option.");
+                        throw new SyntaxException("Expected a directoy after the --cache option.");
                     }
-                } else if (arg.equals("--distributor-uri")) {
+                } else if (arg.equals("--distributor")) {
                     try {
-                        main.setDistributorUri(alist.removeFirst());
+                        main.setDistributor(alist.removeFirst());
                     } catch (Exception e) {
-                        throw new SyntaxException("Expected a url after the --registry-url option.");
+                        throw new SyntaxException("Expected a url after the --distributor option.");
                     }
-                } else if (arg.equals("--classloader-url")) {
+                } else if (arg.equals("--classloader")) {
                     try {
-                        main.setClassLoaderURI(alist.removeFirst());
+                        main.setClassLoader(alist.removeFirst());
                     } catch (Throwable e) {
-                        throw new SyntaxException("Expected a url after the --classloader-url option.");
+                        throw new SyntaxException("Expected a url after the --classloader option.");
                     }
                 } else if (arg.equals("--classloader-libs")) {
                     try {
                         main.setClassLoaderLibs(new File(alist.removeFirst()).getCanonicalFile());
                     } catch (Throwable e) {
                         throw new SyntaxException("Expected a directoy after the --classloader-libs option.");
-                    }
-                } else if (arg.equals("--classloader-depth")) {
-                    try {
-                        main.setDepth(Integer.parseInt(alist.removeFirst()));
-                    } catch (Throwable e) {
-                        throw new SyntaxException("Expected a number after the --classloader-depth option.");
                     }
                 } else {
                     // Not an option.. then it must be the main class name and args..
@@ -99,14 +93,14 @@ public class RemoteLoadingMain {
             if (main.getMainClass() == null) {
                 throw new SyntaxException("Main class not specified.");
             }
-            if (main.getCacheDirectory() == null) {
-                throw new SyntaxException("Cache directory not specified.");
+            if (main.getCache() == null) {
+                throw new SyntaxException("--cache not specified.");
             }
-            if (main.getClassLoaderURI() == null) {
-                throw new SyntaxException("ClassLoader URL not specified.");
+            if (main.getClassLoader() == null) {
+                throw new SyntaxException("--classloader not specified.");
             }
-            if (main.getDistributorUri() == null) {
-                throw new SyntaxException("distributor-url not specified.");
+            if (main.getDistributor() == null) {
+                throw new SyntaxException("--distributor not specified.");
             }
 
         } catch (SyntaxException e) {
@@ -119,13 +113,18 @@ public class RemoteLoadingMain {
     }
 
     private void execute() throws Throwable {
-        
-        DistributorFactory.setDefaultRegistryUri(distributorUri);
-        distributor = DistributorFactory.createDefaultDistributor();
-        
         ClassLoader mainCl = loadMainClassLoader();
         Class<?> clazz = mainCl.loadClass(mainClass);
 
+        // Store our options in the System properties.. they might be usefull
+        // to the booted application.
+        System.setProperty("cloudlaunch.bootstrap.distributor", distributor);
+        System.setProperty("cloudlaunch.bootstrap.classloader", classLoader);
+        System.setProperty("cloudlaunch.bootstrap.cache", cache.getPath());
+        if( classLoaderLibs!=null ) {
+            System.setProperty("cloudlaunch.bootstrap.classloader-libs", classLoaderLibs.getPath());
+        }
+        
         // Invoke the main.
         Method mainMethod = clazz.getMethod("main", new Class[] { String[].class });
         try {
@@ -152,44 +151,45 @@ public class RemoteLoadingMain {
         }
 
         // Create the remote classloader
-        Class<?> remoteCLClass = cl.loadClass("org.fusesource.cloudlaunch.util.RemoteClassLoader");
-        Method method = remoteCLClass.getMethod("createRemoteClassLoader", new Class[] { Distributor.class, String.class, File.class, int.class, ClassLoader.class });
+        Class<?> remoteCLClass = cl.loadClass("org.fusesource.cloudlaunch.classloader.ClassLoaderServerFactory");
+        Method method = remoteCLClass.getMethod("createClassLoader", new Class[] { String.class, String.class, File.class, ClassLoader.class });
 
         // Use the new remote classloader to load the main class
-        ClassLoader mainCl = null;
-        mainCl = (ClassLoader) method.invoke(null, new Object[] {distributor, classLoaderURI, cacheDirectory, depth, null });
-        return mainCl;
+        System.out.println("Looking up remote class loader...");
+        return (ClassLoader) method.invoke(null, new Object[] {distributor, classLoader, cache, null});
     }
 
     private static void showUsage() {
         System.out.println();
     }
 
+    ///////////////////////////////////////////////////////////////////
+    // Property Accessors
+    ///////////////////////////////////////////////////////////////////
 
-
-    public void setDistributorUri(String uri) {
-        distributorUri = uri;
+    public void setDistributor(String uri) {
+        distributor = uri;
     }
     
-    public String getDistributorUri()
+    public String getDistributor()
     {
-        return distributorUri;
+        return distributor;
     }
     
-    public void setClassLoaderURI(String classLoaderURI) {
-        this.classLoaderURI = classLoaderURI;
+    public void setClassLoader(String classLoader) {
+        this.classLoader = classLoader;
     }
 
-    public void setCacheDirectory(File cacheDirectory) {
-        this.cacheDirectory = cacheDirectory;
+    public void setCache(File cache) {
+        this.cache = cache;
     }
 
-    public File getCacheDirectory() {
-        return cacheDirectory;
+    public File getCache() {
+        return cache;
     }
 
-    public String getClassLoaderURI() {
-        return classLoaderURI;
+    public String getClassLoader() {
+        return classLoader;
     }
 
     public File getClassLoaderLibs() {
@@ -216,11 +216,4 @@ public class RemoteLoadingMain {
         this.mainClass = mainClass;
     }
 
-    public int getDepth() {
-        return depth;
-    }
-
-    public void setDepth(int depth) {
-        this.depth = depth;
-    }
 }

@@ -36,7 +36,7 @@ public class JMSServerFactory extends ControlServiceFactory {
      */
     @Override
     public final ControlService createControlService(URI providerUri) throws Exception {
-        return ((JMSServerFactory) RESOURCE_FACTORY_FINDER.newInstance(providerUri.getScheme())).createJMSControlService(URISupport.stripScheme(providerUri));
+        return ((JMSServerFactory) RESOURCE_FACTORY_FINDER.create(providerUri.getScheme())).createJMSControlService(URISupport.stripScheme(providerUri));
     }
 
     protected ControlService createJMSControlService(URI uri) throws Exception {

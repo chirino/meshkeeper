@@ -27,7 +27,7 @@ public abstract class RegistryFactory {
 
     public static final Registry create(String uri) throws Exception {
         URI registryUri = new URI(uri);
-        return ((RegistryFactory) RegistryFactory.FACTORY_FINDER.newInstance(registryUri.getScheme())).createRegistry(URISupport.stripScheme(registryUri).toString());
+        return ((RegistryFactory) RegistryFactory.FACTORY_FINDER.create(registryUri.getScheme())).createRegistry(URISupport.stripScheme(registryUri).toString());
     }
 
     protected abstract Registry createRegistry(String uri) throws Exception;

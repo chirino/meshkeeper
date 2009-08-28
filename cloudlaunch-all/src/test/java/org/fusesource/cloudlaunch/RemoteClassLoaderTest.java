@@ -19,23 +19,21 @@ package org.fusesource.cloudlaunch;
 import junit.framework.TestCase;
 import static org.fusesource.cloudlaunch.Expression.file;
 import static org.fusesource.cloudlaunch.Expression.path;
-
-import org.fusesource.cloudlaunch.Expression;
-import org.fusesource.cloudlaunch.LaunchDescription;
-import org.fusesource.cloudlaunch.Process;
-import org.fusesource.cloudlaunch.ProcessListener;
-import org.fusesource.cloudlaunch.util.ClassLoaderServer;
-import org.fusesource.cloudlaunch.util.RemoteLoadingMain;
+import org.fusesource.cloudlaunch.classloader.ClassLoaderFactory;
+import org.fusesource.cloudlaunch.classloader.ClassLoaderServer;
+import org.fusesource.cloudlaunch.classloader.ClassLoaderServerFactory;
+import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.launcher.RemoteBootstrap;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import java.io.IOException;
-import java.io.File;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author chirino
@@ -46,7 +44,6 @@ public class RemoteClassLoaderTest extends TestCase {
     LaunchClient client;
     
     protected void setUp() throws Exception {
-
         String dataDir = "target" + File.separator + "remote-classloader-test";
         String commonRepo = new File(dataDir + File.separator + "common-repo").toURI().toString();
         
@@ -93,7 +90,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add("java");
         ld.add("-cp");
         setClassPath(ld);
-        ld.add(RemoteLoadingMain.class.getName());
+        ld.add(RemoteBootstrap.class.getName());
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
@@ -103,31 +100,36 @@ public class RemoteClassLoaderTest extends TestCase {
     }
 
     public void testLoadRemoteClass() throws Exception {
-        ClassLoaderServer server = new ClassLoaderServer(null, DataInputTestApplication.class.getClassLoader());
+        Distributor distributor = client.getDistributor();
+        ClassLoaderServer server = ClassLoaderServerFactory.create("basic:", distributor);
+        server.start();
 
-        String path = client.getDistributor().register(server, "/test/classloader", true).getPath();
+        ClassLoaderFactory stub = server.export(DataInputTestApplication.class.getClassLoader(), 1);
+        String path = distributor.getRegistry().addObject("/test/classloader", true, stub);
+
         LaunchDescription ld = new LaunchDescription();
         ld.add("java");
         ld.add("-cp");
         setClassPath(ld);
-        ld.add(RemoteLoadingMain.class.getName());
-        ld.add("--cache-dir");
+        ld.add(RemoteBootstrap.class.getName());
+        ld.add("--cache");
         ld.add(file("./classloader-cache"));
-        ld.add("--distributor-uri");
+        ld.add("--distributor");
         ld.add(client.getDistributor().getRegistryUri());
-        ld.add("--classloader-url");
+        ld.add("--classloader");
         ld.add(path);
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
         Process process = client.launchProcess(getAgent(), ld, exitListener);
         process.write(Process.FD_STD_IN, "exit: 5\n".getBytes());
-
         try {
             exitListener.assertExitCode(5);
         } finally {
+            System.out.println("==== client output ====");
             System.out.println(exitListener.getOutAsString());
             System.out.println(exitListener.getErrAsString());
+            server.stop();
         }
     }
 
@@ -141,7 +143,6 @@ public class RemoteClassLoaderTest extends TestCase {
                 files.add(file(file));
             }
         }
-
         ld.add(path(files));
     }
 
@@ -161,7 +162,7 @@ public class RemoteClassLoaderTest extends TestCase {
         private ArrayList<Throwable> errors = new ArrayList<Throwable>();
 
         public void assertExitCode(int value) throws InterruptedException {
-            assertTrue("timed out waiting for exit", exitLatch.await(10, TimeUnit.SECONDS));
+            assertTrue("timed out waiting for exit", exitLatch.await(30, TimeUnit.SECONDS));
             assertEquals(value, exitCode.get());
         }
 

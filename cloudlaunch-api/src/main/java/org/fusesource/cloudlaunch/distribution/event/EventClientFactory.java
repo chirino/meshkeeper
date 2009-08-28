@@ -27,7 +27,7 @@ public abstract class EventClientFactory {
 
     public static final EventClient create(String uri) throws Exception {
         URI eventUri = new URI(uri);
-        return ((EventClientFactory) EventClientFactory.FACTORY_FINDER.newInstance(eventUri.getScheme())).createEventClient(URISupport.stripScheme(eventUri).toString());
+        return ((EventClientFactory) EventClientFactory.FACTORY_FINDER.create(eventUri.getScheme())).createEventClient(URISupport.stripScheme(eventUri).toString());
     }
 
     protected abstract EventClient createEventClient(String uri) throws Exception;
