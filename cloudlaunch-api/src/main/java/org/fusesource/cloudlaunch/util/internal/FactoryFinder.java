@@ -26,6 +26,9 @@
  */
 package org.fusesource.cloudlaunch.util.internal;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.fusesource.cloudlaunch.distribution.DistributorFactory;
 import org.fusesource.mop.MOP;
 import org.fusesource.mop.MOPRepository;
 import org.fusesource.mop.support.ArtifactId;
@@ -38,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.net.URLClassLoader;
 
 public class FactoryFinder {
+    private static Log LOG = LogFactory.getLog(DistributorFactory.class);
 
     private final String path;
     private final ConcurrentHashMap<String, Class> classMap = new ConcurrentHashMap<String, Class>();
@@ -167,6 +171,7 @@ public class FactoryFinder {
             CLASSLOADER_CACHE.put(cl, mavenArtifact);
             return cl;
         } catch (Exception e) {
+            LOG.warn("Error loading artifact class loader", e);
             return null;
         }
     }
