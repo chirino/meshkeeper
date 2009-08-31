@@ -87,7 +87,7 @@ public class ActiveMQControlService implements ControlService {
         BrokerService controlBroker = null;
         try {
             controlBroker = BrokerFactory.createBroker(uri);
-        } catch (Exception e) {
+        } catch (Throwable thrown) {
             controlBroker = new BrokerService();
             controlBroker.setBrokerName("CloudLaunchControlBroker");
             controlBroker.addConnector(uri.toString());

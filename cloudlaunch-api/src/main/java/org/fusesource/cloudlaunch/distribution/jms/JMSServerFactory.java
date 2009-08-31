@@ -9,7 +9,7 @@ package org.fusesource.cloudlaunch.distribution.jms;
 
 import org.fusesource.cloudlaunch.control.ControlService;
 import org.fusesource.cloudlaunch.control.ControlServiceFactory;
-import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
+import org.fusesource.cloudlaunch.distribution.FactoryFinder;
 
 /**
  * JMSServerFactory

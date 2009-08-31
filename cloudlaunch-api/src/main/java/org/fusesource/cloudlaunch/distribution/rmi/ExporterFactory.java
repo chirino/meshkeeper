@@ -9,7 +9,7 @@ package org.fusesource.cloudlaunch.distribution.rmi;
 
 
 import org.fusesource.cloudlaunch.distribution.AbstractPluginFactory;
-import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
+import org.fusesource.cloudlaunch.distribution.FactoryFinder;
 
 /**
  * ExporterFactory

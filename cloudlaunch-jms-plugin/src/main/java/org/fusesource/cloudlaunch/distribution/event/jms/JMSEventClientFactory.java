@@ -13,7 +13,6 @@ import org.fusesource.cloudlaunch.distribution.event.EventClient;
 import org.fusesource.cloudlaunch.distribution.event.EventClientFactory;
 import org.fusesource.cloudlaunch.distribution.jms.JMSClientFactory;
 import org.fusesource.cloudlaunch.distribution.jms.JMSProvider;
-import org.fusesource.cloudlaunch.util.internal.PluginClassLoader;
 import org.fusesource.cloudlaunch.util.internal.URISupport;
 
 /**

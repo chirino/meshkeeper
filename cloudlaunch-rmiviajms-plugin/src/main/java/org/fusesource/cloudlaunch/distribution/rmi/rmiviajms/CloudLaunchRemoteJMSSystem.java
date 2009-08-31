@@ -15,7 +15,6 @@ import javax.jms.Destination;
 import org.fusesource.cloudlaunch.control.ControlServer;
 import org.fusesource.cloudlaunch.distribution.jms.JMSClientFactory;
 import org.fusesource.cloudlaunch.distribution.jms.JMSProvider;
-import org.fusesource.cloudlaunch.util.internal.PluginClassLoader;
 import org.fusesource.cloudlaunch.util.internal.URISupport;
 import org.fusesource.rmiviajms.internal.JMSRemoteSystem;
 

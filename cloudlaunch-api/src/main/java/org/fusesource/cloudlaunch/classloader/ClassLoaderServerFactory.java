@@ -7,11 +7,10 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.classloader;
 
-import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
-import org.fusesource.cloudlaunch.util.internal.PluginClassLoader;
 import org.fusesource.cloudlaunch.util.internal.URISupport;
 import org.fusesource.cloudlaunch.distribution.Distributor;
 import org.fusesource.cloudlaunch.distribution.DistributorFactory;
+import org.fusesource.cloudlaunch.distribution.FactoryFinder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

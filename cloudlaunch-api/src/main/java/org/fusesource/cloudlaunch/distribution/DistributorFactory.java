@@ -20,7 +20,6 @@ import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManagerFactory;
 import org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory;
 import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
-import org.fusesource.cloudlaunch.util.internal.PluginClassLoader;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -93,54 +92,48 @@ public class DistributorFactory {
 
     public Distributor create() throws Exception {
 
-        ClassLoader original = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(new PluginClassLoader(DistributorFactory.class.getClassLoader()));
-        try {
-            //Create Registry:
-            Registry registry = new RegistryFactory().create(registryProviderUri);
-            registry.start();
+        //Create Registry:
+        Registry registry = new RegistryFactory().create(registryProviderUri);
+        registry.start();
 
-            //Create Exporter:
+        //Create Exporter:
+        if (rmiProviderUri == null) {
+            rmiProviderUri = registry.getObject(ControlServer.EXPORTER_CONNECT_URI_PATH);
             if (rmiProviderUri == null) {
-                rmiProviderUri = registry.getObject(ControlServer.EXPORTER_CONNECT_URI_PATH);
-                if (rmiProviderUri == null) {
-                    rmiProviderUri = ControlServer.DEFAULT_RMI_URI;
-                }
+                rmiProviderUri = ControlServer.DEFAULT_RMI_URI;
             }
-            IExporter exporter = new ExporterFactory().create(rmiProviderUri);
-
-            //Create Event Client:
-            if (eventProviderUri == null) {
-                eventProviderUri = registry.getObject(ControlServer.EVENT_CONNECT_URI_PATH);
-                if (eventProviderUri == null) {
-                    eventProviderUri = ControlServer.DEFAULT_EVENT_URI;
-                }
-            }
-            EventClient eventClient = new EventClientFactory().create(eventProviderUri);
-
-            //Create ResourceManager:
-            ResourceManager resourceManager = new ResourceManagerFactory().create(resourceManagerProvider);
-            String commonRepoUrl = registry.getObject(ControlServer.COMMON_REPO_URL_PATH);
-            if (commonRepoUrl != null) {
-                resourceManager.setCommonRepoUrl(commonRepoUrl, null);
-            }
-            resourceManager.setLocalRepoDir(dataDirectory + File.separator + "local-repo");
-
-            Distributor ret = new Distributor();
-            ret.setExporter(exporter);
-            ret.setRegistry(registry);
-            ret.setEventClient(eventClient);
-            ret.setResourceManager(resourceManager);
-            ret.setRegistryUri(registryProviderUri);
-
-            ret.start();
-            if (log.isTraceEnabled()) {
-                log.trace("Created: " + ret);
-            }
-            return ret;
-        } finally {
-            Thread.currentThread().setContextClassLoader(original);
         }
+        IExporter exporter = new ExporterFactory().create(rmiProviderUri);
+
+        //Create Event Client:
+        if (eventProviderUri == null) {
+            eventProviderUri = registry.getObject(ControlServer.EVENT_CONNECT_URI_PATH);
+            if (eventProviderUri == null) {
+                eventProviderUri = ControlServer.DEFAULT_EVENT_URI;
+            }
+        }
+        EventClient eventClient = new EventClientFactory().create(eventProviderUri);
+
+        //Create ResourceManager:
+        ResourceManager resourceManager = new ResourceManagerFactory().create(resourceManagerProvider);
+        String commonRepoUrl = registry.getObject(ControlServer.COMMON_REPO_URL_PATH);
+        if (commonRepoUrl != null) {
+            resourceManager.setCommonRepoUrl(commonRepoUrl, null);
+        }
+        resourceManager.setLocalRepoDir(dataDirectory + File.separator + "local-repo");
+
+        Distributor ret = new Distributor();
+        ret.setExporter(exporter);
+        ret.setRegistry(registry);
+        ret.setEventClient(eventClient);
+        ret.setResourceManager(resourceManager);
+        ret.setRegistryUri(registryProviderUri);
+
+        ret.start();
+        if (log.isTraceEnabled()) {
+            log.trace("Created: " + ret);
+        }
+        return ret;
 
     }
 

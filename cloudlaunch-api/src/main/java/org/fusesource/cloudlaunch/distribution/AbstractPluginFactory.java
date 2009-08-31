@@ -9,8 +9,6 @@ package org.fusesource.cloudlaunch.distribution;
 
 import java.net.URI;
 
-import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
-
 /**
  * AbstractPluginFactory
  * <p>
@@ -30,8 +28,18 @@ public abstract class AbstractPluginFactory<P> {
             factoryName = remaining;
             remaining = "";
         }
+        
         AbstractPluginFactory<P> f = (AbstractPluginFactory<P>) getFactoryFinder().create(factoryName);
-        return f.createPlugin(remaining);
+        
+        //Create the plugin using PluginClassLoader
+        ClassLoader orig = Thread.currentThread().getContextClassLoader();
+        PluginClassLoader pcl = PluginClassLoader.getContextPluginLoader();
+        Thread.currentThread().setContextClassLoader(pcl);
+        try {
+            return f.createPlugin(remaining);
+        } finally {
+            Thread.currentThread().setContextClassLoader(orig);
+        }
     }
 
     protected abstract FactoryFinder getFactoryFinder();

@@ -1,7 +1,7 @@
 package org.fusesource.cloudlaunch.distribution.jms;
 
 import org.fusesource.cloudlaunch.distribution.AbstractPluginFactory;
-import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
+import org.fusesource.cloudlaunch.distribution.FactoryFinder;
 
 /**************************************************************************************
  * Copyright (C) 2009 Progress Software, Inc. All rights reserved.                    *
