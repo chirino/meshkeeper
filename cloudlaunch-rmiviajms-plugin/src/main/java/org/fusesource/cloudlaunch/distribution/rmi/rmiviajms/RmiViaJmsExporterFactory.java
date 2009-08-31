@@ -33,7 +33,8 @@ public class RmiViaJmsExporterFactory extends ExporterFactory {
      * org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory#createExporter
      * (java.lang.String)
      */
-    public IExporter createExporter(String uri) throws Exception {
+    @Override
+    public IExporter createPlugin(String uri) throws Exception {
 
         URI connectUri = new URI(URISupport.stripPrefix(uri, "rmiviajms:"));
 

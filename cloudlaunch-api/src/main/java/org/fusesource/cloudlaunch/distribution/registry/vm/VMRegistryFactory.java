@@ -24,7 +24,7 @@ public class VMRegistryFactory extends RegistryFactory{
      * @see org.fusesource.cloudlaunch.distribution.registry.RegistryFactory#createRegistry(java.lang.String)
      */
     @Override
-    protected Registry createRegistry(String uri) throws Exception {
+    protected Registry createPlugin(String uri) throws Exception {
         return new VMRegistry();
     }
 }

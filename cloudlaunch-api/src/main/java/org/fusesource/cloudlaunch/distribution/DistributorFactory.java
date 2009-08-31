@@ -20,6 +20,7 @@ import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManagerFactory;
 import org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory;
 import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
+import org.fusesource.cloudlaunch.util.internal.PluginClassLoader;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -51,8 +52,8 @@ public class DistributorFactory {
         } catch (SecurityException se) {
         }
         DEFAULT_DATA_DIR = repoDir;
-        
-        EXECUTOR = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory(){
+
+        EXECUTOR = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
 
             public Thread newThread(Runnable r) {
                 return new Thread(r, "CloudLaunchExecutor-" + EXECUTOR_COUNT.incrementAndGet());
@@ -66,7 +67,6 @@ public class DistributorFactory {
     private String eventProviderUri;
     private String rmiProviderUri;
     private String commonRepoUrl;
-    
 
     /**
      * This convenience method creates a Distributor by connecting to a control
@@ -86,57 +86,62 @@ public class DistributorFactory {
     public static void setDefaultRegistryUri(String defaultRegistryUri) {
         DEFAULT_REGISTRY_URI = defaultRegistryUri;
     }
-    
-    public static ScheduledExecutorService getExecutorService()
-    {
+
+    public static ScheduledExecutorService getExecutorService() {
         return EXECUTOR;
     }
 
     public Distributor create() throws Exception {
 
-        //Create Registry:
-        Registry registry = RegistryFactory.create(registryProviderUri);
-        registry.start();
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(new PluginClassLoader(DistributorFactory.class.getClassLoader()));
+        try {
+            //Create Registry:
+            Registry registry = new RegistryFactory().create(registryProviderUri);
+            registry.start();
 
-        //Create Exporter:
-        if (rmiProviderUri == null) {
-            rmiProviderUri = registry.getObject(ControlServer.EXPORTER_CONNECT_URI_PATH);
+            //Create Exporter:
             if (rmiProviderUri == null) {
-                rmiProviderUri = ControlServer.DEFAULT_RMI_URI;
+                rmiProviderUri = registry.getObject(ControlServer.EXPORTER_CONNECT_URI_PATH);
+                if (rmiProviderUri == null) {
+                    rmiProviderUri = ControlServer.DEFAULT_RMI_URI;
+                }
             }
-        }
-        IExporter exporter = ExporterFactory.create(rmiProviderUri);
-        
+            IExporter exporter = new ExporterFactory().create(rmiProviderUri);
 
-        //Create Event Client:
-        if (eventProviderUri == null) {
-            eventProviderUri = registry.getObject(ControlServer.EVENT_CONNECT_URI_PATH);
+            //Create Event Client:
             if (eventProviderUri == null) {
-                eventProviderUri = ControlServer.DEFAULT_EVENT_URI;
+                eventProviderUri = registry.getObject(ControlServer.EVENT_CONNECT_URI_PATH);
+                if (eventProviderUri == null) {
+                    eventProviderUri = ControlServer.DEFAULT_EVENT_URI;
+                }
             }
-        }
-        EventClient eventClient = EventClientFactory.create(eventProviderUri);
+            EventClient eventClient = new EventClientFactory().create(eventProviderUri);
 
-        //Create ResourceManager:
-        ResourceManager resourceManager = ResourceManagerFactory.create(resourceManagerProvider);
-        String commonRepoUrl = registry.getObject(ControlServer.COMMON_REPO_URL_PATH);
-        if (commonRepoUrl != null) {
-            resourceManager.setCommonRepoUrl(commonRepoUrl, null);
-        }
-        resourceManager.setLocalRepoDir(dataDirectory + File.separator + "local-repo");
+            //Create ResourceManager:
+            ResourceManager resourceManager = new ResourceManagerFactory().create(resourceManagerProvider);
+            String commonRepoUrl = registry.getObject(ControlServer.COMMON_REPO_URL_PATH);
+            if (commonRepoUrl != null) {
+                resourceManager.setCommonRepoUrl(commonRepoUrl, null);
+            }
+            resourceManager.setLocalRepoDir(dataDirectory + File.separator + "local-repo");
 
-        Distributor ret = new Distributor();
-        ret.setExporter(exporter);
-        ret.setRegistry(registry);
-        ret.setEventClient(eventClient);
-        ret.setResourceManager(resourceManager);
-        ret.setRegistryUri(registryProviderUri);
+            Distributor ret = new Distributor();
+            ret.setExporter(exporter);
+            ret.setRegistry(registry);
+            ret.setEventClient(eventClient);
+            ret.setResourceManager(resourceManager);
+            ret.setRegistryUri(registryProviderUri);
 
-        ret.start();
-        if (log.isTraceEnabled()) {
-            log.trace("Created: " + ret);
+            ret.start();
+            if (log.isTraceEnabled()) {
+                log.trace("Created: " + ret);
+            }
+            return ret;
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
         }
-        return ret;
+
     }
 
     public String getResourceManagerProvider() {

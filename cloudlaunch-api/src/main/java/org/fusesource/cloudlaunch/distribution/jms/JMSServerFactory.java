@@ -7,12 +7,9 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.jms;
 
-import java.net.URI;
-
 import org.fusesource.cloudlaunch.control.ControlService;
 import org.fusesource.cloudlaunch.control.ControlServiceFactory;
 import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
-import org.fusesource.cloudlaunch.util.internal.URISupport;
 
 /**
  * JMSServerFactory
@@ -25,7 +22,11 @@ import org.fusesource.cloudlaunch.util.internal.URISupport;
  */
 public class JMSServerFactory extends ControlServiceFactory {
 
-    private static final FactoryFinder RESOURCE_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/jms/server/");
+    private static final FactoryFinder FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/jms/server/");
+
+    public final FactoryFinder getFactoryFinder() {
+        return FACTORY_FINDER;
+    }
 
     /*
      * (non-Javadoc)
@@ -35,11 +36,9 @@ public class JMSServerFactory extends ControlServiceFactory {
      * (java.lang.String)
      */
     @Override
-    public final ControlService createControlService(URI providerUri) throws Exception {
-        return ((JMSServerFactory) RESOURCE_FACTORY_FINDER.create(providerUri.getScheme())).createJMSControlService(URISupport.stripScheme(providerUri));
+    public ControlService createPlugin(String providerUri) throws Exception {
+
+        return create(providerUri);
     }
 
-    protected ControlService createJMSControlService(URI uri) throws Exception {
-        throw new UnsupportedOperationException();
-    }
 }

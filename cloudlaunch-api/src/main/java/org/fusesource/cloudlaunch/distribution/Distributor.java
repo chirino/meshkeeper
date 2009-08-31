@@ -130,7 +130,7 @@ public class Distributor {
     }
 
     public void start() {
-        
+
     }
 
     public void destroy() throws Exception {
@@ -190,16 +190,17 @@ public class Distributor {
     public String toString() {
         return "Distributor [exporter: " + exporter + " registry: " + registry + "]";
     }
-    
+
     /**
-     * @param registryUri the registryUri to set
+     * @param registryUri
+     *            the registryUri to set
      */
     void setRegistryUri(String registryUri) {
         this.registryUri = registryUri;
     }
 
     /**
-     * Returns the URI of the cloudlaunch registry to which this distributor is 
+     * Returns the URI of the cloudlaunch registry to which this distributor is
      * connected.
      * 
      * @return the registryUri
@@ -229,6 +230,8 @@ public class Distributor {
         private synchronized D export() throws Exception {
             if (stub == null) {
                 stub = (D) exporter.export(object);
+                if (log.isDebugEnabled())
+                    log.debug("Exported: " + object + " to " + stub);
             }
             return stub;
         }

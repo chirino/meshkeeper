@@ -7,8 +7,7 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.resource;
 
-import java.net.URI;
-
+import org.fusesource.cloudlaunch.distribution.AbstractPluginFactory;
 import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
 
 /**
@@ -20,19 +19,13 @@ import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
  * @author cmacnaug
  * @version 1.0
  */
-public abstract class ResourceManagerFactory {
+public class ResourceManagerFactory extends AbstractPluginFactory<ResourceManager> {
 
     private static final FactoryFinder RESOURCE_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/resource/");
 
-    public static final ResourceManager create(String uri) throws Exception {
-        URI providerUri = new URI(uri);
-        String scheme = providerUri.getScheme();
-        if (scheme == null) {
-            scheme = providerUri.getSchemeSpecificPart();
-        }
-        return ((ResourceManagerFactory) RESOURCE_FACTORY_FINDER.create(scheme)).createResourceManager(uri);
+    @Override
+    protected final FactoryFinder getFactoryFinder() {
+        return RESOURCE_FACTORY_FINDER;
     }
-
-    protected abstract ResourceManager createResourceManager(String uri) throws Exception;
 
 }

@@ -70,8 +70,7 @@ public class ActiveMQControlService implements ControlService {
      * @see org.fusesource.cloudlaunch.control.ControlService#getName()
      */
     public String getName() {
-        // TODO Auto-generated method stub
-        return null;
+        return "ActiveMQ Control Service at: " + getServiceUri();
     }
 
     /*

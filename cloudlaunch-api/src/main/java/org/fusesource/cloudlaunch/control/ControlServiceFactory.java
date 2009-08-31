@@ -7,10 +7,9 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.control;
 
-import java.net.URI;
 
+import org.fusesource.cloudlaunch.distribution.AbstractPluginFactory;
 import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
-import org.fusesource.cloudlaunch.util.internal.URISupport;
 
 /**
  * ControlServiceFactory
@@ -21,14 +20,13 @@ import org.fusesource.cloudlaunch.util.internal.URISupport;
  * @author cmacnaug
  * @version 1.0
  */
-public abstract class ControlServiceFactory {
+public class ControlServiceFactory extends AbstractPluginFactory<ControlService> {
 
-    private static final FactoryFinder RESOURCE_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/control/");
+    private static final FactoryFinder FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/control/");
 
-    public static final ControlService create(String uri) throws Exception {
-        URI providerUri = new URI(uri);
-        return ((ControlServiceFactory)RESOURCE_FACTORY_FINDER.create(providerUri.getScheme())).createControlService(URISupport.stripScheme(providerUri));
+    @Override
+    protected FactoryFinder getFactoryFinder() {
+        return FACTORY_FINDER;
     }
 
-    protected abstract ControlService createControlService(URI uri) throws Exception;
 }

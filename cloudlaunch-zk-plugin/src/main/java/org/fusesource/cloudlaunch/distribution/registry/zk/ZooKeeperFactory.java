@@ -20,7 +20,8 @@ import java.util.Map;
  */
 public class ZooKeeperFactory extends RegistryFactory {
 
-    public Registry createRegistry(String uri) throws Exception {
+    @Override
+    public Registry createPlugin(String uri) throws Exception {
         URI connectUri = new URI(URISupport.stripPrefix(uri, "zk:"));
 
         ZooKeeperRegistry registry = new ZooKeeperRegistry();

@@ -41,10 +41,16 @@ class RmiViaJmsExporter extends AbstractExporter {
         this.providerUri = providerUri;
     }
 
-    public void start() {
+    public void start() throws Exception {
         System.setProperty("org.fusesource.rmiviajms.REMOTE_SYSTEM_CLASS", CloudLaunchRemoteJMSSystem.class.getName());
-        CloudLaunchRemoteJMSSystem.PROVIDER_URI = providerUri;
-        JMSRemoteObject.addOneWayAnnotation(Oneway.class);
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(RmiViaJmsExporter.class.getClassLoader());
+        try {
+            CloudLaunchRemoteJMSSystem.initialize(providerUri);
+            JMSRemoteObject.addOneWayAnnotation(Oneway.class);
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
+        }
     }
 
     public void destroy() throws InterruptedException, Exception {

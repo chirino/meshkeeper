@@ -26,17 +26,18 @@ import org.fusesource.cloudlaunch.util.internal.URISupport;
 public class ZooKeeperServerFactory extends ControlServiceFactory {
 
     @Override
-    protected ControlService createControlService(URI connectUri) throws Exception {
+    protected ControlService createPlugin(String connectUri) throws Exception {
 
+        URI cUri = new URI(connectUri);
         ZooKeeperServer server = new ZooKeeperServer();
-        server.setPort(connectUri.getPort());
+        server.setPort(cUri.getPort());
         server.setPurge(true);
         //Use query params to initialize the server:
-        Map<String, String> props = URISupport.parseParamters(connectUri);
+        Map<String, String> props = URISupport.parseParamters(cUri);
         if (!props.isEmpty()) {
             IntrospectionSupport.setProperties(server, props);
-            connectUri = URISupport.removeQuery(connectUri);
-            connectUri = URISupport.createRemainingURI(connectUri, props);
+            cUri = URISupport.removeQuery(cUri);
+            cUri = URISupport.createRemainingURI(cUri, props);
         }
         return server;
     }    

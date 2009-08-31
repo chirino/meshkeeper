@@ -29,7 +29,7 @@ import org.fusesource.cloudlaunch.distribution.registry.RegistryFactory;
 public class ControlServer {
 
     Log log = LogFactory.getLog(ControlServer.class);
-
+    private static final ControlServiceFactory SERVICE_FACTORY = new ControlServiceFactory();
     public static final String DEFAULT_JMS_PROVIDER_URI= "activemq:tcp://localhost:4041";
     public static final String DEFAULT_REGISTRY_PROVIDER_URI = "zk:tcp://localhost:4040";
     public static final String DEFAULT_RMI_URI = "rmiviajms:" + DEFAULT_JMS_PROVIDER_URI;
@@ -63,10 +63,11 @@ public class ControlServer {
             }
         };
 
+        
         //Start the jms server:
         log.info("Creating JMS Server at " + jmsProviderUri);
         try {
-            rmiServer = ControlServiceFactory.create(jmsProviderUri);
+            rmiServer = SERVICE_FACTORY.create(jmsProviderUri);
             rmiServer.setDataDirectory(dataDirectory + File.separator + "jms");
             rmiServer.start();
             log.info("JMS Server started: " + rmiServer.getName());
@@ -80,7 +81,7 @@ public class ControlServer {
         //Start the registry server:
         log.info("Creating Registry Server at " + registryProviderUri);
         try {
-            registryServer = ControlServiceFactory.create(registryProviderUri);
+            registryServer = SERVICE_FACTORY.create(registryProviderUri);
             registryServer.setDataDirectory(dataDirectory + File.separator + "registry");
             registryServer.start();
             log.info("Registry Server started: " + registryServer.getName());
@@ -94,7 +95,7 @@ public class ControlServer {
         //Connect to the registry and publish service connection info:
         try {
             
-            registry = RegistryFactory.create("zk:" + registryProviderUri);
+            registry = new RegistryFactory().create("zk:" + registryProviderUri);
 
             //Register the control services:
             

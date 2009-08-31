@@ -24,9 +24,9 @@ public class VMExporterFactory extends ExporterFactory{
      * @see org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory#createExporter(java.lang.String)
      */
     @Override
-    protected IExporter createExporter(String uri) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+    protected IExporter createPlugin(String uri) throws Exception {
+        
+        return new VMExporter();
     }
 
 }

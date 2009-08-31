@@ -1,7 +1,6 @@
 package org.fusesource.cloudlaunch.distribution.jms;
 
-import java.net.URI;
-
+import org.fusesource.cloudlaunch.distribution.AbstractPluginFactory;
 import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
 
 /**************************************************************************************
@@ -21,15 +20,12 @@ import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
  * @author cmacnaug
  * @version 1.0
  */
-public abstract class JMSClientFactory {
+public class JMSClientFactory extends AbstractPluginFactory<JMSProvider> {
 
-    private static final FactoryFinder RESOURCE_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/jms/client/");
+    private static final FactoryFinder FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/jms/client/");
 
-    
-    public static final JMSProvider create(String uri) throws Exception {
-        URI providerUri = new URI(uri);
-        return ((JMSClientFactory)RESOURCE_FACTORY_FINDER.create(providerUri.getScheme())).createJMSProvider(uri);
+    @Override
+    protected final FactoryFinder getFactoryFinder() {
+        return FACTORY_FINDER;
     }
-    
-    protected abstract JMSProvider createJMSProvider(String uri) throws Exception;
 }

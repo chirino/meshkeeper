@@ -15,6 +15,7 @@ import javax.jms.Destination;
 import org.fusesource.cloudlaunch.control.ControlServer;
 import org.fusesource.cloudlaunch.distribution.jms.JMSClientFactory;
 import org.fusesource.cloudlaunch.distribution.jms.JMSProvider;
+import org.fusesource.cloudlaunch.util.internal.PluginClassLoader;
 import org.fusesource.cloudlaunch.util.internal.URISupport;
 import org.fusesource.rmiviajms.internal.JMSRemoteSystem;
 
@@ -30,22 +31,21 @@ import org.fusesource.rmiviajms.internal.JMSRemoteSystem;
 public class CloudLaunchRemoteJMSSystem extends JMSRemoteSystem {
 
     public final static String QUEUE_PREFIX = System.getProperty("org.fusesource.rmiviajms.QUEUE_PREFIX", "rmiviajms.");
-    public static String PROVIDER_URI = ControlServer.DEFAULT_RMI_URI;
-    private static URI CONNECT_URI;
+    static String PROVIDER_URI = ControlServer.DEFAULT_RMI_URI;
     private static JMSProvider provider;
 
-    private synchronized JMSProvider getProvider() throws Exception {
-        if (provider == null) {
-            provider = JMSClientFactory.create(PROVIDER_URI);
-            CONNECT_URI = URISupport.stripScheme(new URI(PROVIDER_URI));
-        }
-        return provider;
+    private static URI CONNECT_URI;
+
+    static void initialize(String providerUri) throws Exception {
+        PROVIDER_URI = providerUri;
+        provider = new JMSClientFactory().create(PROVIDER_URI);
+        CONNECT_URI = URISupport.stripScheme(new URI(PROVIDER_URI));
     }
 
     @Override
     protected ConnectionFactory createConnectionFactory() {
         try {
-            return getProvider().createConnectionFactory(CONNECT_URI);
+            return provider.createConnectionFactory(CONNECT_URI);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error creating rmi connection factory", e);
@@ -55,7 +55,7 @@ public class CloudLaunchRemoteJMSSystem extends JMSRemoteSystem {
     @Override
     protected Destination createQueue(String systemId) {
         try {
-            return getProvider().createQueue(QUEUE_PREFIX + systemId);
+            return provider.createQueue(QUEUE_PREFIX + systemId);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error creating rmi destination", e);

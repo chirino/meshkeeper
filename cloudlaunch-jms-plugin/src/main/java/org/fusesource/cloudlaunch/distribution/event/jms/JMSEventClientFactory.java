@@ -13,6 +13,7 @@ import org.fusesource.cloudlaunch.distribution.event.EventClient;
 import org.fusesource.cloudlaunch.distribution.event.EventClientFactory;
 import org.fusesource.cloudlaunch.distribution.jms.JMSClientFactory;
 import org.fusesource.cloudlaunch.distribution.jms.JMSProvider;
+import org.fusesource.cloudlaunch.util.internal.PluginClassLoader;
 import org.fusesource.cloudlaunch.util.internal.URISupport;
 
 /**
@@ -35,7 +36,8 @@ public class JMSEventClientFactory extends EventClientFactory {
      * org.fusesource.cloudlaunch.distribution.rmi.ExporterFactory#createExporter
      * (java.lang.String)
      */
-    protected EventClient createEventClient(String uri) throws Exception {
+    @Override
+    protected EventClient createPlugin(String uri) throws Exception {
         URI providerUri = new URI(uri);
         getJMSProvider(providerUri);
         URI connectUri = URISupport.stripScheme(providerUri);
@@ -44,7 +46,7 @@ public class JMSEventClientFactory extends EventClientFactory {
 
     private static final JMSProvider getJMSProvider(URI providerUri) throws Exception {
         if (provider == null) {
-            provider = JMSClientFactory.create(providerUri.toString());
+            provider = new JMSClientFactory().create(providerUri.toString());
             ;
         }
         return provider;

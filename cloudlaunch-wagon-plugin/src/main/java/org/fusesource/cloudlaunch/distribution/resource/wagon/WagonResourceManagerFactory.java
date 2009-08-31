@@ -7,8 +7,6 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.resource.wagon;
 
-import java.io.File;
-
 import org.fusesource.cloudlaunch.distribution.resource.AuthenticationInfo;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManagerFactory;
@@ -35,7 +33,8 @@ public class WagonResourceManagerFactory extends ResourceManagerFactory {
      * org.fusesource.cloudlaunch.distribution.resource.ResourceManagerFactory
      * #createResourceManager()
      */
-    public ResourceManager createResourceManager(String uri) throws Exception {
+    @Override
+    public ResourceManager createPlugin(String uri) throws Exception {
         WagonResourceManager wrm = new WagonResourceManager();
         if (localRepoDir != null) {
             wrm.setLocalRepoDir(localRepoDir);

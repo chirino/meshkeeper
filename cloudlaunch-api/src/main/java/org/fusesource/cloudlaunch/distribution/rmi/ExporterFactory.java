@@ -7,40 +7,25 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.rmi;
 
-import java.net.URI;
 
+import org.fusesource.cloudlaunch.distribution.AbstractPluginFactory;
 import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
 
-/** 
+/**
  * ExporterFactory
  * <p>
- * Description:
- * Factory interface for creating {@link IExporter}s
+ * Description: Factory interface for creating {@link IExporter}s
  * </p>
+ * 
  * @author cmacnaug
  * @version 1.0
  */
-public abstract class ExporterFactory {
+public class ExporterFactory extends AbstractPluginFactory<IExporter> {
 
     private static final FactoryFinder EXPORTER_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/exporter/");
-    
-    public static final IExporter create(String uri) throws Exception
-    {
-        ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
-        try
-        {
-            ClassLoader cl = originalLoader;
-            Thread.currentThread().setContextClassLoader(cl);
-            URI rmiUri = new URI(uri);
-            ExporterFactory ef = (ExporterFactory) EXPORTER_FACTORY_FINDER.create(rmiUri.getScheme());
-            return ef.createExporter(rmiUri.toString());
-        }
-        finally
-        {
-            Thread.currentThread().setContextClassLoader(originalLoader);
-        }
+
+    @Override
+    protected final FactoryFinder getFactoryFinder() {
+        return EXPORTER_FACTORY_FINDER;
     }
-    
-    protected abstract IExporter createExporter(String uri) throws Exception;
-    
 }

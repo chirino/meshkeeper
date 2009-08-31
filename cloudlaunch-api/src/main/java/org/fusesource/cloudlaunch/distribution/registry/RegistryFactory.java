@@ -7,10 +7,8 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.registry;
 
-import java.net.URI;
-
+import org.fusesource.cloudlaunch.distribution.AbstractPluginFactory;
 import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
-import org.fusesource.cloudlaunch.util.internal.URISupport;
 
 /**
  * RegistryFactory
@@ -21,14 +19,12 @@ import org.fusesource.cloudlaunch.util.internal.URISupport;
  * @author cmacnaug
  * @version 1.0
  */
-public abstract class RegistryFactory {
+public class RegistryFactory extends AbstractPluginFactory<Registry> {
 
     public static final FactoryFinder FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/registry/");
 
-    public static final Registry create(String uri) throws Exception {
-        URI registryUri = new URI(uri);
-        return ((RegistryFactory) RegistryFactory.FACTORY_FINDER.create(registryUri.getScheme())).createRegistry(URISupport.stripScheme(registryUri).toString());
+    @Override
+    protected final FactoryFinder getFactoryFinder() {
+        return FACTORY_FINDER;
     }
-
-    protected abstract Registry createRegistry(String uri) throws Exception;
 }

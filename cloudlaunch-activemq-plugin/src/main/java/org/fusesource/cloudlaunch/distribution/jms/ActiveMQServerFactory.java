@@ -8,6 +8,7 @@
 package org.fusesource.cloudlaunch.distribution.jms;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.fusesource.cloudlaunch.control.ControlService;
 
@@ -23,11 +24,10 @@ import org.fusesource.cloudlaunch.control.ControlService;
 public class ActiveMQServerFactory extends JMSServerFactory {
 
     /* (non-Javadoc)
-     * @see org.fusesource.cloudlaunch.distribution.jms.JMSServerFactory#createJMSControlService(java.net.URI)
+     * @see org.fusesource.cloudlaunch.distribution.jms.JMSServerFactory#createJMSServerControlService(java.lang.String)
      */
     @Override
-    protected ControlService createJMSControlService(URI uri) throws Exception {
-        return ActiveMQControlService.create(uri);
+    public ControlService createPlugin(String providerUri) throws Exception {
+        return ActiveMQControlService.create(new URI(providerUri));
     }
-
 }

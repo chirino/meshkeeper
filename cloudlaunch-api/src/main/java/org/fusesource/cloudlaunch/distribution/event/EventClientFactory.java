@@ -7,10 +7,8 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.event;
 
-import java.net.URI;
-
+import org.fusesource.cloudlaunch.distribution.AbstractPluginFactory;
 import org.fusesource.cloudlaunch.util.internal.FactoryFinder;
-import org.fusesource.cloudlaunch.util.internal.URISupport;
 
 /**
  * EventClientFactory
@@ -21,15 +19,12 @@ import org.fusesource.cloudlaunch.util.internal.URISupport;
  * @author cmacnaug
  * @version 1.0
  */
-public abstract class EventClientFactory {
+public class EventClientFactory extends AbstractPluginFactory<EventClient> {
 
     private static final FactoryFinder FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/cloudlaunch/distribution/event/");
 
-    public static final EventClient create(String uri) throws Exception {
-        URI eventUri = new URI(uri);
-        return ((EventClientFactory) EventClientFactory.FACTORY_FINDER.create(eventUri.getScheme())).createEventClient(URISupport.stripScheme(eventUri).toString());
+    @Override
+    protected final FactoryFinder getFactoryFinder() {
+        return FACTORY_FINDER;
     }
-
-    protected abstract EventClient createEventClient(String uri) throws Exception;
-
 }

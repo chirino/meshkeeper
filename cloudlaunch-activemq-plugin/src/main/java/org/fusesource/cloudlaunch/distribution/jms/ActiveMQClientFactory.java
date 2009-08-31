@@ -21,7 +21,7 @@ public class ActiveMQClientFactory extends JMSClientFactory{
      * @see org.fusesource.cloudlaunch.distribution.jms.JMSClientFactory#createConnectionFactory(java.lang.String)
      */
     @Override
-    protected JMSProvider createJMSProvider(String uri) throws Exception {
+    protected JMSProvider createPlugin(String uri) throws Exception {
         return new ActiveMQProvider();
     }
 

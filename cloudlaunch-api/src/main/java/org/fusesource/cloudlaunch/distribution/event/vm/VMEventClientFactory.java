@@ -28,7 +28,7 @@ public class VMEventClientFactory extends EventClientFactory {
      * createEventClient(java.lang.String)
      */
     @Override
-    protected EventClient createEventClient(String uri) throws Exception {
+    protected EventClient createPlugin(String uri) throws Exception {
         return new VMEventClient();
     }
 
