@@ -27,7 +27,6 @@ import org.apache.maven.artifact.Artifact;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderServer;
 import org.fusesource.cloudlaunch.control.ControlService;
 import org.fusesource.cloudlaunch.distribution.event.EventClient;
-import org.fusesource.cloudlaunch.distribution.jms.JMSProvider;
 import org.fusesource.cloudlaunch.distribution.registry.Registry;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
@@ -56,6 +55,8 @@ public class PluginClassLoader extends URLClassLoader {
     // Sets the default plugin version.. for example: cloudlaunch.plugin.version.default=1.0
     public static final String KEY_DEFAULT_PLUGINS_VERSION = KEY_PLUGIN_VERSION_PREFIX +"default";
     
+    public static final String MOP_BASE = MOPRepository.MOP_BASE;
+    
     private static final String CLOUDLAUNCH_GROUP_ID = "org.fusesource.cloudlaunch";
     private static final String CLOUDLAUNCH_ARTIFACT_ID = "cloudlaunch-api";
     
@@ -74,7 +75,6 @@ public class PluginClassLoader extends URLClassLoader {
         SPI_PACKAGES.add(IExporter.class.getPackage().getName());
         SPI_PACKAGES.add(ResourceManager.class.getPackage().getName());
         SPI_PACKAGES.add(Registry.class.getPackage().getName());
-        SPI_PACKAGES.add(JMSProvider.class.getPackage().getName());
         SPI_PACKAGES.add(EventClient.class.getPackage().getName());
         SPI_PACKAGES.add(ControlService.class.getPackage().getName());
         SPI_PACKAGES.add(ClassLoaderServer.class.getPackage().getName());

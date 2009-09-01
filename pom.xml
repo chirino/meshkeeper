@@ -41,10 +41,11 @@
   </licenses>
   <modules>
     <module>cloudlaunch-api</module>
+    <module>cloudlaunch-jms-plugin</module>
     <module>cloudlaunch-rmiviajms-plugin</module>
     <module>cloudlaunch-zk-plugin</module>
     <module>cloudlaunch-wagon-plugin</module>
-    <module>cloudlaunch-jms-plugin</module>
+    <module>cloudlaunch-eventviajms-plugin</module>
     <module>cloudlaunch-activemq-plugin</module>
     <module>cloudlaunch-all</module>
     <module>assembly</module>

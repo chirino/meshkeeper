@@ -34,7 +34,7 @@ public class ControlServer {
     public static final String DEFAULT_REGISTRY_PROVIDER_URI = "zk:tcp://localhost:4040";
     public static final String DEFAULT_RMI_URI = "rmiviajms:" + DEFAULT_JMS_PROVIDER_URI;
     public static final String DEFAULT_REGISTRY_URI = DEFAULT_REGISTRY_PROVIDER_URI;
-    public static final String DEFAULT_EVENT_URI = "jms:" + DEFAULT_JMS_PROVIDER_URI;
+    public static final String DEFAULT_EVENT_URI = "eventviajms:" + DEFAULT_JMS_PROVIDER_URI;
     public static final String EXPORTER_CONNECT_URI_PATH = "/control/exporter-uri";
     public static final String EVENT_CONNECT_URI_PATH = "/control/event-uri";
     public static final String COMMON_REPO_URL_PATH = "/control/common-repo-url";
@@ -107,8 +107,8 @@ public class ControlServer {
             log.info("Registered RMI control server at " + EXPORTER_CONNECT_URI_PATH + "=rmiviajms:" + rmiServer.getServiceUri());
             
             registry.remove(EVENT_CONNECT_URI_PATH, true);
-            registry.addObject(EVENT_CONNECT_URI_PATH, false, new String("jms:" + rmiServer.getServiceUri()));
-            log.info("Registered event server at " + EVENT_CONNECT_URI_PATH + "=jms:" + rmiServer.getServiceUri());
+            registry.addObject(EVENT_CONNECT_URI_PATH, false, new String("eventviajms:" + rmiServer.getServiceUri()));
+            log.info("Registered event server at " + EVENT_CONNECT_URI_PATH + "=eventviajms:" + rmiServer.getServiceUri());
             
             registry.remove(COMMON_REPO_URL_PATH, true);
             registry.addObject(COMMON_REPO_URL_PATH, false, commonRepoUrl);

@@ -25,7 +25,6 @@ import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.distribution.PluginClassLoader;
-import org.fusesource.mop.MOPRepository;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.io.File;
@@ -59,7 +58,7 @@ public class RemoteLaunchTest extends TestCase {
 
         }
 
-        System.setProperty(MOPRepository.MOP_BASE, new File(basedir, "mop").getCanonicalPath());
+        System.setProperty(PluginClassLoader.MOP_BASE, new File(basedir, "mop").getCanonicalPath());
         System.setProperty("basedir", basedir.getCanonicalPath());
         String commonRepo = new File(basedir, "common-repo").toURI().toString();
         System.setProperty("common.repo.url", commonRepo);

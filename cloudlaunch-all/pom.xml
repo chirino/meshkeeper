@@ -58,7 +58,7 @@
     </dependency>
     <dependency>
       <groupId>org.fusesource.cloudlaunch</groupId>
-      <artifactId>cloudlaunch-jms-plugin</artifactId>
+      <artifactId>cloudlaunch-eventviajms-plugin</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>runtime</scope>
     </dependency>
