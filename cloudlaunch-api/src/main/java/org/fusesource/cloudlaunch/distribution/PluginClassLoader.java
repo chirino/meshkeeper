@@ -47,20 +47,20 @@ import org.fusesource.mop.support.ArtifactId;
  * @author cmacnaug
  * @version 1.0
  */
-class PluginClassLoader extends URLClassLoader {
+public class PluginClassLoader extends URLClassLoader {
 
     private static final Log LOG = LogFactory.getLog(PluginClassLoader.class);
 
-    private static final String CLOUDLAUNCH_GROUP_ID = "org.fusesource.cloudlaunch";
-    private static final String CLOUDLAUNCH_ARTIFACT_ID = "cloudlaunch-api";
-    
     // Allows folks to set a per plugin version.. for example: cloudlaunch.plugin.version.jms=1.2
     public static final String KEY_PLUGIN_VERSION_PREFIX = "cloudlaunch.plugin.version.";
     // Sets the default plugin version.. for example: cloudlaunch.plugin.version.default=1.0
     public static final String KEY_DEFAULT_PLUGINS_VERSION = KEY_PLUGIN_VERSION_PREFIX +"default";
+    
+    private static final String CLOUDLAUNCH_GROUP_ID = "org.fusesource.cloudlaunch";
+    private static final String CLOUDLAUNCH_ARTIFACT_ID = "cloudlaunch-api";
+    
     // If not provides via system properties, pick up the default plugin in version from the maven pom.properties file
     private static final String PATH_POM_PROPERTIES = "META-INF/maven/" + CLOUDLAUNCH_GROUP_ID + "/" + CLOUDLAUNCH_ARTIFACT_ID +"/pom.properties";
-    
     
     private static final HashSet<String> SPI_PACKAGES = new HashSet<String>();
     private static final HashSet<String> PARENT_FIRST = new HashSet<String>();
@@ -116,7 +116,7 @@ class PluginClassLoader extends URLClassLoader {
         }
     }
 
-    public PluginClassLoader(ClassLoader parent) {
+    PluginClassLoader(ClassLoader parent) {
         super(new URL[] {}, parent);
         //        delegate = new PluginCL(this.getParent());
     }

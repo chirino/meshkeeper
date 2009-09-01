@@ -7,9 +7,6 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.launcher;
 
-import org.fusesource.cloudlaunch.LaunchDescription;
-import static org.fusesource.cloudlaunch.Expression.file;
-
 import java.util.LinkedList;
 import java.util.Arrays;
 import java.util.ArrayList;
