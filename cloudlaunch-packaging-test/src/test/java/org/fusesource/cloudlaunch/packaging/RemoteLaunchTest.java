@@ -24,7 +24,7 @@ import org.fusesource.cloudlaunch.LaunchClient;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
-import org.fusesource.cloudlaunch.util.internal.PluginClassLoader;
+import org.fusesource.cloudlaunch.distribution.PluginClassLoader;
 import org.fusesource.mop.MOPRepository;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
