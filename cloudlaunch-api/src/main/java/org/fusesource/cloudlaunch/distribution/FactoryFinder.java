@@ -45,8 +45,6 @@ public class FactoryFinder {
      * @param key
      *            is the key to add to the path to find a text file containing
      *            the factory class name
-     * @param pLoader
-     *            TODO
      * @return a newly created instance
      */
     public <T> T create(String key) throws IllegalAccessException, InstantiationException, IOException, ClassNotFoundException {
@@ -73,7 +71,6 @@ public class FactoryFinder {
     }
 
     private Class<?> loadClass(String key) throws ClassNotFoundException, IOException {
-
         return PluginClassLoader.getContextPluginLoader().loadPlugin(path, key);
     }
 }

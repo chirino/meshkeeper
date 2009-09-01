@@ -47,12 +47,19 @@ import org.fusesource.mop.support.ArtifactId;
  */
 class PluginClassLoader extends URLClassLoader {
 
-    private static Log LOG = LogFactory.getLog(PluginClassLoader.class);
+    private static final Log LOG = LogFactory.getLog(PluginClassLoader.class);
+
+    // Allows folks to set a per plugin version.. for example: cloudlaunch.plugin.version.jms=1.2
+    public static final String KEY_PLUGIN_VERSION_PREFIX = "cloudlaunch.plugin.version.";
+    // Sets the default plugin version.. for example: cloudlaunch.plugin.version.default=1.0
+    public static final String KEY_DEFAULT_PLUGINS_VERSION = KEY_PLUGIN_VERSION_PREFIX +"default";
+    // If not provides via system properties, pick up the default plugin in version from the maven pom.properties file
+    private static final String PATH_POM_PROPERTIES = "META-INF/maven/org.fusesource.cloudlaunch/cloudlaunch-api/pom.properties";
     
     private final HashSet<String> resolvedPlugins = new HashSet<String>();
     private final HashSet<String> resolvedFiles = new HashSet<String>();
+    private final String DEFAULT_PLUGIN_VERSION = getDefaultPluginVersion();
 
-    private static String PLUGIN_VERSION;
     private static final HashSet<String> SPI_PACKAGES = new HashSet<String>();
     private static final HashSet<String> PARENT_FIRST = new HashSet<String>();
     private static final boolean USE_PARENT_FIRST = true;
@@ -274,7 +281,9 @@ class PluginClassLoader extends URLClassLoader {
     }
 
     private void loadPlugin(String key) throws IOException, Exception {
-        loadArtifact("org.fusesource.cloudlaunch:cloudlaunch-" + key + "-plugin");
+        // The plugin version can be configured via a system prop
+        String version = System.getProperty(KEY_PLUGIN_VERSION_PREFIX+key, DEFAULT_PLUGIN_VERSION);
+        loadArtifact("org.fusesource.cloudlaunch:cloudlaunch-" + key + "-plugin:"+ version);
     }
 
     synchronized private void loadArtifact(String mavenArtifact) throws Exception {
@@ -285,11 +294,8 @@ class PluginClassLoader extends URLClassLoader {
 
         MOPRepository repo = new MOPRepository();
         repo.setOnline(true);
-        repo.setLocalRepo(new File(System.getProperty("user.home", "."), ".mop" + File.separator + "repository"));
-        //repo.setAlwaysCheckUserLocalRepo(true);
-        
         ArrayList<ArtifactId> artifact = new ArrayList<ArtifactId>(1);
-        artifact.add(ArtifactId.parse(mavenArtifact, getPluginVersion(), MOP.DEFAULT_TYPE));
+        artifact.add(ArtifactId.parse(mavenArtifact));
 
         List<File> resolved = repo.resolveFiles(artifact, getArtifactFilter());
         for (File f : resolved) {
@@ -300,7 +306,7 @@ class PluginClassLoader extends URLClassLoader {
         resolvedPlugins.add(mavenArtifact);
     }
 
-    private static Predicate<Artifact> getArtifactFilter() {
+    private Predicate<Artifact> getArtifactFilter() {
         if (ARTIFACT_FILTER == null) {
             MOPRepository repo = new MOPRepository();
             repo.setOnline(true);
@@ -308,7 +314,7 @@ class PluginClassLoader extends URLClassLoader {
             
             Set<Artifact> deps;
             try {
-                deps = repo.resolveArtifacts(new ArtifactId[] {ArtifactId.parse("org.fusesource.cloudlaunch:cloudlaunch-api", getPluginVersion(), MOP.DEFAULT_TYPE)});
+                deps = repo.resolveArtifacts(new ArtifactId[] {ArtifactId.parse("org.fusesource.cloudlaunch:cloudlaunch-api", DEFAULT_PLUGIN_VERSION, MOP.DEFAULT_TYPE)});
             } catch (Exception e) {
                 return new Predicate<Artifact>() {
                     public boolean apply(Artifact artifact) {
@@ -332,21 +338,24 @@ class PluginClassLoader extends URLClassLoader {
         return ARTIFACT_FILTER;
     }
 
-    private static String getPluginVersion() {
-        //Try to find the current cloudlaunch version:
-        if (PLUGIN_VERSION == null) {
-            String defaultVersion = "LATEST";
-            Properties p = new Properties();
-            try {
-                p.load(FactoryFinder.class.getResourceAsStream("META-INF/maven/org.fusesource.cloudlaunch/cloudlaunch-api/pom.properties"));
-                PLUGIN_VERSION = p.getProperty("version", defaultVersion);
-            } catch (Exception e) {
-                LOG.warn("Unable to locate cloudlaunch-api/pom.properties to determine plugin versions using default: " + defaultVersion);
-                PLUGIN_VERSION = defaultVersion;
-            }
-
-            LOG.trace("Plugin version is: " + PLUGIN_VERSION);
+    private String getDefaultPluginVersion() {
+        String rc = System.getProperty(KEY_DEFAULT_PLUGINS_VERSION);
+        if( rc !=null ) {
+            return rc;
         }
-        return PLUGIN_VERSION;
+
+        final String DEFAULT_VERSION = "RELEASE";
+        try {
+            Properties p = loadProperties(PATH_POM_PROPERTIES);
+            if( p!=null ) {
+                return p.getProperty("version", DEFAULT_VERSION);
+            }
+        } catch (Exception e) {
+        }
+        LOG.warn("Unable to locate '"+ PATH_POM_PROPERTIES +"' to determine plugin versions using default: " + DEFAULT_VERSION);
+        return DEFAULT_VERSION;
     }
+
+//    LOG.trace("Plugin version is: " + PLUGIN_VERSION);
+
 }

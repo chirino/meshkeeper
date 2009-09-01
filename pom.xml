@@ -48,6 +48,7 @@
     <module>cloudlaunch-activemq-plugin</module>
     <module>cloudlaunch-all</module>
     <module>assembly</module>
+    <module>cloudlaunch-packaging-test</module>
   </modules>
 
   <repositories>
