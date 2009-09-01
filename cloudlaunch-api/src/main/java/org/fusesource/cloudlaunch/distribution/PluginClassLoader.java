@@ -33,8 +33,10 @@ import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
 import org.fusesource.mop.MOP;
 import org.fusesource.mop.MOPRepository;
+
 import org.fusesource.mop.common.base.Predicate;
 import org.fusesource.mop.support.ArtifactId;
+
 
 /**
  * PluginClassLoader
@@ -49,23 +51,24 @@ class PluginClassLoader extends URLClassLoader {
 
     private static final Log LOG = LogFactory.getLog(PluginClassLoader.class);
 
+    private static final String CLOUDLAUNCH_GROUP_ID = "org.fusesource.cloudlaunch";
+    private static final String CLOUDLAUNCH_ARTIFACT_ID = "cloudlaunch-api";
+    
     // Allows folks to set a per plugin version.. for example: cloudlaunch.plugin.version.jms=1.2
     public static final String KEY_PLUGIN_VERSION_PREFIX = "cloudlaunch.plugin.version.";
     // Sets the default plugin version.. for example: cloudlaunch.plugin.version.default=1.0
     public static final String KEY_DEFAULT_PLUGINS_VERSION = KEY_PLUGIN_VERSION_PREFIX +"default";
     // If not provides via system properties, pick up the default plugin in version from the maven pom.properties file
-    private static final String PATH_POM_PROPERTIES = "META-INF/maven/org.fusesource.cloudlaunch/cloudlaunch-api/pom.properties";
+    private static final String PATH_POM_PROPERTIES = "META-INF/maven/" + CLOUDLAUNCH_GROUP_ID + "/" + CLOUDLAUNCH_ARTIFACT_ID +"/pom.properties";
     
-    private final HashSet<String> resolvedPlugins = new HashSet<String>();
-    private final HashSet<String> resolvedFiles = new HashSet<String>();
-    private final String DEFAULT_PLUGIN_VERSION = getDefaultPluginVersion();
-
+    
     private static final HashSet<String> SPI_PACKAGES = new HashSet<String>();
     private static final HashSet<String> PARENT_FIRST = new HashSet<String>();
-    private static final boolean USE_PARENT_FIRST = true;
+    private final String DEFAULT_PLUGIN_VERSION = getDefaultPluginVersion();
+    
+    private static final boolean USE_PARENT_FIRST = false;
 
     private static Predicate<Artifact> ARTIFACT_FILTER = null;
-
     static {
         SPI_PACKAGES.add(Distributor.class.getPackage().getName());
         SPI_PACKAGES.add(IExporter.class.getPackage().getName());
@@ -83,6 +86,13 @@ class PluginClassLoader extends URLClassLoader {
     }
 
     private static final PluginClassLoader DEFAULT_PLUGIN_CLASSLOADER = new PluginClassLoader(Thread.currentThread().getContextClassLoader());
+
+    private static MOPRepository MOP_REPO;
+
+    private final HashSet<String> resolvedPlugins = new HashSet<String>();
+    private final HashSet<String> resolvedFiles = new HashSet<String>();
+
+    private static String PLUGIN_VERSION;
 
     /**
      * @return Returns the default plugin classloader.
@@ -283,7 +293,7 @@ class PluginClassLoader extends URLClassLoader {
     private void loadPlugin(String key) throws IOException, Exception {
         // The plugin version can be configured via a system prop
         String version = System.getProperty(KEY_PLUGIN_VERSION_PREFIX+key, DEFAULT_PLUGIN_VERSION);
-        loadArtifact("org.fusesource.cloudlaunch:cloudlaunch-" + key + "-plugin:"+ version);
+        loadArtifact(CLOUDLAUNCH_GROUP_ID + ":cloudlaunch-" + key + "-plugin:" + version);
     }
 
     synchronized private void loadArtifact(String mavenArtifact) throws Exception {
@@ -292,29 +302,27 @@ class PluginClassLoader extends URLClassLoader {
             return;
         }
 
-        MOPRepository repo = new MOPRepository();
-        repo.setOnline(true);
         ArrayList<ArtifactId> artifact = new ArrayList<ArtifactId>(1);
         artifact.add(ArtifactId.parse(mavenArtifact));
 
-        List<File> resolved = repo.resolveFiles(artifact, getArtifactFilter());
+        LOG.info("Resolving plugin: " + mavenArtifact);
+        List<File> resolved = getMopRepository().resolveFiles(artifact, getArtifactFilter());
         for (File f : resolved) {
             if (resolvedFiles.add(f.getCanonicalPath())) {
+                LOG.debug("Adding plugin dependency: " + f.getCanonicalPath());
                 addUrl(f.toURL());
             }
         }
+        LOG.info("Resolved plugin: " + mavenArtifact);
         resolvedPlugins.add(mavenArtifact);
     }
 
     private Predicate<Artifact> getArtifactFilter() {
         if (ARTIFACT_FILTER == null) {
-            MOPRepository repo = new MOPRepository();
-            repo.setOnline(true);
-            repo.setLocalRepo(new File(System.getProperty("user.home", "."), ".mop" + File.separator + "repository"));
-            
+
             Set<Artifact> deps;
             try {
-                deps = repo.resolveArtifacts(new ArtifactId[] {ArtifactId.parse("org.fusesource.cloudlaunch:cloudlaunch-api", DEFAULT_PLUGIN_VERSION, MOP.DEFAULT_TYPE)});
+                deps = getMopRepository().resolveArtifacts(new ArtifactId[] { ArtifactId.parse(CLOUDLAUNCH_GROUP_ID + ":" + CLOUDLAUNCH_ARTIFACT_ID, DEFAULT_PLUGIN_VERSION, MOP.DEFAULT_TYPE) });
             } catch (Exception e) {
                 return new Predicate<Artifact>() {
                     public boolean apply(Artifact artifact) {
@@ -322,12 +330,14 @@ class PluginClassLoader extends URLClassLoader {
                     }
                 };
             }
-            final HashSet<String> filters = new HashSet(deps.size());
+            final HashSet<String> filters = new HashSet<String>(deps.size());
             for (Artifact a : deps) {
                 filters.add(a.getArtifactId());
             }
 
-            System.out.println("Filters: " + filters);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Filters: " + filters);
+            }
 
             ARTIFACT_FILTER = new Predicate<Artifact>() {
                 public boolean apply(Artifact artifact) {
@@ -356,6 +366,12 @@ class PluginClassLoader extends URLClassLoader {
         return DEFAULT_VERSION;
     }
 
-//    LOG.trace("Plugin version is: " + PLUGIN_VERSION);
-
+    private synchronized static MOPRepository getMopRepository() {
+        if (MOP_REPO == null) {
+            MOP_REPO = new MOPRepository();
+            MOP_REPO.setOnline(true);
+            //repo.setAlwaysCheckUserLocalRepo(true);
+        }
+        return MOP_REPO;
+    }
 }
