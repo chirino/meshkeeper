@@ -136,26 +136,51 @@ public class RemoteBootstrap {
 
         System.out.println("bootstrap started...");
         if( runnable !=null ) {
-            Marshalled<Runnable> marshalled = distributor.getRegistry().getObject(runnable);
-            distributor.getRegistry().remove(runnable, false);
-            ClassLoaderFactory clf = marshalled.getClassLoaderFactory();
+            Runnable r = null;
+            try {
+                Marshalled<Runnable> marshalled = distributor.getRegistry().getObject(runnable);
+                if( marshalled == null ) {
+                    throw new Exception("The runnable not found at: "+ runnable);
+                }
+//              distributor.getRegistry().remove(runnable, false);
+                ClassLoaderFactory clf = marshalled.getClassLoaderFactory();
 
-            System.out.println("Setting up classloader...");
-            ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
+                System.out.println("Setting up classloader...");
+                ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
 
-            System.out.println("Executing runnable.");
-            Runnable runnable = marshalled.get(cl);
-            runnable.run();
+                System.out.println("Executing runnable.");
+                r = marshalled.get(cl);
+            } catch (Throwable e) {
+                e.printStackTrace();
+                System.exit(100);
+            }
+
+            r.run();
+
+            try {
+                // The runnable can set the exit code via a system prop.
+                System.exit(Integer.parseInt(System.getProperty("cloudlaunch.bootstrap.exit", "0")));
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                System.exit(101);
+            }
+
         } else {
-            ClassLoaderFactory clf = distributor.getRegistry().getObject(this.classLoader);
+            Method mainMethod = null;
+            try {
+                ClassLoaderFactory clf = distributor.getRegistry().getObject(this.classLoader);
 
-            System.out.println("Setting up classloader...");
-            ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
+                System.out.println("Setting up classloader...");
+                ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
 
-            System.out.println("Executing main.");
-            Class<?> clazz = cl.loadClass(mainClass);
-            // Invoke the main.
-            Method mainMethod = clazz.getMethod("main", new Class[] { String[].class });
+                System.out.println("Executing main.");
+                Class<?> clazz = cl.loadClass(mainClass);
+                // Invoke the main.
+                mainMethod = clazz.getMethod("main", new Class[] { String[].class });
+            } catch (Throwable e) {
+                e.printStackTrace();
+                System.exit(100);
+            }
             try {
                 mainMethod.invoke(null, new Object[] { args });
             } catch (InvocationTargetException e) {
