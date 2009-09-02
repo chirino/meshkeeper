@@ -37,7 +37,44 @@
       <groupId>org.fusesource.mop</groupId>
       <artifactId>mop-core</artifactId>
       <version>1.0-SNAPSHOT</version>
+      <scope>compile</scope>
     </dependency>
 
   </dependencies>
+  <!--
+  <build>
+    <defaultGoal>install</defaultGoal>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-mop</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>target/classes</outputDirectory>
+              <includeArtifactIds>mop-core</includeArtifactIds>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+              <configuration>
+                <useDefaultManifestFile>true</useDefaultManifestFile>
+                <includes>
+                  <include>**</include>
+                  <include>target/dependencies/mop-core-1.0-SNAPSHOT.jar</include>
+                </includes>
+              </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  -->
+  
 </project>

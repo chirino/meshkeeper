@@ -24,7 +24,7 @@ import org.fusesource.cloudlaunch.LaunchClient;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
-import org.fusesource.cloudlaunch.distribution.PluginClassLoader;
+import org.fusesource.cloudlaunch.distribution.PluginResolver;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.io.File;
@@ -53,12 +53,11 @@ public class RemoteLaunchTest extends TestCase {
 
 
         // This should be getting set by the junit test runner to actuall plugins being tested.
-        if( System.getProperty(PluginClassLoader.KEY_DEFAULT_PLUGINS_VERSION) == null ) {
-            System.setProperty(PluginClassLoader.KEY_DEFAULT_PLUGINS_VERSION, "LATEST");
-
+        if( System.getProperty(PluginResolver.KEY_DEFAULT_PLUGINS_VERSION) == null ) {
+            System.setProperty(PluginResolver.KEY_DEFAULT_PLUGINS_VERSION, "LATEST");
         }
 
-        System.setProperty(PluginClassLoader.MOP_BASE, new File(basedir, "mop").getCanonicalPath());
+        System.setProperty(PluginResolver.BASE_DIR, new File(basedir, "mop").getCanonicalPath());
         System.setProperty("basedir", basedir.getCanonicalPath());
         String commonRepo = new File(basedir, "common-repo").toURI().toString();
         System.setProperty("common.repo.url", commonRepo);

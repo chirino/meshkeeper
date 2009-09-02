@@ -8,34 +8,38 @@
 package org.fusesource.cloudlaunch.distribution;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.PhantomReference;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
+import java.util.UUID;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.maven.artifact.Artifact;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderServer;
 import org.fusesource.cloudlaunch.control.ControlService;
 import org.fusesource.cloudlaunch.distribution.event.EventClient;
 import org.fusesource.cloudlaunch.distribution.registry.Registry;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.rmi.IExporter;
-import org.fusesource.mop.MOP;
-import org.fusesource.mop.MOPRepository;
-
-import org.fusesource.mop.common.base.Predicate;
-import org.fusesource.mop.support.ArtifactId;
-
 
 /**
  * PluginClassLoader
@@ -50,26 +54,13 @@ public class PluginClassLoader extends URLClassLoader {
 
     private static final Log LOG = LogFactory.getLog(PluginClassLoader.class);
 
-    // Allows folks to set a per plugin version.. for example: cloudlaunch.plugin.version.jms=1.2
-    public static final String KEY_PLUGIN_VERSION_PREFIX = "cloudlaunch.plugin.version.";
-    // Sets the default plugin version.. for example: cloudlaunch.plugin.version.default=1.0
-    public static final String KEY_DEFAULT_PLUGINS_VERSION = KEY_PLUGIN_VERSION_PREFIX +"default";
-    
-    public static final String MOP_BASE = MOPRepository.MOP_BASE;
-
-    public static final String CLOUDLAUNCH_GROUP_ID = "org.fusesource.cloudlaunch";
-    public static final String CLOUDLAUNCH_ARTIFACT_ID = "cloudlaunch-api";
-    
-    // If not provides via system properties, pick up the default plugin in version from the maven pom.properties file
-    private static final String PATH_POM_PROPERTIES = "META-INF/maven/" + CLOUDLAUNCH_GROUP_ID + "/" + CLOUDLAUNCH_ARTIFACT_ID +"/pom.properties";
-    
     private static final HashSet<String> SPI_PACKAGES = new HashSet<String>();
     private static final HashSet<String> PARENT_FIRST = new HashSet<String>();
     private final String DEFAULT_PLUGIN_VERSION = getDefaultPluginVersion();
-    
-    private static final boolean USE_PARENT_FIRST = false;
 
-    private static Predicate<Artifact> ARTIFACT_FILTER = null;
+    private static final boolean USE_PARENT_FIRST = false;
+    private static PluginResolver PLUGIN_RESOLVER;
+
     static {
         SPI_PACKAGES.add(Distributor.class.getPackage().getName());
         SPI_PACKAGES.add(IExporter.class.getPackage().getName());
@@ -87,12 +78,8 @@ public class PluginClassLoader extends URLClassLoader {
 
     private static final PluginClassLoader DEFAULT_PLUGIN_CLASSLOADER = new PluginClassLoader(Thread.currentThread().getContextClassLoader());
 
-    private static MOPRepository MOP_REPO;
-
     private final HashSet<String> resolvedPlugins = new HashSet<String>();
     private final HashSet<String> resolvedFiles = new HashSet<String>();
-
-    private static String PLUGIN_VERSION;
 
     /**
      * @return Returns the default plugin classloader.
@@ -270,7 +257,7 @@ public class PluginClassLoader extends URLClassLoader {
 
     }
 
-    static private Properties loadProperties(ClassLoader cl, String uri) throws IOException {
+    private static Properties loadProperties(ClassLoader cl, String uri) throws IOException {
         InputStream in = cl.getResourceAsStream(uri);
         if (in == null) {
             return null;
@@ -290,91 +277,227 @@ public class PluginClassLoader extends URLClassLoader {
         }
     }
 
-    private void loadPlugin(String key) throws IOException, Exception {
-        // The plugin version can be configured via a system prop
-        String version = System.getProperty(KEY_PLUGIN_VERSION_PREFIX+key, DEFAULT_PLUGIN_VERSION);
-        loadArtifact(CLOUDLAUNCH_GROUP_ID + ":cloudlaunch-" + key + "-plugin:" + version);
-    }
-
-    synchronized private void loadArtifact(String mavenArtifact) throws Exception {
-
-        if (resolvedPlugins.contains(mavenArtifact)) {
+    public void loadArtifact(String artifactId) throws IOException, Exception {
+        if (resolvedPlugins.contains(artifactId)) {
             return;
         }
 
-        ArrayList<ArtifactId> artifact = new ArrayList<ArtifactId>(1);
-        artifact.add(ArtifactId.parse(mavenArtifact));
+        List<File> resolved = getPluginResolver().resolvePlugin(artifactId);
 
-        LOG.info("Resolving plugin: " + mavenArtifact);
-        List<File> resolved = getMopRepository().resolveFiles(artifact, getArtifactFilter());
         for (File f : resolved) {
             if (resolvedFiles.add(f.getCanonicalPath())) {
                 LOG.debug("Adding plugin dependency: " + f.getCanonicalPath());
                 addUrl(f.toURL());
             }
         }
-        LOG.info("Resolved plugin: " + mavenArtifact);
-        resolvedPlugins.add(mavenArtifact);
+        LOG.info("Resolved plugin: " + artifactId);
+        resolvedPlugins.add(artifactId);
     }
 
-    private Predicate<Artifact> getArtifactFilter() {
-        if (ARTIFACT_FILTER == null) {
-
-            Set<Artifact> deps;
-            try {
-                deps = getMopRepository().resolveArtifacts(new ArtifactId[] { ArtifactId.parse(CLOUDLAUNCH_GROUP_ID + ":" + CLOUDLAUNCH_ARTIFACT_ID, DEFAULT_PLUGIN_VERSION, MOP.DEFAULT_TYPE) });
-            } catch (Exception e) {
-                return new Predicate<Artifact>() {
-                    public boolean apply(Artifact artifact) {
-                        return true;
-                    }
-                };
-            }
-            final HashSet<String> filters = new HashSet<String>(deps.size());
-            for (Artifact a : deps) {
-                filters.add(a.getArtifactId());
-            }
-
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Filters: " + filters);
-            }
-
-            ARTIFACT_FILTER = new Predicate<Artifact>() {
-                public boolean apply(Artifact artifact) {
-                    return !filters.contains(artifact.getArtifactId());
-                }
-            };
-        }
-        return ARTIFACT_FILTER;
+    private void loadPlugin(String key) throws IOException, Exception {
+        // The plugin version can be configured via a system prop
+        String version = System.getProperty(PluginResolver.KEY_PLUGIN_VERSION_PREFIX + key, DEFAULT_PLUGIN_VERSION);
+        loadArtifact(PluginResolver.CLOUDLAUNCH_GROUP_ID + ":cloudlaunch-" + key + "-plugin:" + version);
     }
 
-    static public String getDefaultPluginVersion() {
-        String rc = System.getProperty(KEY_DEFAULT_PLUGINS_VERSION);
-        if( rc !=null ) {
+    private static String getDefaultPluginVersion() {
+        String rc = System.getProperty(PluginResolver.KEY_DEFAULT_PLUGINS_VERSION);
+        if (rc != null) {
             return rc;
         }
+
         return getModuleVersion();
     }
 
     static public String getModuleVersion() {
+        String pomProps = "META-INF/maven/" + PluginResolver.CLOUDLAUNCH_GROUP_ID + "/" + PluginResolver.CLOUDLAUNCH_ARTIFACT_ID + "/pom.properties";
+
         final String DEFAULT_VERSION = "RELEASE";
         try {
-            Properties p = loadProperties(PluginClassLoader.class.getClassLoader(), PATH_POM_PROPERTIES);
-            if( p!=null ) {
+            Properties p = loadProperties(PluginClassLoader.class.getClassLoader(), pomProps);
+            if (p != null) {
                 return p.getProperty("version", DEFAULT_VERSION);
             }
         } catch (Exception e) {
         }
-        LOG.warn("Unable to locate '"+ PATH_POM_PROPERTIES +"' to determine version.  Using default: " + DEFAULT_VERSION);
+        LOG.warn("Unable to locate '" + pomProps + "' to determine plugin versions using default: " + DEFAULT_VERSION);
         return DEFAULT_VERSION;
     }
 
-    public synchronized static MOPRepository getMopRepository() {
-        if (MOP_REPO == null) {
-            MOP_REPO = new MOPRepository();
-            MOP_REPO.setOnline(true);
-            //repo.setAlwaysCheckUserLocalRepo(true);
+    public static synchronized PluginResolver getPluginResolver() {
+
+        if (PLUGIN_RESOLVER == null) {
+            PLUGIN_RESOLVER = new MopPluginResolver();
+            PLUGIN_RESOLVER.setDefaultPluginVersion(getDefaultPluginVersion());
         }
-        return MOP_REPO;
+
+//        if (PLUGIN_RESOLVER == null) {
+//            ClassLoader loader = PluginClassLoader.DEFAULT_PLUGIN_CLASSLOADER;
+//            try {
+//                URL url = PluginClassLoader.class.getClassLoader().getResource("mop-core-1.0-SNAPSHOT.jar");
+//                if (url != null) {
+//
+//                    if (url.getProtocol().equals("jar")) {
+//                        InputStream jaris = PluginClassLoader.class.getClassLoader().getResourceAsStream("mop-core-1.0-SNAPSHOT.jar");
+//                        loader = new JarClassLoader(jaris, ClassLoader.getSystemClassLoader());
+//                    } else {
+//                        loader = new URLClassLoader(new URL[] { url });
+//                    }
+//                } else {
+//                    LOG.warn("mop-core-1.0-SNAPSHOT.jar was not found on the classpath");
+//                }
+//
+//                PLUGIN_RESOLVER = (PluginResolver) loader.loadClass("org.fusesource.cloudlaunch.distribution.MopPluginResolver").newInstance();
+//
+//            } catch (Throwable thrown) {
+//                LOG.error("Error loading plugin resolver:" + thrown.getMessage(), thrown);
+//                throw new RuntimeException(thrown);
+//            }
+//
+//        }
+        return PLUGIN_RESOLVER;
     }
+
+    private static class JarClassLoader extends ClassLoader {
+        HashMap<String, byte[]> classBytes = new HashMap<String, byte[]>();
+        private final ReferenceQueue<URL> cleanupQueue = new ReferenceQueue<URL>();
+        private final AtomicInteger cleanupUrls = new AtomicInteger();
+
+        JarClassLoader(InputStream jaris, ClassLoader parent) throws IOException {
+            super(parent);
+            JarInputStream jis = new JarInputStream(jaris);
+            JarEntry je = jis.getNextJarEntry();
+            while (je != null) {
+                
+                if (!je.isDirectory()) {
+                    String name = je.getName();
+                    if (je.getName().endsWith(".class")) {
+                        name = name.substring(0, name.length() - 6);
+                        name = name.replaceAll("\\/", ".");
+                    }
+                    
+                    byte[] bytes = new byte [] {};
+                    if (je.getSize() > 0) {
+                        bytes = new byte[(int) je.getSize()];
+                        int i = 0;
+                        while (i < bytes.length) {
+                            int read = jis.read(bytes, i, bytes.length - 1);
+                            if (read > 0) {
+                                i += read;
+                            }
+                        }
+                    }
+                    //Unknown length;
+                    else if (je.getSize() < 0)
+                    {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
+                        while(jis.available() > 0)
+                        {
+                            byte [] chunk = new byte [1024];
+                            int read = jis.read(chunk);
+                            if(read > 0)
+                            {
+                                baos.write(chunk, 0, read);
+                            }
+                        }
+                        bytes = baos.toByteArray();
+                    }
+
+                    //LOG.debug("Read jar entry for " + name + " size " + bytes.length);
+                    
+                    classBytes.put(name, bytes);
+                }
+                jis.closeEntry();
+                je = jis.getNextJarEntry();
+            }
+
+            jis.close();
+        }
+
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            
+            LOG.debug("Looking for class " + name);
+            byte[] b = classBytes.get(name);
+            if (b == null) {
+                throw new ClassNotFoundException(name);
+            }
+            LOG.debug("Defining class " + name);
+            return defineClass(name, b, 0, b.length);
+        }
+
+        protected URL findResource(String name) {
+
+            byte[] b = classBytes.get(name);
+            if (b == null) {
+                return null;
+            }
+            try {
+                File f = File.createTempFile(UUID.randomUUID().toString(), name);
+
+                f.deleteOnExit();
+                FileOutputStream fos = new FileOutputStream(f);
+                fos.write(b);
+                fos.flush();
+                fos.close();
+
+                URL ret = f.toURL();
+                final String cleanupPath = f.getCanonicalPath();
+                new PhantomReference<URL>(ret, cleanupQueue) {
+                    String toDelete = cleanupPath;
+
+                    public void clear() {
+                        super.clear();
+                        try {
+                            LOG.info("DELETING: " + toDelete);
+                            new File(toDelete).delete();
+                        } catch (Throwable thrown) {
+                        }
+                    }
+                };
+
+                if (cleanupUrls.incrementAndGet() == 1) {
+                    scheduleCleanup();
+                }
+
+                return ret;
+
+            } catch (IOException ioe) {
+                LOG.warn("Error creating resource temp file for" + name, ioe);
+                return null;
+            }
+
+        }
+
+        public void cleanupTempFiles() {
+            Reference<?> ref = cleanupQueue.poll();
+            while (ref != null) {
+                ref.clear();
+                cleanupUrls.decrementAndGet();
+            }
+
+            if (cleanupUrls.get() > 0) {
+                scheduleCleanup();
+            }
+        }
+
+        private void scheduleCleanup() {
+            DistributorFactory.getExecutorService().schedule(new Runnable() {
+                public void run() {
+                    cleanupTempFiles();
+                }
+            }, 1, TimeUnit.SECONDS);
+        }
+
+        public Enumeration<URL> findResources(String name) {
+            URL u = findResource(name);
+            if (u == null) {
+                return null;
+            }
+            Vector<URL> r = new Vector<URL>(1);
+            r.add(u);
+            return r.elements();
+        }
+
+    }
+
 }

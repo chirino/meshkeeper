@@ -20,6 +20,7 @@ import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.classloader.Marshalled;
 import org.fusesource.cloudlaunch.distribution.Distributor;
 import org.fusesource.cloudlaunch.distribution.PluginClassLoader;
+import org.fusesource.cloudlaunch.distribution.PluginResolver;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.util.internal.FileUtils;
 import org.fusesource.mop.support.ArtifactId;
@@ -79,10 +80,9 @@ public class LaunchAgent implements LaunchAgentService {
         String path = distributor.getRegistry().addObject(getRegistryPath() + ":runnable", true, runnable);
 
         // Figure out the boostrap classpath using mop.
-        String artifact = PluginClassLoader.CLOUDLAUNCH_GROUP_ID + ":cloudlaunch-api:" + PluginClassLoader.getModuleVersion();
-        ArrayList<ArtifactId> artifactId = new ArrayList<ArtifactId>(1);
-        artifactId.add(ArtifactId.parse(artifact));
-        String classpath = PluginClassLoader.getMopRepository().classpath(artifactId);
+        PluginResolver resolver = PluginClassLoader.getPluginResolver();
+        String artifactId = PluginResolver.CLOUDLAUNCH_GROUP_ID + ":cloudlaunch-api:" + PluginClassLoader.getModuleVersion();
+        String classpath = resolver.resolveClassPath(artifactId);
 
         LaunchDescription ld = new LaunchDescription();
         ld.add("java");
