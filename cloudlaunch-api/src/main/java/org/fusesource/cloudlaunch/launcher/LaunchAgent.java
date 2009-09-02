@@ -77,7 +77,8 @@ public class LaunchAgent implements LaunchAgentService {
     }
 
     public Process launch(Marshalled<Runnable> runnable, ProcessListener handler) throws Exception {
-        String path = distributor.getRegistry().addObject(getRegistryPath() + ":runnable", true, runnable);
+        String path = LaunchAgent.REGISTRY_PATH + "-runnable/" + getAgentId();
+        path = distributor.getRegistry().addObject(path, true, runnable);
 
         // Figure out the boostrap classpath using mop.
         PluginResolver resolver = PluginClassLoader.getPluginResolver();

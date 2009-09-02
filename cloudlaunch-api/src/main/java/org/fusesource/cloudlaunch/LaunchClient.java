@@ -15,6 +15,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
@@ -22,6 +24,10 @@ import org.apache.commons.logging.LogFactory;
 import org.fusesource.cloudlaunch.distribution.Distributor;
 import org.fusesource.cloudlaunch.distribution.registry.RegistryWatcher;
 import org.fusesource.cloudlaunch.launcher.LaunchAgentService;
+import org.fusesource.cloudlaunch.classloader.ClassLoaderServer;
+import org.fusesource.cloudlaunch.classloader.ClassLoaderFactory;
+import org.fusesource.cloudlaunch.classloader.Marshalled;
+import org.fusesource.cloudlaunch.classloader.ClassLoaderServerFactory;
 
 /**
  * LaunchClient
@@ -48,6 +54,7 @@ public class LaunchClient {
     private final HashMap<String, LaunchAgentService> boundAgents = new HashMap<String, LaunchAgentService>();
     private final HashMap<String, HashSet<Integer>> reservedPorts = new HashMap<String, HashSet<Integer>>();
     private String name;
+    private ClassLoaderServer classLoaderServer;
 
     public void start() throws Exception {
         name = distributor.getRegistry().addObject("/launchclients/" + System.getProperty("user.name"), true, null);
@@ -136,6 +143,10 @@ public class LaunchClient {
 
     public synchronized void destroy() throws Exception {
 
+        if( classLoaderServer !=null ) {
+            classLoaderServer.stop();
+        }
+
         //Release reserved ports:
         for (String agentName : reservedPorts.keySet()) {
             releaseAllPorts(agentName);
@@ -147,6 +158,7 @@ public class LaunchClient {
             e.printStackTrace();
             //            listener.onTRException("Error releasing agents.", e);
         }
+
         distributor.getRegistry().remove(name, false);
         distributor.getRegistry().removeRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
         knownAgents.clear();
@@ -265,6 +277,47 @@ public class LaunchClient {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    public Executor createRemoteExecutor(String agentId) throws Exception {
+        checkNotClosed();
+        final LaunchAgentService agent = getAgent(agentId);
+        return new Executor() {
+            public void execute(Runnable command) {
+                try {
+                    launch(agent, command, null);
+                } catch (Exception e) {
+                    throw new RejectedExecutionException(e);
+                }
+            }
+        };
+    }
+
+    public Process launch(String agentId, Runnable runnable, ProcessListener handler) throws Exception {
+        checkNotClosed();
+        return launch(getAgent(agentId), runnable, handler);
+    }
+
+    public Process launch(LaunchAgentService agent, Runnable runnable, ProcessListener handler) throws Exception {
+        checkNotClosed();
+        ClassLoaderFactory factory = getClassLoaderServer().export(runnable.getClass().getClassLoader(), 100);
+        Marshalled<Runnable> marshalled = new Marshalled<Runnable>(factory, runnable);
+        return agent.launch(marshalled, handler);
+    }
+
+    public ClassLoaderServer getClassLoaderServer() throws Exception {
+        if( classLoaderServer==null ) {
+            if( distributor == null ) {
+                throw new IllegalArgumentException("distributor or classLoaderServer property must be set");
+            }
+            classLoaderServer = ClassLoaderServerFactory.create("basic:", distributor);
+            classLoaderServer.start();
+        }
+        return classLoaderServer;
+    }
+
+    public void setClassLoaderServer(ClassLoaderServer classLoaderServer) {
+        this.classLoaderServer = classLoaderServer;
     }
 
     public long getBindTimeout() {

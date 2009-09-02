@@ -109,7 +109,9 @@ public class LocalProcess implements Process {
         //Generate the launch string
         String msg = "Launching as: " + command_line + " [pid = " + pid + "] [workDir = " + workingDirectory + "]";
         log.info(msg);
-        listener.onProcessInfo(msg);
+        if( listener!=null ) {
+            listener.onProcessInfo(msg);
+        }
 
         //Launch:
         synchronized (mutex) {
@@ -133,7 +135,9 @@ public class LocalProcess implements Process {
 
     protected void onExit(int exitValue) {
         running.set(false);
-        listener.onProcessExit(exitValue);
+        if( listener!=null ) {
+            listener.onProcessExit(exitValue);
+        }
         try {
             processLauncher.getDistributor().unexport(this);
         } catch (Exception e) {
@@ -208,7 +212,9 @@ public class LocalProcess implements Process {
         @Override
         public void flush() throws IOException {
             if( buffer.size() > 0 ) {
-                listener.onProcessOutput(fd, buffer.toByteArray());
+                if( listener!=null ) {
+                    listener.onProcessOutput(fd, buffer.toByteArray());
+                }
                 buffer.reset();
             }
         }

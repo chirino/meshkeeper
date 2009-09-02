@@ -88,11 +88,17 @@ public class LaunchDescription implements Serializable {
             error = new Exception("Sub process failed", thrown);
         }
         public void onProcessInfo(String message) {
-            process.getListener().onProcessInfo(message);
+            ProcessListener listener = process.getListener();
+            if (listener!=null) {
+                listener.onProcessInfo(message);
+            }
 
         }
         public void onProcessOutput(int fd, byte[] output) {
-            process.getListener().onProcessOutput(fd, output);
+            ProcessListener listener = process.getListener();
+            if (listener!=null) {
+                listener.onProcessOutput(fd, output);
+            }
         }
     }
 

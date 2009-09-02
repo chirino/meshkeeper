@@ -133,15 +133,26 @@ public class RemoteBootstrap {
         DistributorFactory.setDefaultRegistryUri(this.distributor);
         Distributor distributor = DistributorFactory.createDefaultDistributor();
 
+
+        System.out.println("bootstrap started...");
         if( runnable !=null ) {
             Marshalled<Runnable> marshalled = distributor.getRegistry().getObject(runnable);
+            distributor.getRegistry().remove(runnable, false);
             ClassLoaderFactory clf = marshalled.getClassLoaderFactory();
+
+            System.out.println("Setting up classloader...");
             ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
+
+            System.out.println("Executing runnable.");
             Runnable runnable = marshalled.get(cl);
             runnable.run();
         } else {
             ClassLoaderFactory clf = distributor.getRegistry().getObject(this.classLoader);
+
+            System.out.println("Setting up classloader...");
             ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
+
+            System.out.println("Executing main.");
             Class<?> clazz = cl.loadClass(mainClass);
             // Invoke the main.
             Method mainMethod = clazz.getMethod("main", new Class[] { String[].class });

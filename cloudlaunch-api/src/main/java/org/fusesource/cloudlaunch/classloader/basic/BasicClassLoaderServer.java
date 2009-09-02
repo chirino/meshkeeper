@@ -137,7 +137,9 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
 
     private static void addExportedFiles(ClassLoader classLoader, int maxExportDepth, ArrayList<ExportedFile> elements) throws IOException {
         if( maxExportDepth > 0 ) {
-            addExportedFiles(classLoader.getParent(), maxExportDepth-1, elements);
+            if( classLoader.getParent()!=null ) {
+                addExportedFiles(classLoader.getParent(), maxExportDepth-1, elements);
+            }
         }
         addExportedFiles(classLoader, elements);
     }

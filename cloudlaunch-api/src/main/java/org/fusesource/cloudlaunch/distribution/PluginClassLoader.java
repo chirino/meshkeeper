@@ -312,7 +312,7 @@ public class PluginClassLoader extends URLClassLoader {
     static public String getModuleVersion() {
         String pomProps = "META-INF/maven/" + PluginResolver.CLOUDLAUNCH_GROUP_ID + "/" + PluginResolver.CLOUDLAUNCH_ARTIFACT_ID + "/pom.properties";
 
-        final String DEFAULT_VERSION = "RELEASE";
+        final String DEFAULT_VERSION = "LATEST";
         try {
             Properties p = loadProperties(PluginClassLoader.class.getClassLoader(), pomProps);
             if (p != null) {
