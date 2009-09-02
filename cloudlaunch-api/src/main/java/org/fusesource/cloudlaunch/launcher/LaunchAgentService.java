@@ -7,7 +7,6 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.launcher;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -15,6 +14,7 @@ import org.fusesource.cloudlaunch.HostProperties;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
+import org.fusesource.cloudlaunch.classloader.Marshalled;
 import org.fusesource.cloudlaunch.distribution.Distributable;
 
 /** 
@@ -53,6 +53,17 @@ public interface LaunchAgentService extends Distributable {
     public void releaseTcpPorts(Collection<Integer> ports);
 
     public Process launch(LaunchDescription launchDescription, ProcessListener handler) throws Exception;
+
+
+    /**
+     * Executes a runnable task in a new JVM. 
+     *
+     * @param runnable
+     * @param handler
+     * @return
+     * @throws Exception
+     */
+    public Process launch(Marshalled<Runnable> runnable, ProcessListener handler) throws Exception;
 
     public HostProperties getHostProperties() throws Exception;
 }

@@ -14,6 +14,7 @@ import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.LaunchTask;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
+import org.fusesource.cloudlaunch.util.internal.ProcessSupport;
 
 import java.io.*;
 import java.util.Map;
@@ -34,10 +35,7 @@ public class LocalProcess implements Process {
     protected final ProcessListener listener;
     private final int pid;
 
-    Thread thread;
     java.lang.Process process;
-    ProcessOutputHandler errorHandler;
-    ProcessOutputHandler outputHandler;
     private OutputStream os;
 
     AtomicBoolean running = new AtomicBoolean();
@@ -120,29 +118,15 @@ public class LocalProcess implements Process {
                 throw new Exception("Process launched failed (returned null).");
             }
 
-            // create error handler
             running.set(true);
-            errorHandler = new ProcessOutputHandler(process.getErrorStream(), "Process Error Handler for: " + pid, FD_STD_ERR);
-            outputHandler = new ProcessOutputHandler(process.getInputStream(), "Process Output Handler for: " + pid, FD_STD_OUT);
             os = process.getOutputStream();
-
-            thread = new Thread("Process Watcher for: " + pid) {
-                @Override
+            ProcessSupport.watch(""+pid, process, new OutputHandler(FD_STD_OUT), new OutputHandler(FD_STD_ERR), new Runnable() {
                 public void run() {
-                    try {
-                        process.waitFor();
-                        int exitValue = process.exitValue();
-                        //Prior to sending exit join the output
-                        //handler threads to make sure that all 
-                        //data is sent:
-                        errorHandler.join();
-                        outputHandler.join();
-                        onExit(exitValue);
-                    } catch (InterruptedException e) {
-                    }
+                    int exitValue = process.exitValue();
+                    onExit(exitValue);
                 }
-            };
-            thread.start();
+            });
+            
         }
 
     }
@@ -168,7 +152,7 @@ public class LocalProcess implements Process {
             try {
                 log.info("Killing process " + process + " [pid = " + pid + "]");
                 process.destroy();
-                thread.join();
+                process.waitFor();
                 log.info("Killed process " + process + " [pid = " + pid + "]");
                 
             } catch (Exception e) {
@@ -204,57 +188,35 @@ public class LocalProcess implements Process {
     }
 
     // handle output or error data
-    private class ProcessOutputHandler implements Runnable {
+    private class OutputHandler extends OutputStream {
         private final int fd;
-        private final BufferedInputStream is;
-        private static final int MAX_CHUNK_SIZE = 8 * 1024;
-        Thread thread;
+        private final static int MAX_CHUNK_SIZE = 8 * 1024;
+        private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(MAX_CHUNK_SIZE);
 
-        public ProcessOutputHandler(InputStream is, String name, int fd) {
-            this.is = new BufferedInputStream(is, MAX_CHUNK_SIZE);
+        public OutputHandler(int fd) {
             this.fd = fd;
-            thread = new Thread(this, name);
-            thread.start();
         }
 
-        public void join() throws InterruptedException {
-            thread.join();
-        }
-
-        public void run() {
-
-            try {
-
-                byte b = -1;
-                while (true) {
-
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream(MAX_CHUNK_SIZE);
-                    b = (byte) is.read();
-                    if (b == -1) {
-                        throw new EOFException();
-                    }
-
-                    baos.write(b);
-
-                    while (is.available() > 0 && baos.size() < MAX_CHUNK_SIZE) {
-                        b = (byte) is.read();
-                        if (b == -1) {
-                            throw new EOFException();
-                        }
-                        baos.write(b);
-                    }
-
-                    listener.onProcessOutput(fd, baos.toByteArray());
-
-                }
-            } catch (EOFException expected) {
-            } catch (Exception e) {
-                if (running.get()) {
-                    log.error("ERROR: reading from process' output or  error stream.");
-                    e.printStackTrace();
-                }
+        @Override
+        public void write(int b) throws IOException {
+            buffer.write(b);
+            if( buffer.size() >= MAX_CHUNK_SIZE) {
+                flush();
             }
         }
-    }
 
-}//private class ProcessServer
+        @Override
+        public void flush() throws IOException {
+            if( buffer.size() > 0 ) {
+                listener.onProcessOutput(fd, buffer.toByteArray());
+                buffer.reset();
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+            super.close();
+        }
+    }
+}

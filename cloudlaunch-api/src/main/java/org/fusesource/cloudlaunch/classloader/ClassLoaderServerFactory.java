@@ -35,27 +35,4 @@ public abstract class ClassLoaderServerFactory {
 
     protected abstract ClassLoaderServer createClassLoaderManager(String uri, Distributor distributor) throws Exception;
 
-    /**
-     * Creates a ClassLoader which loads classes from a remote location.  It accesses
-     * the remote ClassLoaderServer by looking up one of it's ClassLoaderFactory objects in
-     * the distributor registry which is addressed by <code>distributorUri</code> and <code>path</code>.
-     * <br/>
-     * Remote class files will be cahced in the specified cache directory.  The created classloader will
-     * have the specified parent class loader.
-     *
-     * @param distributorUri
-     * @param path
-     * @param cacheDir
-     * @param parent
-     * @return
-     * @throws Exception
-     */
-    public static ClassLoader createClassLoader(String distributorUri, String path, File cacheDir, ClassLoader parent) throws Exception {
-        LOG.debug("Looking up classloader: "+distributorUri+" @ "+path);
-        DistributorFactory.setDefaultRegistryUri(distributorUri);
-        Distributor d = DistributorFactory.createDefaultDistributor();
-        ClassLoaderFactory clf = d.getRegistry().getObject(path);
-        return clf.createClassLoader(parent, cacheDir);
-    }
-
 }

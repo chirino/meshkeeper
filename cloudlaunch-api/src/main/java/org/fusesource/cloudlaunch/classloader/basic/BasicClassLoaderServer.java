@@ -79,6 +79,7 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         public File jared;
     }
 
+    private final ConcurrentHashMap<ClassLoader, ClassLoaderFactory> factories = new ConcurrentHashMap<ClassLoader, ClassLoaderFactory>();
     private final static AtomicLong ids = new AtomicLong();
     private final ConcurrentHashMap<Long, ArrayList<ExportedFile>> exportedClassLoaders = new ConcurrentHashMap<Long, ArrayList<ExportedFile>>();
     private final ConcurrentHashMap<Long, ExportedFile> exportedFiles = new ConcurrentHashMap<Long, ExportedFile>();
@@ -117,14 +118,21 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
 
 
     public ClassLoaderFactory export(ClassLoader classLoader, int maxExportDepth) throws IOException {
-        ArrayList<ExportedFile> exports = new ArrayList<ExportedFile>();
-        addExportedFiles(classLoader, maxExportDepth, exports);
-        long id = ids.incrementAndGet();
-        exportedClassLoaders.put(id, exports);
-        for (ExportedFile export : exports) {
-            exportedFiles.put(export.element.id, export);
+        ClassLoaderFactory factory = factories.get(classLoader);
+        if( factory == null ) {
+
+            ArrayList<ExportedFile> exports = new ArrayList<ExportedFile>();
+            addExportedFiles(classLoader, maxExportDepth, exports);
+            long id = ids.incrementAndGet();
+            exportedClassLoaders.put(id, exports);
+            for (ExportedFile export : exports) {
+                exportedFiles.put(export.element.id, export);
+            }
+            factory = new BasicClassLoaderFactory(proxy, id);
+            factories.put(classLoader, factory);
+            
         }
-        return new BasicClassLoaderFactory(proxy, id);
+        return factory;
     }
 
     private static void addExportedFiles(ClassLoader classLoader, int maxExportDepth, ArrayList<ExportedFile> elements) throws IOException {

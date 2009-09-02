@@ -7,12 +7,14 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.launcher;
 
+import org.fusesource.cloudlaunch.classloader.ClassLoaderFactory;
+import org.fusesource.cloudlaunch.classloader.Marshalled;
+import org.fusesource.cloudlaunch.distribution.DistributorFactory;
+import org.fusesource.cloudlaunch.distribution.Distributor;
+
 import java.util.LinkedList;
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
@@ -25,12 +27,12 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class RemoteBootstrap {
 
-    private File classLoaderLibs;
     private File cache;
     private String classLoader;
     private String mainClass;
     private String[] args;
     private String distributor;
+    private String runnable;
 
     static class SyntaxException extends Exception {
         private static final long serialVersionUID = 4997524790367555614L;
@@ -64,17 +66,17 @@ public class RemoteBootstrap {
                     } catch (Exception e) {
                         throw new SyntaxException("Expected a url after the --distributor option.");
                     }
+                } else if (arg.equals("--runnable")) {
+                    try {
+                        main.setRunnable(alist.removeFirst());
+                    } catch (Throwable e) {
+                        throw new SyntaxException("Expected a url after the --runnable option.");
+                    }
                 } else if (arg.equals("--classloader")) {
                     try {
                         main.setClassLoader(alist.removeFirst());
                     } catch (Throwable e) {
                         throw new SyntaxException("Expected a url after the --classloader option.");
-                    }
-                } else if (arg.equals("--classloader-libs")) {
-                    try {
-                        main.setClassLoaderLibs(new File(alist.removeFirst()).getCanonicalFile());
-                    } catch (Throwable e) {
-                        throw new SyntaxException("Expected a directoy after the --classloader-libs option.");
                     }
                 } else {
                     // Not an option.. then it must be the main class name and args..
@@ -87,14 +89,16 @@ public class RemoteBootstrap {
             }
 
             // Validate required arguments/options.
-            if (main.getMainClass() == null) {
-                throw new SyntaxException("Main class not specified.");
+            if( main.getRunnable() == null ) {
+                if (main.getMainClass() == null) {
+                    throw new SyntaxException("Main class not specified.");
+                }
+                if (main.getClassLoader() == null) {
+                    throw new SyntaxException("--classloader not specified.");
+                }
             }
             if (main.getCache() == null) {
                 throw new SyntaxException("--cache not specified.");
-            }
-            if (main.getClassLoader() == null) {
-                throw new SyntaxException("--classloader not specified.");
             }
             if (main.getDistributor() == null) {
                 throw new SyntaxException("--distributor not specified.");
@@ -109,56 +113,46 @@ public class RemoteBootstrap {
         main.execute();
     }
 
-    private void execute() throws Throwable {
-        ClassLoader mainCl = loadMainClassLoader();
-        Class<?> clazz = mainCl.loadClass(mainClass);
-
-        // Store our options in the System properties.. they might be usefull
-        // to the booted application.
-        System.setProperty("cloudlaunch.bootstrap.distributor", distributor);
-        System.setProperty("cloudlaunch.bootstrap.classloader", classLoader);
-        System.setProperty("cloudlaunch.bootstrap.cache", cache.getPath());
-        if( classLoaderLibs!=null ) {
-            System.setProperty("cloudlaunch.bootstrap.classloader-libs", classLoaderLibs.getPath());
-        }
-        
-        // Invoke the main.
-        Method mainMethod = clazz.getMethod("main", new Class[] { String[].class });
-        try {
-            mainMethod.invoke(null, new Object[] { args });
-        } catch (InvocationTargetException e) {
-            throw e.getTargetException();
-        }
-    }
-
-    private ClassLoader loadMainClassLoader() throws Exception {
-        ClassLoader cl = getClass().getClassLoader();
-        if (classLoaderLibs != null) {
-            // Doing this allows us to keep the classes used in remote class loading
-            // seperate from the classes loaded by those classloaders.
-            ArrayList<URL> urls = new ArrayList<URL>();
-            for (File file : classLoaderLibs.listFiles()) {
-                if (file.isFile() && (file.getName().endsWith(".jar") || file.getName().endsWith(".zip"))) {
-                    urls.add(file.getCanonicalFile().toURI().toURL());
-                }
-            }
-            URL u[] = new URL[urls.size()];
-            urls.toArray(u);
-            cl = new URLClassLoader(u);
-        }
-
-        // Create the remote classloader
-        Class<?> remoteCLClass = cl.loadClass("org.fusesource.cloudlaunch.classloader.ClassLoaderServerFactory");
-        Method method = remoteCLClass.getMethod("createClassLoader", new Class[] { String.class, String.class, File.class, ClassLoader.class });
-
-        // Use the new remote classloader to load the main class
-        System.out.println("Looking up remote class loader...");
-        return (ClassLoader) method.invoke(null, new Object[] {distributor, classLoader, cache, null});
-    }
-
     private static void showUsage() {
         System.out.println();
     }
+
+    private void execute() throws Throwable {
+
+        // Store our options in the System properties.. they might be usefull
+        // to the booted application.
+        System.setProperty("cloudlaunch.bootstrap.distributor", this.distributor);
+        System.setProperty("cloudlaunch.bootstrap.cache", cache.getPath());
+        if( runnable !=null ) {
+            System.setProperty("cloudlaunch.bootstrap.runnable", runnable);
+        } else {
+            System.setProperty("cloudlaunch.bootstrap.classloader", classLoader);
+            System.setProperty("cloudlaunch.bootstrap.mainclass", mainClass);
+        }
+
+        DistributorFactory.setDefaultRegistryUri(this.distributor);
+        Distributor distributor = DistributorFactory.createDefaultDistributor();
+
+        if( runnable !=null ) {
+            Marshalled<Runnable> marshalled = distributor.getRegistry().getObject(runnable);
+            ClassLoaderFactory clf = marshalled.getClassLoaderFactory();
+            ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
+            Runnable runnable = marshalled.get(cl);
+            runnable.run();
+        } else {
+            ClassLoaderFactory clf = distributor.getRegistry().getObject(this.classLoader);
+            ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
+            Class<?> clazz = cl.loadClass(mainClass);
+            // Invoke the main.
+            Method mainMethod = clazz.getMethod("main", new Class[] { String[].class });
+            try {
+                mainMethod.invoke(null, new Object[] { args });
+            } catch (InvocationTargetException e) {
+                throw e.getTargetException();
+            }
+        }
+    }
+
 
     ///////////////////////////////////////////////////////////////////
     // Property Accessors
@@ -189,14 +183,6 @@ public class RemoteBootstrap {
         return classLoader;
     }
 
-    public File getClassLoaderLibs() {
-        return classLoaderLibs;
-    }
-
-    public void setClassLoaderLibs(File classLoaderLibs) {
-        this.classLoaderLibs = classLoaderLibs;
-    }
-
     public String[] getArgs() {
         return args;
     }
@@ -213,4 +199,11 @@ public class RemoteBootstrap {
         this.mainClass = mainClass;
     }
 
+    public String getRunnable() {
+        return runnable;
+    }
+
+    public void setRunnable(String runnable) {
+        this.runnable = runnable;
+    }
 }

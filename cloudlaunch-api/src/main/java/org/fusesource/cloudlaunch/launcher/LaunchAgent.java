@@ -9,11 +9,7 @@ package org.fusesource.cloudlaunch.launcher;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,9 +17,12 @@ import org.fusesource.cloudlaunch.HostProperties;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
+import org.fusesource.cloudlaunch.classloader.Marshalled;
 import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.distribution.PluginClassLoader;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.util.internal.FileUtils;
+import org.fusesource.mop.support.ArtifactId;
 
 /**
  * @author chirino
@@ -31,7 +30,7 @@ import org.fusesource.cloudlaunch.util.internal.FileUtils;
 public class LaunchAgent implements LaunchAgentService {
     public static final long CLEANUP_TIMEOUT = 60000;
     public static final String LOCAL_REPO_PROP = "org.fusesource.testrunner.localRepoDir";
-    Log log = LogFactory.getLog(this.getClass());
+    public static final Log LOG = LogFactory.getLog(LaunchAgent.class);
 
     private String exclusiveOwner;
 
@@ -60,7 +59,7 @@ public class LaunchAgent implements LaunchAgentService {
     synchronized public void bind(String owner) throws Exception {
         if (exclusiveOwner == null) {
             exclusiveOwner = owner;
-            log.info("Now bound to: " + exclusiveOwner);
+            LOG.info("Now bound to: " + exclusiveOwner);
         } else if (!exclusiveOwner.equals(owner)) {
             throw new Exception("Bind failure, already bound: " + exclusiveOwner);
         }
@@ -69,12 +68,36 @@ public class LaunchAgent implements LaunchAgentService {
     synchronized public void unbind(String owner) throws Exception {
         if (exclusiveOwner == null) {
         } else if (exclusiveOwner.equals(owner)) {
-            log.info("Bind to " + exclusiveOwner + " released");
+            LOG.info("Bind to " + exclusiveOwner + " released");
             exclusiveOwner = null;
         } else {
             throw new Exception("Release failure, different owner: " + exclusiveOwner);
         }
     }
+
+    public Process launch(Marshalled<Runnable> runnable, ProcessListener handler) throws Exception {
+        String path = distributor.getRegistry().addObject(getRegistryPath() + ":runnable", true, runnable);
+
+        // Figure out the boostrap classpath using mop.
+        String artifact = PluginClassLoader.CLOUDLAUNCH_GROUP_ID + ":cloudlaunch-api:" + PluginClassLoader.getModuleVersion();
+        ArrayList<ArtifactId> artifactId = new ArrayList<ArtifactId>(1);
+        artifactId.add(ArtifactId.parse(artifact));
+        String classpath = PluginClassLoader.getMopRepository().classpath(artifactId);
+
+        LaunchDescription ld = new LaunchDescription();
+        ld.add("java");
+        ld.add("-cp");
+        ld.add(classpath);
+        ld.add(RemoteBootstrap.class.getName());
+        ld.add("--cache");
+        ld.add(new File(getDataDirectory(), "bootstrap-cache").getCanonicalPath());
+        ld.add("--distributor");
+        ld.add(getDistributor().getRegistryUri());
+        ld.add("--runnable");
+        ld.add(path);
+        return launch(ld, handler);
+    }
+
 
     synchronized public Process launch(LaunchDescription launchDescription, ProcessListener handler) throws Exception {
         int pid = pidCounter++;
@@ -107,7 +130,7 @@ public class LaunchAgent implements LaunchAgentService {
             try {
                 setAgentId(java.net.InetAddress.getLocalHost().getHostName());
             } catch (java.net.UnknownHostException uhe) {
-                log.warn("Error determining hostname.");
+                LOG.warn("Error determining hostname.");
                 uhe.printStackTrace();
                 setAgentId("UNDEFINED");
             }
@@ -115,7 +138,7 @@ public class LaunchAgent implements LaunchAgentService {
 
         shutdownHook = new Thread(getAgentId() + "-Shutdown") {
             public void run() {
-                log.debug("Executing Shutdown Hook for " + LaunchAgent.this);
+                LOG.debug("Executing Shutdown Hook for " + LaunchAgent.this);
                 try {
                     LaunchAgent.this.stop();
                 } catch (Exception e) {
@@ -130,10 +153,14 @@ public class LaunchAgent implements LaunchAgentService {
 
         monitor.start();
 
-        distributor.register(this, LaunchAgent.REGISTRY_PATH + "/" + getAgentId(), false);
+        distributor.register(this, getRegistryPath(), false);
 
-        log.info("PROCESS LAUNCHER " + getAgentId() + " STARTED\n");
+        LOG.info("PROCESS LAUNCHER " + getAgentId() + " STARTED\n");
 
+    }
+
+    private String getRegistryPath() {
+        return LaunchAgent.REGISTRY_PATH + "/" + getAgentId();
     }
 
     public synchronized void stop() throws Exception {
@@ -237,7 +264,7 @@ public class LaunchAgent implements LaunchAgentService {
     }
 
     /**
-     * @param i
+     * @param timeout
      */
     public void checkForRogueProcesses(int timeout) {
         // TODO Need a mechanism of pinging the launcher

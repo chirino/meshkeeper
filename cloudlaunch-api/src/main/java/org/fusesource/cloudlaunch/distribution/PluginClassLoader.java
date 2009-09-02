@@ -56,9 +56,9 @@ public class PluginClassLoader extends URLClassLoader {
     public static final String KEY_DEFAULT_PLUGINS_VERSION = KEY_PLUGIN_VERSION_PREFIX +"default";
     
     public static final String MOP_BASE = MOPRepository.MOP_BASE;
-    
-    private static final String CLOUDLAUNCH_GROUP_ID = "org.fusesource.cloudlaunch";
-    private static final String CLOUDLAUNCH_ARTIFACT_ID = "cloudlaunch-api";
+
+    public static final String CLOUDLAUNCH_GROUP_ID = "org.fusesource.cloudlaunch";
+    public static final String CLOUDLAUNCH_ARTIFACT_ID = "cloudlaunch-api";
     
     // If not provides via system properties, pick up the default plugin in version from the maven pom.properties file
     private static final String PATH_POM_PROPERTIES = "META-INF/maven/" + CLOUDLAUNCH_GROUP_ID + "/" + CLOUDLAUNCH_ARTIFACT_ID +"/pom.properties";
@@ -233,10 +233,10 @@ public class PluginClassLoader extends URLClassLoader {
         try {
             //Possible that the plugin properties are already on the classpath
             //try loading there first: 
-            Properties properties = loadProperties(uri);
+            Properties properties = loadProperties(this, uri);
             if (properties == null) {
                 loadPlugin(key);
-                properties = loadProperties(uri);
+                properties = loadProperties(this, uri);
             }
 
             if (properties == null) {
@@ -270,8 +270,8 @@ public class PluginClassLoader extends URLClassLoader {
 
     }
 
-    private Properties loadProperties(String uri) throws IOException {
-        InputStream in = getResourceAsStream(uri);
+    static private Properties loadProperties(ClassLoader cl, String uri) throws IOException {
+        InputStream in = cl.getResourceAsStream(uri);
         if (in == null) {
             return null;
         }
@@ -348,25 +348,28 @@ public class PluginClassLoader extends URLClassLoader {
         return ARTIFACT_FILTER;
     }
 
-    private String getDefaultPluginVersion() {
+    static public String getDefaultPluginVersion() {
         String rc = System.getProperty(KEY_DEFAULT_PLUGINS_VERSION);
         if( rc !=null ) {
             return rc;
         }
+        return getModuleVersion();
+    }
 
+    static public String getModuleVersion() {
         final String DEFAULT_VERSION = "RELEASE";
         try {
-            Properties p = loadProperties(PATH_POM_PROPERTIES);
+            Properties p = loadProperties(PluginClassLoader.class.getClassLoader(), PATH_POM_PROPERTIES);
             if( p!=null ) {
                 return p.getProperty("version", DEFAULT_VERSION);
             }
         } catch (Exception e) {
         }
-        LOG.warn("Unable to locate '"+ PATH_POM_PROPERTIES +"' to determine plugin versions using default: " + DEFAULT_VERSION);
+        LOG.warn("Unable to locate '"+ PATH_POM_PROPERTIES +"' to determine version.  Using default: " + DEFAULT_VERSION);
         return DEFAULT_VERSION;
     }
 
-    private synchronized static MOPRepository getMopRepository() {
+    public synchronized static MOPRepository getMopRepository() {
         if (MOP_REPO == null) {
             MOP_REPO = new MOPRepository();
             MOP_REPO.setOnline(true);

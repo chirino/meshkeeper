@@ -7,9 +7,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.lang.*;
+import java.lang.Process;
 
 import org.fusesource.cloudlaunch.distribution.resource.Resource;
 import org.fusesource.cloudlaunch.launcher.LaunchAgent;
+import org.fusesource.cloudlaunch.util.internal.ProcessSupport;
 
 /**
  * @author chirino
@@ -50,6 +53,11 @@ abstract public class Expression implements Serializable {
         List<FileExpression> list = Arrays.asList(value);
         return path(list);
     }
+
+    public static ExecExpression exec(List<Expression> value) {
+        return new ExecExpression(value);
+    }
+
 
     public static AppendExpression append(List<Expression> list) {
         return new AppendExpression(list);
@@ -130,6 +138,35 @@ abstract public class Expression implements Serializable {
                 sb.append(file.evaluate(p));
             }
             return sb.toString();
+        }
+    }
+
+
+    public static class ExecExpression extends Expression {
+        private final List<Expression> args;
+
+        public ExecExpression(List<Expression> args) {
+            this.args = args;
+        }
+
+        public String evaluate(Properties p) {
+            String cmdline[] = new String[args.size()];
+            for (int i = 0; i < cmdline.length; i++) {
+                cmdline[i] = args.get(i).evaluate(p);
+            }
+            try {
+                Process process = Runtime.getRuntime().exec(cmdline);
+                if( process == null ) {
+                    throw new RuntimeException("Could not execute "+cmdline[0]);
+                }
+                String rc = ProcessSupport.caputure(process);
+                if( rc == null ) {
+                    throw new RuntimeException("Command "+cmdline[0]+" failed");
+                }
+                return rc;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
