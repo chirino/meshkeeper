@@ -1,6 +1,13 @@
+/**************************************************************************************
+ * Copyright (C) 2009 Progress Software, Inc. All rights reserved.                    *
+ * http://fusesource.com                                                              *
+ * ---------------------------------------------------------------------------------- *
+ * The software in this package is published under the terms of the AGPL license      *
+ * a copy of which has been included with this distribution in the license.txt file.  *
+ **************************************************************************************/
 package org.fusesource.cloudlaunch.classloader;
 
-import org.fusesource.cloudlaunch.classloader.ClassLoaderFactory;
+import org.fusesource.cloudlaunch.distribution.PluginClassLoader;
 import org.fusesource.cloudlaunch.util.internal.ClassLoadingAwareObjectInputStream;
 
 import java.io.*;
@@ -31,14 +38,21 @@ public class Marshalled<T> implements Serializable {
     }
 
     public T get(final ClassLoader cl) throws IOException, ClassNotFoundException {
-        ByteArrayInputStream bais = new ByteArrayInputStream(serializedObject);
-        ClassLoadingAwareObjectInputStream is = new ClassLoadingAwareObjectInputStream(bais) {
-            @Override
-            protected ClassLoader getClassLoader() {
-                return cl;
-            }
-        };
-        return (T) is.readObject();
+        ClassLoader original = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(cl);
+        try {
+            final ClassLoader[]loaders = new ClassLoader[]{cl, PluginClassLoader.getDefaultPluginLoader()};
+            ByteArrayInputStream bais = new ByteArrayInputStream(serializedObject);
+            ClassLoadingAwareObjectInputStream is = new ClassLoadingAwareObjectInputStream(bais) {
+                @Override
+                protected ClassLoader[] getClassLoaders() {
+                    return loaders;
+                }
+            };
+            return (T) is.readObject();
+        } finally {
+            Thread.currentThread().setContextClassLoader(original);
+        }
     }
 
 }

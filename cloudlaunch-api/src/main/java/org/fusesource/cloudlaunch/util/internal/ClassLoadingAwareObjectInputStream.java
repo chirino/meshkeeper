@@ -26,24 +26,26 @@ import java.lang.reflect.Proxy;
 public class ClassLoadingAwareObjectInputStream extends ObjectInputStream {
 
     private static final ClassLoader FALLBACK_CLASS_LOADER = ClassLoadingAwareObjectInputStream.class.getClassLoader();
-    
-    /** <p>Maps primitive type names to corresponding class objects.</p> */
+
+    /**
+     * <p>Maps primitive type names to corresponding class objects.</p>
+     */
     private static final HashMap<String, Class> primClasses = new HashMap<String, Class>(8, 1.0F);
+
     public ClassLoadingAwareObjectInputStream(InputStream in) throws IOException {
         super(in);
     }
 
     protected Class resolveClass(ObjectStreamClass classDesc) throws IOException, ClassNotFoundException {
-        return load(classDesc.getName(),  getClassLoader());
+        String s = classDesc.getName();
+        return load(s);
     }
 
     protected Class resolveProxyClass(String[] interfaces) throws IOException, ClassNotFoundException {
-        ClassLoader cl = getClassLoader();
         Class[] cinterfaces = new Class[interfaces.length];
         for (int i = 0; i < interfaces.length; i++) {
-            cinterfaces[i] = load(interfaces[i], cl);
+            cinterfaces[i] = load(interfaces[i]);
         }
-
         try {
             return Proxy.getProxyClass(cinterfaces[0].getClassLoader(), cinterfaces);
         } catch (IllegalArgumentException e) {
@@ -51,25 +53,27 @@ public class ClassLoadingAwareObjectInputStream extends ObjectInputStream {
         }
     }
 
-    protected ClassLoader getClassLoader() {
-        return Thread.currentThread().getContextClassLoader();
+    protected ClassLoader[] getClassLoaders() {
+        return new ClassLoader[]{Thread.currentThread().getContextClassLoader()};
     }
 
-    private Class load(String className, ClassLoader cl)
-            throws ClassNotFoundException {
-        try {
-            return Class.forName(className, false, cl);
-        } catch (ClassNotFoundException e) {
-            final Class clazz = (Class) primClasses.get(className);
-            if (clazz != null) {
-                return clazz;
-            } else {
-                return Class.forName(className, false, FALLBACK_CLASS_LOADER);
+    private Class load(String s) throws ClassNotFoundException {
+        ClassLoader[] cls = getClassLoaders();
+        ClassNotFoundException error = null;
+        for (ClassLoader cl : cls) {
+            try {
+                return Class.forName(s, false, cl);
+            } catch (ClassNotFoundException e) {
+                error = e;
             }
         }
+        final Class clazz = (Class) primClasses.get(s);
+        if (clazz != null) {
+            return clazz;
+        } else {
+            return Class.forName(s, false, FALLBACK_CLASS_LOADER);
+        }
     }
-
-
 
     static {
         primClasses.put("boolean", boolean.class);

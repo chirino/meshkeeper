@@ -56,11 +56,11 @@ public class RemoteRunnableTest extends TestCase {
         f.delete();
     }
 
-    static interface ICallBack extends Distributable {
+    public static interface ICallBack extends Distributable {
         public void done();
     }
     
-    static class CallBack implements ICallBack {
+    public static class CallBack implements ICallBack {
         CountDownLatch latch = new CountDownLatch(1);
         public void done() {
             latch.countDown();
