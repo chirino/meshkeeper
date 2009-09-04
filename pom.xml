@@ -14,14 +14,14 @@
   <modelVersion>4.0.0</modelVersion>
 
   <description>A distributed process launching framework</description>
-  <url>http://fusesource.com/forge/projects/cloudlaunch</url>
+  <url>http://fusesource.com/forge/projects/meshkeeper</url>
 
-  <groupId>org.fusesource.cloudlaunch</groupId>
-  <artifactId>cloudlaunch</artifactId>
+  <groupId>org.fusesource.meshkeeper</groupId>
+  <artifactId>meshkeeper</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>cloudlaunch</name>
+  <name>meshkeeper</name>
 
   <organization>
     <name>Fuse Source</name>
@@ -40,16 +40,16 @@
     </license>
   </licenses>
   <modules>
-    <module>cloudlaunch-api</module>
-    <module>cloudlaunch-jms-plugin</module>
-    <module>cloudlaunch-rmiviajms-plugin</module>
-    <module>cloudlaunch-zk-plugin</module>
-    <module>cloudlaunch-wagon-plugin</module>
-    <module>cloudlaunch-eventviajms-plugin</module>
-    <module>cloudlaunch-activemq-plugin</module>
-    <module>cloudlaunch-all</module>
+    <module>meshkeeper-api</module>
+    <module>meshkeeper-jms-plugin</module>
+    <module>meshkeeper-rmiviajms-plugin</module>
+    <module>meshkeeper-zk-plugin</module>
+    <module>meshkeeper-wagon-plugin</module>
+    <module>meshkeeper-eventviajms-plugin</module>
+    <module>meshkeeper-activemq-plugin</module>
+    <module>meshkeeper-all</module>
     <module>assembly</module>
-    <module>cloudlaunch-packaging-test</module>
+    <module>meshkeeper-packaging-test</module>
   </modules>
 
   <repositories>
@@ -78,27 +78,27 @@
   </repositories>
 
   <scm>
-    <connection>scm:svn:http://fusesource.com/forge/svn/cloudlaunch/trunk</connection>
-    <developerConnection>scm:svn:http://forge.fusesource.com/svn/cloudlaunch/trunk</developerConnection>
-    <url>http://forge.fusesource.com/svn/cloudmix/trunk</url>
+    <connection>scm:svn:http://fusesource.com/forge/svn/meshkeeper/trunk</connection>
+    <developerConnection>scm:svn:http://forge.fusesource.com/svn/meshkeeper/trunk</developerConnection>
+    <url>http://forge.fusesource.com/svn/meshkeeper/trunk</url>
   </scm>
 
   <distributionManagement>
     <repository>
       <id>release.fusesource.org</id>
-      <name>cloudlaunch Release Repository</name>
-      <url>dav:http://fusesource.com/forge/dav/cloudlaunch/repo/release</url>
+      <name>meshkeeper Release Repository</name>
+      <url>dav:http://fusesource.com/forge/dav/meshkeeper/repo/release</url>
     </repository>
     <snapshotRepository>
       <uniqueVersion>false</uniqueVersion>
       <id>snapshot.fusesource.org</id>
-      <name>cloudlaunch Snapshot Repository</name>
-      <url>dav:http://fusesource.com/forge/dav/cloudlaunch/repo/snapshot</url>
+      <name>meshkeeper Snapshot Repository</name>
+      <url>dav:http://fusesource.com/forge/dav/meshkeeper/repo/snapshot</url>
     </snapshotRepository>
     <site>
       <id>website.fusesource.org</id>
       <name>website</name>
-      <url>dav:http://fusesource.com/forge/dav/cloudlaunch/maven/${project.version}</url>
+      <url>dav:http://fusesource.com/forge/dav/meshkeeper/maven/${project.version}</url>
     </site>
   </distributionManagement>
 
