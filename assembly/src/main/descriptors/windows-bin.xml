@@ -80,7 +80,7 @@
 
     <!-- Copy over jar files -->
     <fileSet>
-      <directory>../cloudlaunch-all/target/dependencies</directory>
+      <directory>../meshkeeper-all/target/dependencies</directory>
       <outputDirectory>/lib/</outputDirectory>
     </fileSet>
 

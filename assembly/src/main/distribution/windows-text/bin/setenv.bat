@@ -17,7 +17,7 @@ cd ..
 set CL_HOME=%cd%
 
 if not exist "%CL_HOME%" (
-    call :warn Cloud Launch home directory is not valid: %CL_HOME%
+    call :warn MeshKeeper home directory is not valid: %CL_HOME%
     goto END
 )
 

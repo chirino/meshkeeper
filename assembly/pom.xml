@@ -14,17 +14,17 @@
   <modelVersion>4.0.0</modelVersion>
   
   <parent>
-    <artifactId>cloudlaunch</artifactId>
-    <groupId>org.fusesource.cloudlaunch</groupId>
+    <artifactId>meshkeeper</artifactId>
+    <groupId>org.fusesource.meshkeeper</groupId>
     <version>1.0-SNAPSHOT</version>
   </parent>
   
-  <groupId>org.fusesource.cloudlaunch</groupId>
+  <groupId>org.fusesource.meshkeeper</groupId>
   <artifactId>assembly</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>Cloud Launch Assembly</name>
+  <name>MeshKeeper Assembly</name>
 
   <build>
     <defaultGoal>install</defaultGoal>
@@ -44,7 +44,7 @@
             <descriptors>
               <descriptor>assembly/src/main/descriptors/unix-bin.xml</descriptor>
             </descriptors>
-            <finalName>cloudlaunch-${pom.version}</finalName>
+            <finalName>meshkeeper-${pom.version}</finalName>
             <tarLongFileMode>gnu</tarLongFileMode>
           </configuration>
         </execution>
@@ -58,7 +58,7 @@
             <descriptors>
               <descriptor>assembly/src/main/descriptors/windows-bin.xml</descriptor>
             </descriptors>
-            <finalName>cloudlaunch-${pom.version}</finalName>
+            <finalName>meshkeeper-${pom.version}</finalName>
             <appendAssemblyId>true</appendAssemblyId>
             <assemblyId />
           </configuration>

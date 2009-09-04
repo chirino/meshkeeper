@@ -13,7 +13,7 @@ init() {
 
 run() {
 
-    exec $JAVA $JAVA_OPTS $OPTS -classpath "$CLASSPATH" org.fusesource.cloudlaunch.control.Main -dataDir $CL_HOME/data $*
+    exec $JAVA $JAVA_OPTS $OPTS -classpath "$CLASSPATH" org.fusesource.meshkeeper.control.Main -dataDir $CL_HOME/data $*
 }
 
 main() {

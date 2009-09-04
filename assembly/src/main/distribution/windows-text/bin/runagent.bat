@@ -1,12 +1,12 @@
 echo off
 setlocal
-TITLE CloudLaunch Agent
+TITLE MeshKeeper Agent
 
 REM  runagent.bat
 
 REM  ---------------------------------------------------------------------------
 REM  Usage:   runagent.bat
-REM  Purpose: See the cloudlaunch documentation for the explanation
+REM  Purpose: See the meshkeeper documentation for the explanation
 REM  ---------------------------------------------------------------------------
 
 REM  -------- USER MUST SET THE FOLLOWING VARIABLES AFTER INSTALL --------------
@@ -29,7 +29,7 @@ goto :END
 CALL setenv.bat
 if ERRORLEVEL 1 goto warn
 
-%JAVA_EXE% %OPTS% -classpath %CLASSPATH% org.fusesource.cloudlaunch.launcher.Main -dataDir "%CL_HOME%\data" %*
+%JAVA_EXE% %OPTS% -classpath %CLASSPATH% org.fusesource.meshkeeper.launcher.Main -dataDir "%CL_HOME%\data" %*
 
 :END
 echo Paused to catch any errors. Press any key to continue.
