@@ -73,7 +73,7 @@ public class DistributorFactory {
      * 
      * @return
      */
-    public static Distributor createDefaultDistributor() throws Exception {
+    public static DefaultDistributor createDefaultDistributor() throws Exception {
         DistributorFactory df = new DistributorFactory();
         return df.create();
     }
@@ -90,7 +90,7 @@ public class DistributorFactory {
         return EXECUTOR;
     }
 
-    public Distributor create() throws Exception {
+    public DefaultDistributor create() throws Exception {
 
         //Create Registry:
         Registry registry = new RegistryFactory().create(registryProviderUri);
@@ -122,7 +122,7 @@ public class DistributorFactory {
         }
         resourceManager.setLocalRepoDir(dataDirectory + File.separator + "local-repo");
 
-        Distributor ret = new Distributor();
+        DefaultDistributor ret = new DefaultDistributor();
         ret.setExporter(exporter);
         ret.setRegistry(registry);
         ret.setEventClient(eventClient);

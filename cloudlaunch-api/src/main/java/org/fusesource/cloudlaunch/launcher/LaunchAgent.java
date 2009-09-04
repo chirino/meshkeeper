@@ -18,12 +18,11 @@ import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.classloader.Marshalled;
-import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.Distributor;
 import org.fusesource.cloudlaunch.distribution.PluginClassLoader;
 import org.fusesource.cloudlaunch.distribution.PluginResolver;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.util.internal.FileUtils;
-import org.fusesource.mop.support.ArtifactId;
 
 /**
  * @author chirino
@@ -78,7 +77,7 @@ public class LaunchAgent implements LaunchAgentService {
 
     public Process launch(Marshalled<Runnable> runnable, ProcessListener handler) throws Exception {
         String path = LaunchAgent.REGISTRY_PATH + "-runnable/" + getAgentId();
-        path = distributor.getRegistry().addObject(path, true, runnable);
+        path = distributor.addRegistryObject(path, true, runnable);
 
         // Figure out the boostrap classpath using mop.
         PluginResolver resolver = PluginClassLoader.getPluginResolver();
@@ -93,7 +92,7 @@ public class LaunchAgent implements LaunchAgentService {
         ld.add("--cache");
         ld.add(new File(getDataDirectory(), "bootstrap-cache").getCanonicalPath());
         ld.add("--distributor");
-        ld.add(getDistributor().getRegistryUri());
+        ld.add(getDistributor().getDistributorUri());
         ld.add("--runnable");
         ld.add(path);
         return launch(ld, handler);
@@ -111,7 +110,7 @@ public class LaunchAgent implements LaunchAgentService {
             throw e;
         }
 
-        return (Process) distributor.export(rc).getStub();
+        return (Process) distributor.export(rc);
     }
 
     protected LocalProcess createLocalProcess(LaunchDescription launchDescription, ProcessListener handler, int pid) throws Exception {
@@ -123,7 +122,7 @@ public class LaunchAgent implements LaunchAgentService {
             return;
         }
 
-        System.getProperties().setProperty(LOCAL_REPO_PROP, distributor.getResourceManager().getLocalRepoDirectory().getCanonicalPath());
+        System.getProperties().setProperty(LOCAL_REPO_PROP, distributor.getLocalRepoDirectory().getCanonicalPath());
 
         started = true;
         if (agentId == null) {
@@ -154,7 +153,7 @@ public class LaunchAgent implements LaunchAgentService {
 
         monitor.start();
 
-        distributor.register(this, getRegistryPath(), false);
+        distributor.distribute(getRegistryPath(), false, this);
 
         LOG.info("PROCESS LAUNCHER " + getAgentId() + " STARTED\n");
 
@@ -187,11 +186,7 @@ public class LaunchAgent implements LaunchAgentService {
         monitor.requestCleanup();
         monitor.stop();
 
-        distributor.unregister(this);
-    }
-
-    public ResourceManager getResourceManager() {
-        return distributor.getResourceManager();
+        distributor.undistribute(this);
     }
 
     /**
@@ -201,7 +196,7 @@ public class LaunchAgent implements LaunchAgentService {
      *             If there is an error purging the cache.
      */
     public void purgeResourceRepository() throws IOException {
-        distributor.getResourceManager().purgeLocalRepo();
+        distributor.purgeLocalRepo();
     }
 
     /**

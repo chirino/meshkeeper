@@ -7,7 +7,6 @@
  **************************************************************************************/package org.fusesource.cloudlaunch;
 
 import org.fusesource.cloudlaunch.Expression;
-import org.fusesource.cloudlaunch.distribution.resource.Resource;
 import org.fusesource.cloudlaunch.launcher.LocalProcess;
 
 import java.io.Serializable;
@@ -53,7 +52,7 @@ public class LaunchDescription implements Serializable {
         }
 
         public void execute(LocalProcess process) throws Exception {
-            process.getProcessLauncher().getResourceManager().locateResource(resource);
+            process.getProcessLauncher().getDistributor().resolveResource(resource);
         }
     }
 

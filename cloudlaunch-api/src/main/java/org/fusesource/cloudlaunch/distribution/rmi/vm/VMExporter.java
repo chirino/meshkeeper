@@ -8,7 +8,7 @@
 package org.fusesource.cloudlaunch.distribution.rmi.vm;
 
 
-import org.fusesource.cloudlaunch.distribution.Distributable;
+import org.fusesource.cloudlaunch.Distributable;
 import org.fusesource.cloudlaunch.distribution.rmi.AbstractExporter;
 
 /**

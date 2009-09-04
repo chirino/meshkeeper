@@ -5,18 +5,21 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch.distribution.event;
+package org.fusesource.cloudlaunch;
+
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Documented;
 
 /**
- * EventListener
- * <p>
- * Description:
- * </p>
+ * Adding this annotation to a method on a {@link Distributable} method indicates
+ * that the operation should be invoked asynchronously. 
  * 
- * @author cmacnaug
- * @version 1.0
+ * @author cmacnaug 
  */
-public interface EventListener {
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@java.lang.annotation.Target( { java.lang.annotation.ElementType.METHOD })
+public @interface Oneway {
 
-    public void onEvent(Event e);
 }

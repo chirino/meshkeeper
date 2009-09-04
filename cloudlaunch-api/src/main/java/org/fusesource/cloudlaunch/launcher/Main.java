@@ -11,7 +11,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.Distributor;
 import org.fusesource.cloudlaunch.distribution.DistributorFactory;
 
 /**

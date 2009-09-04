@@ -21,8 +21,8 @@ import org.apache.maven.wagon.repository.Repository;
 import org.apache.maven.wagon.shared.http.AbstractHttpClientWagon;
 import org.apache.maven.wagon.shared.http.HttpConfiguration;
 import org.apache.maven.wagon.shared.http.HttpMethodConfiguration;
+import org.fusesource.cloudlaunch.Resource;
 import org.fusesource.cloudlaunch.distribution.resource.AuthenticationInfo;
-import org.fusesource.cloudlaunch.distribution.resource.Resource;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.util.internal.FileUtils;
 

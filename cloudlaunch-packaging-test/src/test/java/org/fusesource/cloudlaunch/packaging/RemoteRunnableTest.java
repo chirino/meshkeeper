@@ -2,9 +2,10 @@ package org.fusesource.cloudlaunch.packaging;
 
 import junit.framework.TestCase;
 import static org.fusesource.cloudlaunch.Expression.file;
+
+import org.fusesource.cloudlaunch.Distributable;
 import org.fusesource.cloudlaunch.LaunchClient;
 import org.fusesource.cloudlaunch.util.DefaultProcessListener;
-import org.fusesource.cloudlaunch.distribution.Distributable;
 import org.fusesource.cloudlaunch.distribution.PluginResolver;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -82,7 +83,7 @@ public class RemoteRunnableTest extends TestCase {
 
     public void testRemoteRunnable() throws Exception {
         CallBack cb = new CallBack();
-        ICallBack cbp = (ICallBack) client.getDistributor().export(cb).getStub();
+        ICallBack cbp = (ICallBack) client.getDistributor().export(cb);
 
         client.waitForAvailableAgents(5000);
         String agent = client.getAvailableAgents()[0].getAgentId();

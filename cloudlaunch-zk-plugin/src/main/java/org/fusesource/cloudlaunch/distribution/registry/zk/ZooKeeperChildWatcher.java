@@ -16,7 +16,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
-import org.fusesource.cloudlaunch.distribution.registry.RegistryWatcher;
+import org.fusesource.cloudlaunch.RegistryWatcher;
 
 /**
  * ZooKeeperWatcher

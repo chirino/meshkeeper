@@ -10,6 +10,8 @@ package org.fusesource.cloudlaunch.distribution.resource;
 import java.io.File;
 import java.io.IOException;
 
+import org.fusesource.cloudlaunch.Resource;
+
 /**
  * RepositoryManager
  * <p>

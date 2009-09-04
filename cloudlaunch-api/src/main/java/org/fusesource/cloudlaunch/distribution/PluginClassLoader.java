@@ -62,7 +62,7 @@ public class PluginClassLoader extends URLClassLoader {
     private static PluginResolver PLUGIN_RESOLVER;
 
     static {
-        SPI_PACKAGES.add(Distributor.class.getPackage().getName());
+        SPI_PACKAGES.add(DefaultDistributor.class.getPackage().getName());
         SPI_PACKAGES.add(IExporter.class.getPackage().getName());
         SPI_PACKAGES.add(ResourceManager.class.getPackage().getName());
         SPI_PACKAGES.add(Registry.class.getPackage().getName());

@@ -22,7 +22,7 @@ import static org.fusesource.cloudlaunch.Expression.path;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderFactory;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderServer;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderServerFactory;
-import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.Distributor;
 import org.fusesource.cloudlaunch.launcher.RemoteBootstrap;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -105,7 +105,7 @@ public class RemoteClassLoaderTest extends TestCase {
         server.start();
 
         ClassLoaderFactory stub = server.export(DataInputTestApplication.class.getClassLoader(), 1);
-        String path = distributor.getRegistry().addObject("/test/classloader", true, stub);
+        String path = distributor.addRegistryObject("/test/classloader", true, stub);
 
         LaunchDescription ld = new LaunchDescription();
         ld.add("java");
@@ -115,7 +115,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add("--cache");
         ld.add(file("./classloader-cache"));
         ld.add("--distributor");
-        ld.add(client.getDistributor().getRegistryUri());
+        ld.add(client.getDistributor().getDistributorUri());
         ld.add("--classloader");
         ld.add(path);
         ld.add(DataInputTestApplication.class.getName());

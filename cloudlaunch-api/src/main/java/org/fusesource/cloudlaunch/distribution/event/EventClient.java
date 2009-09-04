@@ -7,6 +7,9 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.event;
 
+import org.fusesource.cloudlaunch.Event;
+import org.fusesource.cloudlaunch.EventListener;
+
 /** 
  * EventClient
  * <p>

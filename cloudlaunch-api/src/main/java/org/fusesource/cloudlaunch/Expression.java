@@ -10,7 +10,6 @@ import java.util.Properties;
 import java.lang.*;
 import java.lang.Process;
 
-import org.fusesource.cloudlaunch.distribution.resource.Resource;
 import org.fusesource.cloudlaunch.launcher.LaunchAgent;
 import org.fusesource.cloudlaunch.util.internal.ProcessSupport;
 

@@ -8,13 +8,11 @@
 package org.fusesource.cloudlaunch.classloader;
 
 import org.fusesource.cloudlaunch.util.internal.URISupport;
-import org.fusesource.cloudlaunch.distribution.Distributor;
-import org.fusesource.cloudlaunch.distribution.DistributorFactory;
+import org.fusesource.cloudlaunch.Distributor;
 import org.fusesource.cloudlaunch.distribution.FactoryFinder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.File;
 
 /**
  * ClassLoaderServerFactory provies an extenisble way to create custom ClassLoaderServer implementations.

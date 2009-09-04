@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.File;
 import java.util.List;
 
-import org.fusesource.cloudlaunch.distribution.Distributable;
+import org.fusesource.cloudlaunch.Distributable;
 
 /**
  * A ClassLoaderServer allows to create ClassLoaderFactory objects which will

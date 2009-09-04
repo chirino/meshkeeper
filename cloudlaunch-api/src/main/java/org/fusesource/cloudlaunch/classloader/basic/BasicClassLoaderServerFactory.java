@@ -9,7 +9,7 @@ package org.fusesource.cloudlaunch.classloader.basic;
 
 import org.fusesource.cloudlaunch.classloader.ClassLoaderServerFactory;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderServer;
-import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.Distributor;
 
 /**
  * @author chirino

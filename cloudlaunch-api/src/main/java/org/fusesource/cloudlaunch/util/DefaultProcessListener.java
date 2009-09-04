@@ -7,10 +7,10 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.util;
 
+import org.fusesource.cloudlaunch.Distributable;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.Process;
-import org.fusesource.cloudlaunch.distribution.Distributor;
-import org.fusesource.cloudlaunch.distribution.Distributable;
+import org.fusesource.cloudlaunch.Distributor;
 
 import java.io.Serializable;
 import java.io.ObjectStreamException;
@@ -31,7 +31,7 @@ public class DefaultProcessListener implements ProcessListener, Serializable {
     private Distributable proxy;
 
     public DefaultProcessListener(Distributor distributor) throws Exception {
-        proxy = distributor.export(this).getStub();
+        proxy = distributor.export(this);
     }
 
     // When this object is serialized, we serialize the remote proxy.

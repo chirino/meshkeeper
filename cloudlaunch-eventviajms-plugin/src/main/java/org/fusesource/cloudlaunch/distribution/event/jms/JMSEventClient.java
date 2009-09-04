@@ -21,9 +21,9 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
-import org.fusesource.cloudlaunch.distribution.event.Event;
+import org.fusesource.cloudlaunch.Event;
+import org.fusesource.cloudlaunch.EventListener;
 import org.fusesource.cloudlaunch.distribution.event.EventClient;
-import org.fusesource.cloudlaunch.distribution.event.EventListener;
 import org.fusesource.cloudlaunch.distribution.jms.JMSProvider;
 
 /**

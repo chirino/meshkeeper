@@ -11,9 +11,9 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.fusesource.cloudlaunch.distribution.event.Event;
+import org.fusesource.cloudlaunch.Event;
+import org.fusesource.cloudlaunch.EventListener;
 import org.fusesource.cloudlaunch.distribution.event.EventClient;
-import org.fusesource.cloudlaunch.distribution.event.EventListener;
 
 /**
  * VMEventClient

@@ -19,9 +19,9 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.fusesource.cloudlaunch.RegistryWatcher;
 import org.fusesource.cloudlaunch.control.ControlService;
 import org.fusesource.cloudlaunch.distribution.DistributorFactory;
-import org.fusesource.cloudlaunch.distribution.registry.RegistryWatcher;
 
 /** 
  * VMRegistryServer

@@ -9,8 +9,8 @@ package org.fusesource.cloudlaunch.distribution.rmi.rmiviajms;
 
 import java.rmi.Remote;
 
-import org.fusesource.cloudlaunch.distribution.Distributable;
-import org.fusesource.cloudlaunch.distribution.Oneway;
+import org.fusesource.cloudlaunch.Distributable;
+import org.fusesource.cloudlaunch.Oneway;
 import org.fusesource.cloudlaunch.distribution.rmi.AbstractExporter;
 import org.fusesource.rmiviajms.JMSRemoteObject;
 

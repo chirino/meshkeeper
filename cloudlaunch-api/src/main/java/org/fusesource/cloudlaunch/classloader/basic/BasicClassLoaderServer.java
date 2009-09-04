@@ -7,10 +7,10 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.classloader.basic;
 
+import org.fusesource.cloudlaunch.Distributable;
+import org.fusesource.cloudlaunch.Distributor;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderServer;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderFactory;
-import org.fusesource.cloudlaunch.distribution.Distributable;
-import org.fusesource.cloudlaunch.distribution.Distributor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -92,7 +92,7 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
 
     synchronized public void start() throws Exception {
         if( proxy==null ) {
-            proxy = (IServer) distributor.export(server).getStub();
+            proxy = (IServer) distributor.export(server);
         }
     }
 

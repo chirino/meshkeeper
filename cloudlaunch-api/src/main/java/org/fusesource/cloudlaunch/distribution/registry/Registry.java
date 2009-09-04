@@ -9,6 +9,8 @@ package org.fusesource.cloudlaunch.distribution.registry;
 
 import java.io.Serializable;
 
+import org.fusesource.cloudlaunch.RegistryWatcher;
+
 /** 
  * Registry
  * <p>

@@ -14,7 +14,7 @@
   </bean>
 
   <!--Set up a cloudlaunch distributor-->
-  <bean id="distributor" class="org.fusesource.cloudlaunch.distribution.Distributor"
+  <bean id="distributor" class="org.fusesource.cloudlaunch.Distributor"
     init-method="start" destroy-method="destroy"
     factory-bean="distributorFactory" factory-method="create">
   </bean>

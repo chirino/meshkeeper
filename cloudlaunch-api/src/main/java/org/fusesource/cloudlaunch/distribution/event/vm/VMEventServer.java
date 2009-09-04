@@ -13,10 +13,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.fusesource.cloudlaunch.Event;
+import org.fusesource.cloudlaunch.EventListener;
 import org.fusesource.cloudlaunch.control.ControlService;
 import org.fusesource.cloudlaunch.distribution.DistributorFactory;
-import org.fusesource.cloudlaunch.distribution.event.Event;
-import org.fusesource.cloudlaunch.distribution.event.EventListener;
 
 /**
  * VMEventServer

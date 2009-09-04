@@ -7,7 +7,7 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.resource.wagon;
 
-import org.fusesource.cloudlaunch.distribution.resource.Resource;
+import org.fusesource.cloudlaunch.Resource;
 
 /** 
  * WagonResource

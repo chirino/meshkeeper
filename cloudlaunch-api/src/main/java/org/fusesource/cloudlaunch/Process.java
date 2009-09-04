@@ -9,7 +9,6 @@ package org.fusesource.cloudlaunch;
 
 import java.io.IOException;
 
-import org.fusesource.cloudlaunch.distribution.Distributable;
 
 /** 
  * Process

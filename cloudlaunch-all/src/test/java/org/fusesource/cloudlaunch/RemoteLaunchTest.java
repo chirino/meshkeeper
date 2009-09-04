@@ -34,8 +34,6 @@ import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.Expression.FileExpression;
-import org.fusesource.cloudlaunch.distribution.resource.Resource;
-import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.resource.wagon.WagonResourceManager;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -120,7 +118,7 @@ public class RemoteLaunchTest extends TestCase {
         ld.add(path(files));
         ld.add(DataInputTestApplication.class.getName());
 
-        Resource resource = launchClient.getDistributor().getResourceManager().createResource();
+        Resource resource = launchClient.getDistributor().createResource();
         resource.setType(Resource.FILE);
         resource.setRepoName("common");
         resource.setRepoPath("test/file.dat");

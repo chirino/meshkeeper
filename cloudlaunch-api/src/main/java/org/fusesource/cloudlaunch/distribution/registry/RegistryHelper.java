@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import org.fusesource.cloudlaunch.RegistryWatcher;
+
 /** 
  * RegistryHelper
  * <p>

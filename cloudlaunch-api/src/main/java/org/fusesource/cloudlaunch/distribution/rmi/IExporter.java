@@ -7,7 +7,7 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch.distribution.rmi;
 
-import org.fusesource.cloudlaunch.distribution.Distributable;
+import org.fusesource.cloudlaunch.Distributable;
 
 /** 
  * IExporter

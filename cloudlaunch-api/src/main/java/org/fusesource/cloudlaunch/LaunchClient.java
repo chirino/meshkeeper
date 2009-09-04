@@ -21,8 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.cloudlaunch.distribution.Distributor;
-import org.fusesource.cloudlaunch.distribution.registry.RegistryWatcher;
+import org.fusesource.cloudlaunch.Distributor;
 import org.fusesource.cloudlaunch.launcher.LaunchAgentService;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderServer;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderFactory;
@@ -57,7 +56,7 @@ public class LaunchClient {
     private ClassLoaderServer classLoaderServer;
 
     public void start() throws Exception {
-        name = distributor.getRegistry().addObject("/launchclients/" + System.getProperty("user.name"), true, null);
+        name = distributor.addRegistryObject("/launchclients/" + System.getProperty("user.name"), true, null);
 
         agentWatcher = new RegistryWatcher() {
 
@@ -66,7 +65,7 @@ public class LaunchClient {
                     for (String agentId : children) {
                         if (!knownAgents.containsKey(agentId)) {
                             try {
-                                LaunchAgentService pl = distributor.getRegistry().getObject(path + "/" + agentId);
+                                LaunchAgentService pl = distributor.getRegistryObject(path + "/" + agentId);
                                 knownAgents.put(agentId, pl);
                                 HostProperties props = pl.getHostProperties();
                                 agentProps.put(agentId, props);
@@ -84,7 +83,7 @@ public class LaunchClient {
             }
         };
 
-        distributor.getRegistry().addRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
+        distributor.addRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
     }
 
     /**
@@ -159,8 +158,8 @@ public class LaunchClient {
             //            listener.onTRException("Error releasing agents.", e);
         }
 
-        distributor.getRegistry().remove(name, false);
-        distributor.getRegistry().removeRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
+        distributor.removeRegistryData(name, false);
+        distributor.removeRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
         knownAgents.clear();
         agentProps.clear();
         closed.set(true);
@@ -191,7 +190,7 @@ public class LaunchClient {
         }
 
         if (launcher == null) {
-            LaunchAgentService pl = distributor.getRegistry().getObject(LaunchAgentService.REGISTRY_PATH + "/" + agentName);
+            LaunchAgentService pl = distributor.getRegistryObject(LaunchAgentService.REGISTRY_PATH + "/" + agentName);
             if (pl != null) {
                 HostProperties props = pl.getHostProperties();
                 synchronized (this) {
@@ -266,7 +265,7 @@ public class LaunchClient {
         checkNotClosed();
 
         LaunchAgentService agent = getAgent(agentId);
-        return agent.launch(launch, (ProcessListener) distributor.export(listener).getStub());
+        return agent.launch(launch, (ProcessListener) distributor.export(listener));
     }
 
     public static void println(Process process, String line) {
@@ -298,7 +297,7 @@ public class LaunchClient {
         return launch(getAgent(agentId), runnable, handler);
     }
 
-    public Process launch(LaunchAgentService agent, Runnable runnable, ProcessListener handler) throws Exception {
+    private Process launch(LaunchAgentService agent, Runnable runnable, ProcessListener handler) throws Exception {
         checkNotClosed();
         ClassLoaderFactory factory = getClassLoaderServer().export(runnable.getClass().getClassLoader(), 100);
         Marshalled<Runnable> marshalled = new Marshalled<Runnable>(factory, runnable);

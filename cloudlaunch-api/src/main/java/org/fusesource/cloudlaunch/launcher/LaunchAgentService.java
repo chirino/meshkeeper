@@ -10,12 +10,12 @@ package org.fusesource.cloudlaunch.launcher;
 import java.util.Collection;
 import java.util.List;
 
+import org.fusesource.cloudlaunch.Distributable;
 import org.fusesource.cloudlaunch.HostProperties;
 import org.fusesource.cloudlaunch.LaunchDescription;
 import org.fusesource.cloudlaunch.Process;
 import org.fusesource.cloudlaunch.ProcessListener;
 import org.fusesource.cloudlaunch.classloader.Marshalled;
-import org.fusesource.cloudlaunch.distribution.Distributable;
 
 /** 
  * ProcessLauncher

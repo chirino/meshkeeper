@@ -10,7 +10,7 @@ package org.fusesource.cloudlaunch.distribution.rmi;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.fusesource.cloudlaunch.distribution.Distributable;
+import org.fusesource.cloudlaunch.Distributable;
 
 /**
  * AbstractExporter

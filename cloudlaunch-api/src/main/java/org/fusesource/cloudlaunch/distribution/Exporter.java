@@ -11,7 +11,8 @@ import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.cloudlaunch.distribution.Distributor.DistributionRef;
+import org.fusesource.cloudlaunch.Distributable;
+import org.fusesource.cloudlaunch.Distributor.DistributionRef;
 
 /**
  * Exporter
@@ -26,39 +27,41 @@ public class Exporter {
 
     Log log = LogFactory.getLog(this.getClass());
 
-    Distributor distributor;
+    DefaultDistributor distributor;
     private Distributable source;
     private String path;
-    private DistributionRef<Distributable> ref;
+    private Distributable stub;
 
     private boolean sequential = true;
 
     public void export() throws Exception {
-        if (ref == null) {
+        if (stub == null) {
             if (this.path == null) {
-                ref = distributor.export(source);
+                stub = distributor.export(source);
                 if (log.isTraceEnabled())
                     log.trace("Exported:" + source);
 
             } else {
-                ref = distributor.register(source, path, true);
+                DistributionRef<Distributable> ref = distributor.distribute(path, true, source);
+                path = ref.getRegistryPath();
+                stub = ref.getProxy();
                 if (log.isTraceEnabled())
-                    log.trace("Registered as: " + ref.getPath() + " implementing: " + Arrays.asList(ref.getStub().getClass().getInterfaces()));
+                    log.trace("Registered as: " + ref.getRegistryPath() + " implementing: " + Arrays.asList(ref.getProxy().getClass().getInterfaces()));
             }
         }
     }
 
     public void destroy() throws Exception {
-        if (ref != null) {
-            distributor.unregister(source);
+        if (stub != null) {
+            distributor.undistribute(source);
         }
     }
 
-    public void setDistributor(Distributor distributor) {
+    public void setDistributor(DefaultDistributor distributor) {
         this.distributor = distributor;
     }
 
-    public Distributor getRegistry() {
+    public DefaultDistributor getRegistry() {
         return distributor;
     }
 
@@ -71,10 +74,7 @@ public class Exporter {
     }
 
     public Distributable getStub() {
-        if (ref != null) {
-            return ref.getStub();
-        }
-        return null;
+        return stub;
     }
 
     public String getPath() {

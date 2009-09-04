@@ -177,7 +177,7 @@ public class RemoteLaunchTest extends TestCase {
             String output = new String(data);
 
             if (fd == Process.FD_STD_OUT) {
-                System.out.print("STDOUT: " + output);
+                System.out.print("STDOUT: " + output + " [" + output.length() + " bytes]");
                 if (state == TEST_OUTPUT && EXPECTED_OUTPUT.equals(output.trim())) {
                     state = TEST_ERROR;
                 } else {
@@ -186,7 +186,7 @@ public class RemoteLaunchTest extends TestCase {
                 }
                 notifyAll();
             } else if (fd == Process.FD_STD_ERR) {
-                System.out.print("STDERR: " + output);
+                System.out.print("STDERR: " + output + " [" + output.length() + " bytes]");
                 if (state == TEST_ERROR && EXPECTED_ERROR.equals(output.trim())) {
                     state = SUCCESS;
                 } else {

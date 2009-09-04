@@ -7,8 +7,6 @@
  **************************************************************************************/
 package org.fusesource.cloudlaunch;
 
-import org.fusesource.cloudlaunch.distribution.Distributable;
-import org.fusesource.cloudlaunch.distribution.Oneway;
 
 /**
  * @author chirino

@@ -29,8 +29,8 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.data.Stat;
+import org.fusesource.cloudlaunch.RegistryWatcher;
 import org.fusesource.cloudlaunch.distribution.registry.Registry;
-import org.fusesource.cloudlaunch.distribution.registry.RegistryWatcher;
 
 /**
  * ZooKeeperRegistry

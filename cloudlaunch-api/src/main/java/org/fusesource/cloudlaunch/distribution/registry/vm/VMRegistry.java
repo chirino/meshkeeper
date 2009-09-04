@@ -9,8 +9,8 @@ package org.fusesource.cloudlaunch.distribution.registry.vm;
 
 import java.io.Serializable;
 
+import org.fusesource.cloudlaunch.RegistryWatcher;
 import org.fusesource.cloudlaunch.distribution.registry.Registry;
-import org.fusesource.cloudlaunch.distribution.registry.RegistryWatcher;
 
 import java.util.HashMap;
 import java.util.HashSet;

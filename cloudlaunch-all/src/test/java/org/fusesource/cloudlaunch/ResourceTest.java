@@ -24,7 +24,6 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.cloudlaunch.distribution.resource.AuthenticationInfo;
-import org.fusesource.cloudlaunch.distribution.resource.Resource;
 import org.fusesource.cloudlaunch.distribution.resource.ResourceManager;
 import org.fusesource.cloudlaunch.distribution.resource.wagon.WagonResourceManager;
 

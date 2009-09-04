@@ -10,7 +10,7 @@ package org.fusesource.cloudlaunch.launcher;
 import org.fusesource.cloudlaunch.classloader.ClassLoaderFactory;
 import org.fusesource.cloudlaunch.classloader.Marshalled;
 import org.fusesource.cloudlaunch.distribution.DistributorFactory;
-import org.fusesource.cloudlaunch.distribution.Distributor;
+import org.fusesource.cloudlaunch.Distributor;
 
 import java.util.LinkedList;
 import java.util.Arrays;
@@ -138,7 +138,7 @@ public class RemoteBootstrap {
         if( runnable !=null ) {
             Runnable r = null;
             try {
-                Marshalled<Runnable> marshalled = distributor.getRegistry().getObject(runnable);
+                Marshalled<Runnable> marshalled = distributor.getRegistryObject(runnable);
                 if( marshalled == null ) {
                     throw new Exception("The runnable not found at: "+ runnable);
                 }
@@ -168,7 +168,7 @@ public class RemoteBootstrap {
         } else {
             Method mainMethod = null;
             try {
-                ClassLoaderFactory clf = distributor.getRegistry().getObject(this.classLoader);
+                ClassLoaderFactory clf = distributor.getRegistryObject(this.classLoader);
 
                 System.out.println("Setting up classloader...");
                 ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);

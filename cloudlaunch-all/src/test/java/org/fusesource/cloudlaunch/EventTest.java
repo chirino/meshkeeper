@@ -12,9 +12,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.fusesource.cloudlaunch.distribution.event.Event;
-import org.fusesource.cloudlaunch.distribution.event.EventClient;
-import org.fusesource.cloudlaunch.distribution.event.EventListener;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import junit.framework.AssertionFailedError;
@@ -54,7 +51,7 @@ public class EventTest extends TestCase {
     }
 
     public void testEvent() throws Exception {
-        EventClient ec = client.getDistributor().getEventClient();
+        final Distributor distributor = client.getDistributor();
         final CountDownLatch eventRcvd = new CountDownLatch(1);
         final AtomicReference<Throwable> failure = new AtomicReference<Throwable>();
         final Event event = new Event();
@@ -62,7 +59,7 @@ public class EventTest extends TestCase {
         event.setSource("testSource");
         event.setType(1);
 
-        ec.openEventListener(new EventListener() {
+        distributor.openEventListener(new EventListener() {
 
             public void onEvent(Event e) {
                 switch (e.getType()) {
@@ -85,7 +82,7 @@ public class EventTest extends TestCase {
 
         }, "test-event");
 
-        ec.sendEvent(event, "test-event");
+        distributor.sendEvent(event, "test-event");
         eventRcvd.await(5, TimeUnit.SECONDS);
 
         if (failure.get() != null) {
