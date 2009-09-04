@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean
+    class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE" />
+    <property name="locations">
+      <value>classpath:meshkeeper.default.properties</value>
+    </property>
+  </bean>
+
+  <!--Create a control server (hosts ZookKeeper and RMI server-->
+  <bean id="control-server" class="org.fusesource.meshkeeper.control.ControlServer"
+    init-method="start" destroy-method="destroy">
+    <property name="dataDirectory" value="${basedir}/meshkeeper-controller" />
+    <property name="jmsProviderUri" value="jms:activemq:tcp://localhost:2100" />
+    <property name="registryProviderUri" value="zk:tcp://localhost:2101" />
+    <property name="commonRepoUrl" value="${common.repo.url}" />
+  </bean>
+
+  <!--Set up a meshkeeper distributor-->
+  <bean id="distributor" class="org.fusesource.meshkeeper.Distributor"
+    init-method="start" destroy-method="destroy" depends-on="control-server"
+    factory-bean="distributorFactory" factory-method="create">
+  </bean>
+
+  <bean id="distributorFactory"
+    class="org.fusesource.meshkeeper.distribution.DistributorFactory"
+    depends-on="control-server">
+    <property name="registryProviderUri" value="zk:tcp://localhost:2101" />
+    <property name="dataDirectory" value="${basedir}" />
+  </bean>
+
+  <!--Create a remote process launcher-->
+  <bean id="launcher" class="org.fusesource.meshkeeper.launcher.LaunchAgent"
+    depends-on="distributor" init-method="start" destroy-method="stop">
+    <property name="distributor" ref="distributor" />
+    <property name="dataDirectory" value="${basedir}/launcher" />
+  </bean>
+
+  <!--Launch client for launching remote processes-->
+  <bean id="launch-client" class="org.fusesource.meshkeeper.LaunchClient"
+    depends-on="distributor" init-method="start" destroy-method="destroy">
+    <property name="distributor" ref="distributor" />
+  </bean>
+
+</beans>

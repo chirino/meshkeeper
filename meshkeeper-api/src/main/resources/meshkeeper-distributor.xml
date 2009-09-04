@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jms="http://servicemix.apache.org/jms/1.0"
+  xmlns:tns="http://a/b/amq/http"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
+    <property name="locations">
+      <value>classpath:meshkeeper.default.properties</value>
+    </property>
+  </bean>
+
+  <!--Set up a meshkeeper distributor-->
+  <bean id="distributor" class="org.fusesource.meshkeeper.Distributor"
+    init-method="start" destroy-method="destroy"
+    factory-bean="distributorFactory" factory-method="create">
+  </bean>
+
+  <bean id="distributorFactory"
+    class="org.fusesource.meshkeeper.distribution.DistributorFactory">
+    <property name="registryProviderUri" value="zk:tcp://localhost:2101" />
+    <property name="dataDirectory" value="${basedir}" />
+  </bean>
+</beans>
