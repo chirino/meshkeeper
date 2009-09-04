@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><project>
+  <parent>
+    <artifactId>meshkeeper</artifactId>
+    <groupId>org.fusesource.meshkeeper</groupId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.fusesource.meshkeeper</groupId>
+  <artifactId>meshkeeper-jms-plugin</artifactId>
+  <name>MeshKeeper :: JMS Plugin</name>
+  <version>1.0-SNAPSHOT</version>
+  <url>http://maven.apache.org</url>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.meshkeeper</groupId>
+      <artifactId>meshkeeper-api</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.apache.geronimo.specs</groupId>
+    	<artifactId>geronimo-jms_1.1_spec</artifactId>
+    	<version>1.1.1</version>
+    </dependency>
+  </dependencies>
+</project>
