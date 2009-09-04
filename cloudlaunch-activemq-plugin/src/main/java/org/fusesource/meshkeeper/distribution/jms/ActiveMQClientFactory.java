@@ -5,9 +5,12 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch.distribution.jms;
+package org.fusesource.meshkeeper.distribution.jms;
 
-/** 
+import org.fusesource.meshkeeper.distribution.jms.JMSClientFactory;
+import org.fusesource.meshkeeper.distribution.jms.JMSProvider;
+
+/**
  * ActiveMQClientFactory
  * <p>
  * Description:
@@ -18,7 +21,7 @@ package org.fusesource.cloudlaunch.distribution.jms;
 public class ActiveMQClientFactory extends JMSClientFactory{
 
     /* (non-Javadoc)
-     * @see org.fusesource.cloudlaunch.distribution.jms.JMSClientFactory#createConnectionFactory(java.lang.String)
+     * @see org.fusesource.meshkeeper.distribution.jms.JMSClientFactory#createConnectionFactory(java.lang.String)
      */
     @Override
     protected JMSProvider createPlugin(String uri) throws Exception {

@@ -5,7 +5,7 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch.distribution.jms;
+package org.fusesource.meshkeeper.distribution.jms;
 
 import java.net.URI;
 
@@ -15,14 +15,14 @@ import javax.jms.Destination;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.command.ActiveMQQueue;
 import org.apache.activemq.command.ActiveMQTopic;
-import org.fusesource.cloudlaunch.distribution.jms.JMSProvider;
+import org.fusesource.meshkeeper.distribution.jms.JMSProvider;
 
 /**
  * ActiveMQProvider
  * <p>
  * Description:
  * </p>
- * 
+ *
  * @author cmacnaug
  * @version 1.0
  */
@@ -34,9 +34,9 @@ public class ActiveMQProvider extends JMSProvider {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
-     * org.fusesource.cloudlaunch.distribution.jms.JMSProvider#createQueue(java
+     * org.fusesource.meshkeeper.distribution.jms.JMSProvider#createQueue(java
      * .lang.String)
      */
     @Override
@@ -46,9 +46,9 @@ public class ActiveMQProvider extends JMSProvider {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
-     * org.fusesource.cloudlaunch.distribution.jms.JMSProvider#createTopic(java
+     * org.fusesource.meshkeeper.distribution.jms.JMSProvider#createTopic(java
      * .lang.String)
      */
     @Override

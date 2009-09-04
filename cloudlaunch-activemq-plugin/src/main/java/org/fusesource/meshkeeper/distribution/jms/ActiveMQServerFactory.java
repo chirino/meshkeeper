@@ -5,15 +5,16 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch.distribution.jms;
+package org.fusesource.meshkeeper.distribution.jms;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.fusesource.cloudlaunch.control.ControlService;
+import org.fusesource.meshkeeper.control.ControlService;
+import org.fusesource.meshkeeper.distribution.jms.JMSServerFactory;
 
 
-/** 
+/**
  * ActiveMQServerFactory
  * <p>
  * Description:
@@ -24,7 +25,7 @@ import org.fusesource.cloudlaunch.control.ControlService;
 public class ActiveMQServerFactory extends JMSServerFactory {
 
     /* (non-Javadoc)
-     * @see org.fusesource.cloudlaunch.distribution.jms.JMSServerFactory#createJMSServerControlService(java.lang.String)
+     * @see org.fusesource.meshkeeper.distribution.jms.JMSServerFactory#createJMSServerControlService(java.lang.String)
      */
     @Override
     public ControlService createPlugin(String providerUri) throws Exception {

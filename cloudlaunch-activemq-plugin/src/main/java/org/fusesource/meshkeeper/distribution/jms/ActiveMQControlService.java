@@ -5,7 +5,7 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.cloudlaunch.distribution.jms;
+package org.fusesource.meshkeeper.distribution.jms;
 
 import java.net.URI;
 import java.util.List;
@@ -13,14 +13,14 @@ import java.util.List;
 import org.apache.activemq.broker.BrokerFactory;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.broker.TransportConnector;
-import org.fusesource.cloudlaunch.control.ControlService;
+import org.fusesource.meshkeeper.control.ControlService;
 
 /**
  * ActiveMQControlService
  * <p>
  * Description:
  * </p>
- * 
+ *
  * @author cmacnaug
  * @version 1.0
  */
@@ -32,8 +32,8 @@ public class ActiveMQControlService implements ControlService {
 
     /*
      * (non-Javadoc)
-     * 
-     * @see org.fusesource.cloudlaunch.control.ControlService#setDataDirectory()
+     *
+     * @see org.fusesource.meshkeeper.control.ControlService#setDataDirectory()
      */
     public void setDataDirectory(String path) {
         this.dataDirectory = path;
@@ -41,8 +41,8 @@ public class ActiveMQControlService implements ControlService {
 
     /*
      * (non-Javadoc)
-     * 
-     * @see org.fusesource.cloudlaunch.control.ControlService#start()
+     *
+     * @see org.fusesource.meshkeeper.control.ControlService#start()
      */
     public void start() throws Exception {
         controlBroker.setDataDirectory(dataDirectory);
@@ -53,8 +53,8 @@ public class ActiveMQControlService implements ControlService {
 
     /*
      * (non-Javadoc)
-     * 
-     * @see org.fusesource.cloudlaunch.control.ControlService#destroy()
+     *
+     * @see org.fusesource.meshkeeper.control.ControlService#destroy()
      */
     public void destroy() throws Exception {
         if (controlBroker != null) {
@@ -66,8 +66,8 @@ public class ActiveMQControlService implements ControlService {
 
     /*
      * (non-Javadoc)
-     * 
-     * @see org.fusesource.cloudlaunch.control.ControlService#getName()
+     *
+     * @see org.fusesource.meshkeeper.control.ControlService#getName()
      */
     public String getName() {
         return "ActiveMQ Control Service at: " + getServiceUri();
@@ -75,8 +75,8 @@ public class ActiveMQControlService implements ControlService {
 
     /*
      * (non-Javadoc)
-     * 
-     * @see org.fusesource.cloudlaunch.control.ControlService#getServiceUri()
+     *
+     * @see org.fusesource.meshkeeper.control.ControlService#getServiceUri()
      */
     public String getServiceUri() {
         return serviceUrl;
@@ -89,7 +89,7 @@ public class ActiveMQControlService implements ControlService {
             controlBroker = BrokerFactory.createBroker(uri);
         } catch (Throwable thrown) {
             controlBroker = new BrokerService();
-            controlBroker.setBrokerName("CloudLaunchControlBroker");
+            controlBroker.setBrokerName("MeshKeeperControlBroker");
             controlBroker.addConnector(uri.toString());
             //controlBroker.setPersistent(false);
             controlBroker.setDeleteAllMessagesOnStartup(true);
