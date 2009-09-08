@@ -13,7 +13,7 @@ import java.util.List;
 import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.HostProperties;
 import org.fusesource.meshkeeper.LaunchDescription;
-import org.fusesource.meshkeeper.Process;
+import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.ProcessListener;
 import org.fusesource.meshkeeper.classloader.Marshalled;
 
@@ -52,7 +52,7 @@ public interface LaunchAgentService extends Distributable {
      */
     public void releaseTcpPorts(Collection<Integer> ports);
 
-    public Process launch(LaunchDescription launchDescription, ProcessListener handler) throws Exception;
+    public MeshProcess launch(LaunchDescription launchDescription, ProcessListener handler) throws Exception;
 
 
     /**
@@ -63,7 +63,7 @@ public interface LaunchAgentService extends Distributable {
      * @return
      * @throws Exception
      */
-    public Process launch(Marshalled<Runnable> runnable, ProcessListener handler) throws Exception;
+    public MeshProcess launch(Marshalled<Runnable> runnable, ProcessListener handler) throws Exception;
 
     public HostProperties getHostProperties() throws Exception;
 }

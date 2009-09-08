@@ -11,7 +11,7 @@ import java.io.File;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.distribution.registry.Registry;
+import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
 
 
@@ -41,7 +41,7 @@ public class ControlServer {
     
     ControlService rmiServer;
     ControlService registryServer;
-    Registry registry;
+    RegistryClient registry;
 
     private String jmsProviderUri = DEFAULT_JMS_PROVIDER_URI;
     private String registryProviderUri = DEFAULT_REGISTRY_PROVIDER_URI;

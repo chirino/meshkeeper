@@ -11,7 +11,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import org.fusesource.meshkeeper.Distributor;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.distribution.DistributorFactory;
 
 /**
@@ -46,7 +46,7 @@ public class Main {
             return;
         }
 
-        Distributor distributor = null;
+        MeshKeeper meshKeeper = null;
         String distributorUri = null;
         String dataDir = ".";
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
@@ -73,12 +73,12 @@ public class Main {
 
             DistributorFactory.setDefaultDataDirectory(dataDir);
             DistributorFactory.setDefaultRegistryUri(distributorUri);
-            distributor = DistributorFactory.createDefaultDistributor();
+            meshKeeper = DistributorFactory.createDefaultDistributor();
             
             LaunchAgent agent = new LaunchAgent();
             agent.setDataDirectory(new File(dataDir));
-            distributor.start();
-            agent.setDistributor(distributor);
+            meshKeeper.start();
+            agent.setMeshKeeper(meshKeeper);
 
             agent.start();
         } catch (Exception e) {
@@ -86,8 +86,8 @@ public class Main {
             System.exit(-1);
         } finally {
             try {
-                if (distributor != null) {
-                    distributor.destroy();
+                if (meshKeeper != null) {
+                    meshKeeper.destroy();
                 }
             } catch (Exception e) {
                 e.printStackTrace();

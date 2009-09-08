@@ -10,8 +10,8 @@ package org.fusesource.meshkeeper.distribution.rmi.rmiviajms;
 import java.net.URI;
 import java.util.Map;
 
-import org.fusesource.meshkeeper.distribution.rmi.ExporterFactory;
-import org.fusesource.meshkeeper.distribution.rmi.IExporter;
+import org.fusesource.meshkeeper.distribution.remoting.RemotingFactory;
+import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
 import org.fusesource.meshkeeper.util.internal.IntrospectionSupport;
 import org.fusesource.meshkeeper.util.internal.URISupport;
 
@@ -24,7 +24,7 @@ import org.fusesource.meshkeeper.util.internal.URISupport;
  * @author cmacnaug
  * @version 1.0
  */
-public class RmiViaJmsExporterFactory extends ExporterFactory {
+public class RmiViaJmsExporterFactory extends RemotingFactory {
 
     /*
      * (non-Javadoc)
@@ -34,7 +34,7 @@ public class RmiViaJmsExporterFactory extends ExporterFactory {
      * (java.lang.String)
      */
     @Override
-    public IExporter createPlugin(String uri) throws Exception {
+    public RemotingClient createPlugin(String uri) throws Exception {
 
         URI connectUri = new URI(URISupport.stripPrefix(uri, "rmiviajms:"));
 

@@ -8,7 +8,7 @@
 package org.fusesource.meshkeeper.classloader.basic;
 
 import org.fusesource.meshkeeper.Distributable;
-import org.fusesource.meshkeeper.Distributor;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 import org.apache.commons.logging.Log;
@@ -32,7 +32,7 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
     private static final Log LOG = LogFactory.getLog(BasicClassLoaderServer.class);
 
     static final long ROUNDUP_MILLIS = 1999;
-    private final Distributor distributor;
+    private final MeshKeeper meshKeeper;
 
     public static class PathElement implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -86,19 +86,19 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
     private final Server server = new Server();
     private IServer proxy;
 
-    public BasicClassLoaderServer(Distributor distributor) {
-        this.distributor = distributor;
+    public BasicClassLoaderServer(MeshKeeper meshKeeper) {
+        this.meshKeeper = meshKeeper;
     }
 
     synchronized public void start() throws Exception {
         if( proxy==null ) {
-            proxy = (IServer) distributor.export(server);
+            proxy = (IServer) meshKeeper.remoting().export(server);
         }
     }
 
     synchronized public void stop() throws Exception {
         if( proxy!=null ) {
-            distributor.unexport(proxy);
+            meshKeeper.remoting().unexport(proxy);
             proxy=null;
         }
     }

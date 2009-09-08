@@ -12,10 +12,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.fusesource.meshkeeper.Distributor;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.Event;
 import org.fusesource.meshkeeper.EventListener;
-import org.fusesource.meshkeeper.LaunchClient;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import junit.framework.AssertionFailedError;
@@ -33,7 +32,7 @@ import junit.framework.TestCase;
 public class EventTest extends TestCase {
 
     ClassPathXmlApplicationContext context;
-    LaunchClient client;
+    MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
 
@@ -44,18 +43,17 @@ public class EventTest extends TestCase {
         System.setProperty("common.repo.url", commonRepo);
 
         context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
-        client = (LaunchClient) context.getBean("launch-client");
+        meshKeeper = (MeshKeeper) context.getBean("meshkeeper");
 
     }
 
     protected void tearDown() throws Exception {
 
         context.destroy();
-        client = null;
+        meshKeeper = null;
     }
 
     public void testEvent() throws Exception {
-        final Distributor distributor = client.getDistributor();
         final CountDownLatch eventRcvd = new CountDownLatch(1);
         final AtomicReference<Throwable> failure = new AtomicReference<Throwable>();
         final Event event = new Event();
@@ -63,7 +61,7 @@ public class EventTest extends TestCase {
         event.setSource("testSource");
         event.setType(1);
 
-        distributor.openEventListener(new EventListener() {
+        meshKeeper.eventing().openEventListener(new EventListener() {
 
             public void onEvent(Event e) {
                 switch (e.getType()) {
@@ -86,7 +84,7 @@ public class EventTest extends TestCase {
 
         }, "test-event");
 
-        distributor.sendEvent(event, "test-event");
+        meshKeeper.eventing().sendEvent(event, "test-event");
         eventRcvd.await(5, TimeUnit.SECONDS);
 
         if (failure.get() != null) {

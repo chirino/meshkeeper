@@ -30,7 +30,7 @@ import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.data.Stat;
 import org.fusesource.meshkeeper.RegistryWatcher;
-import org.fusesource.meshkeeper.distribution.registry.Registry;
+import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 
 /**
  * ZooKeeperRegistry
@@ -41,7 +41,7 @@ import org.fusesource.meshkeeper.distribution.registry.Registry;
  * @author cmacnaug
  * @version 1.0
  */
-class ZooKeeperRegistry implements Registry {
+class ZooKeeperRegistry implements RegistryClient {
 
     Log log = LogFactory.getLog(this.getClass());
     HashMap<String, ZooKeeperChildWatcher> watcherMap = new HashMap<String, ZooKeeperChildWatcher>();

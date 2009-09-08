@@ -14,12 +14,12 @@ import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.control.ControlServer;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.event.EventClientFactory;
-import org.fusesource.meshkeeper.distribution.registry.Registry;
+import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
+import org.fusesource.meshkeeper.distribution.remoting.RemotingFactory;
+import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
 import org.fusesource.meshkeeper.distribution.resource.ResourceManager;
 import org.fusesource.meshkeeper.distribution.resource.ResourceManagerFactory;
-import org.fusesource.meshkeeper.distribution.rmi.ExporterFactory;
-import org.fusesource.meshkeeper.distribution.rmi.IExporter;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -93,7 +93,7 @@ public class DistributorFactory {
     public DefaultDistributor create() throws Exception {
 
         //Create Registry:
-        Registry registry = new RegistryFactory().create(registryProviderUri);
+        RegistryClient registry = new RegistryFactory().create(registryProviderUri);
         registry.start();
 
         //Create Exporter:
@@ -103,7 +103,7 @@ public class DistributorFactory {
                 rmiProviderUri = ControlServer.DEFAULT_RMI_URI;
             }
         }
-        IExporter exporter = new ExporterFactory().create(rmiProviderUri);
+        RemotingClient exporter = new RemotingFactory().create(rmiProviderUri);
 
         //Create Event Client:
         if (eventProviderUri == null) {
@@ -123,7 +123,7 @@ public class DistributorFactory {
         resourceManager.setLocalRepoDir(dataDirectory + File.separator + "local-repo");
 
         DefaultDistributor ret = new DefaultDistributor();
-        ret.setExporter(exporter);
+        ret.setRemotingClient(exporter);
         ret.setRegistry(registry);
         ret.setEventClient(eventClient);
         ret.setResourceManager(resourceManager);

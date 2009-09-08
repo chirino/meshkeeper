@@ -7,7 +7,7 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.registry.vm;
 
-import org.fusesource.meshkeeper.distribution.registry.Registry;
+import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
 
 /** 
@@ -24,7 +24,7 @@ public class VMRegistryFactory extends RegistryFactory{
      * @see org.fusesource.meshkeeper.distribution.registry.RegistryFactory#createRegistry(java.lang.String)
      */
     @Override
-    protected Registry createPlugin(String uri) throws Exception {
+    protected RegistryClient createPlugin(String uri) throws Exception {
         return new VMRegistry();
     }
 }

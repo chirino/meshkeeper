@@ -19,7 +19,7 @@ import org.fusesource.meshkeeper.distribution.FactoryFinder;
  * @author cmacnaug
  * @version 1.0
  */
-public class RegistryFactory extends AbstractPluginFactory<Registry> {
+public class RegistryFactory extends AbstractPluginFactory<RegistryClient> {
 
     public static final FactoryFinder FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/meshkeeper/distribution/registry/");
 

@@ -13,10 +13,10 @@ import java.util.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.Distributor;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.HostProperties;
 import org.fusesource.meshkeeper.LaunchDescription;
-import org.fusesource.meshkeeper.Process;
+import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.ProcessListener;
 import org.fusesource.meshkeeper.classloader.Marshalled;
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
@@ -46,7 +46,7 @@ public class LaunchAgent implements LaunchAgentService {
     private HostPropertiesImpl properties = new HostPropertiesImpl();
 
     private Monitor monitor = new Monitor(this);
-    private Distributor distributor;
+    private MeshKeeper meshKeeper;
 
     public List<Integer> reserveTcpPorts(int count) throws Exception {
         return Arrays.asList(PortReserver.reservePorts(PortReserver.TCP, count));
@@ -75,9 +75,9 @@ public class LaunchAgent implements LaunchAgentService {
         }
     }
 
-    public Process launch(Marshalled<Runnable> runnable, ProcessListener handler) throws Exception {
+    public MeshProcess launch(Marshalled<Runnable> runnable, ProcessListener handler) throws Exception {
         String path = LaunchAgent.REGISTRY_PATH + "-runnable/" + getAgentId();
-        path = distributor.addRegistryObject(path, true, runnable);
+        path = meshKeeper.registry().addRegistryObject(path, true, runnable);
 
         // Figure out the boostrap classpath using mop.
         PluginResolver resolver = PluginClassLoader.getPluginResolver();
@@ -92,14 +92,14 @@ public class LaunchAgent implements LaunchAgentService {
         ld.add("--cache");
         ld.add(new File(getDataDirectory(), "bootstrap-cache").getCanonicalPath());
         ld.add("--distributor");
-        ld.add(getDistributor().getDistributorUri());
+        ld.add(getMeshKeeper().getDistributorUri());
         ld.add("--runnable");
         ld.add(path);
         return launch(ld, handler);
     }
 
 
-    synchronized public Process launch(LaunchDescription launchDescription, ProcessListener handler) throws Exception {
+    synchronized public MeshProcess launch(LaunchDescription launchDescription, ProcessListener handler) throws Exception {
         int pid = pidCounter++;
         LocalProcess rc = createLocalProcess(launchDescription, handler, pid);
         processes.put(pid, rc);
@@ -110,7 +110,7 @@ public class LaunchAgent implements LaunchAgentService {
             throw e;
         }
 
-        return (Process) distributor.export(rc);
+        return (MeshProcess) meshKeeper.remoting().export(rc);
     }
 
     protected LocalProcess createLocalProcess(LaunchDescription launchDescription, ProcessListener handler, int pid) throws Exception {
@@ -122,7 +122,7 @@ public class LaunchAgent implements LaunchAgentService {
             return;
         }
 
-        System.getProperties().setProperty(LOCAL_REPO_PROP, distributor.getLocalRepoDirectory().getCanonicalPath());
+        System.getProperties().setProperty(LOCAL_REPO_PROP, meshKeeper.repository().getLocalRepoDirectory().getCanonicalPath());
 
         started = true;
         if (agentId == null) {
@@ -153,7 +153,7 @@ public class LaunchAgent implements LaunchAgentService {
 
         monitor.start();
 
-        distributor.distribute(getRegistryPath(), false, this);
+        meshKeeper.distribute(getRegistryPath(), false, this);
 
         LOG.info("PROCESS LAUNCHER " + getAgentId() + " STARTED\n");
 
@@ -186,7 +186,7 @@ public class LaunchAgent implements LaunchAgentService {
         monitor.requestCleanup();
         monitor.stop();
 
-        distributor.undistribute(this);
+        meshKeeper.undistribute(this);
     }
 
     /**
@@ -196,7 +196,7 @@ public class LaunchAgent implements LaunchAgentService {
      *             If there is an error purging the cache.
      */
     public void purgeResourceRepository() throws IOException {
-        distributor.purgeLocalRepo();
+        meshKeeper.repository().purgeLocalRepo();
     }
 
     /**
@@ -243,12 +243,12 @@ public class LaunchAgent implements LaunchAgentService {
         return agentId;
     }
 
-    public Distributor getDistributor() {
-        return distributor;
+    public MeshKeeper getMeshKeeper() {
+        return meshKeeper;
     }
 
-    public void setDistributor(Distributor distributor) {
-        this.distributor = distributor;
+    public void setMeshKeeper(MeshKeeper meshKeeper) {
+        this.meshKeeper = meshKeeper;
     }
 
     public Map<Integer, LocalProcess> getProcesses() {

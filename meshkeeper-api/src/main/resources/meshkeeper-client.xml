@@ -13,8 +13,8 @@
     </property>
   </bean>
 
-  <!--Set up a meshkeeper distributor-->
-  <bean id="distributor" class="org.fusesource.meshkeeper.Distributor"
+  <!--Set up a meshkeeper client-->
+  <bean id="meshkeeper" class="org.fusesource.meshkeeper.MeshKeeper"
     init-method="start" destroy-method="destroy"
     factory-bean="distributorFactory" factory-method="create">
   </bean>

@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.Expression;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.LaunchTask;
-import org.fusesource.meshkeeper.Process;
+import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.ProcessListener;
 import org.fusesource.meshkeeper.util.internal.ProcessSupport;
 
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @version $Revision: 1.1 $
  */
-public class LocalProcess implements Process {
+public class LocalProcess implements MeshProcess {
 
     Log log = LogFactory.getLog(this.getClass());
     int FD_STD_IN = 0;
@@ -139,7 +139,7 @@ public class LocalProcess implements Process {
             listener.onProcessExit(exitValue);
         }
         try {
-            processLauncher.getDistributor().unexport(this);
+            processLauncher.getMeshKeeper().remoting().unexport(this);
         } catch (Exception e) {
 
         }

@@ -5,7 +5,7 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper.distribution.rmi;
+package org.fusesource.meshkeeper.distribution.remoting;
 
 import org.fusesource.meshkeeper.Distributable;
 
@@ -17,7 +17,7 @@ import org.fusesource.meshkeeper.Distributable;
  * @author cmacnaug
  * @version 1.0
  */
-public interface IExporter {
+public interface RemotingClient {
 
     public <T extends Distributable> T export(Distributable obj) throws Exception;
     

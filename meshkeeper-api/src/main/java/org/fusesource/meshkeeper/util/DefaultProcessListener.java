@@ -8,8 +8,8 @@
 package org.fusesource.meshkeeper.util;
 
 import org.fusesource.meshkeeper.Distributable;
-import org.fusesource.meshkeeper.Distributor;
-import org.fusesource.meshkeeper.Process;
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.ProcessListener;
 
 import java.io.Serializable;
@@ -30,8 +30,8 @@ public class DefaultProcessListener implements ProcessListener, Serializable {
     protected String name = "";
     private Distributable proxy;
 
-    public DefaultProcessListener(Distributor distributor) throws Exception {
-        proxy = distributor.export(this);
+    public DefaultProcessListener(MeshKeeper meshKeeper) throws Exception {
+        proxy = meshKeeper.remoting().export(this);
     }
 
     // When this object is serialized, we serialize the remote proxy.
@@ -84,7 +84,7 @@ public class DefaultProcessListener implements ProcessListener, Serializable {
      * byte[])
      */
     public void onProcessOutput(int fd, byte[] output) {
-        if (fd == Process.FD_STD_ERR) {
+        if (fd == MeshProcess.FD_STD_ERR) {
             System.err.println(format(new String(output)));
         } else {
             System.out.println(format(new String(output)));

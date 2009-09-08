@@ -5,28 +5,32 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper.distribution.rmi.vm;
+package org.fusesource.meshkeeper;
 
-import org.fusesource.meshkeeper.distribution.rmi.ExporterFactory;
-import org.fusesource.meshkeeper.distribution.rmi.IExporter;
+import java.io.IOException;
+
 
 /** 
- * VMExporterFactory
+ * Process
  * <p>
  * Description:
  * </p>
  * @author cmacnaug
  * @version 1.0
  */
-public class VMExporterFactory extends ExporterFactory{
+public interface MeshProcess extends Distributable {
+    
+    int FD_STD_IN = 0;
+    int FD_STD_OUT = 1;
+    int FD_STD_ERR = 2;
+    
+    public boolean isRunning() throws Exception;
+    
+    public void kill() throws Exception;
+    
+    public void open(int fd) throws IOException;
 
-    /* (non-Javadoc)
-     * @see org.fusesource.meshkeeper.distribution.rmi.ExporterFactory#createExporter(java.lang.String)
-     */
-    @Override
-    protected IExporter createPlugin(String uri) throws Exception {
-        
-        return new VMExporter();
-    }
+    public void write(int fd, byte[] data) throws IOException;
 
+    public void close(int fd) throws IOException;
 }

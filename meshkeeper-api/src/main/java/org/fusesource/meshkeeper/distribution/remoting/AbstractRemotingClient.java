@@ -5,7 +5,7 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper.distribution.rmi;
+package org.fusesource.meshkeeper.distribution.remoting;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -21,7 +21,7 @@ import org.fusesource.meshkeeper.Distributable;
  * @author cmacnaug
  * @version 1.0
  */
-public abstract class AbstractExporter implements IExporter {
+public abstract class AbstractRemotingClient implements RemotingClient {
 
     protected abstract <T> T export(Object obj, Class<?>[] interfaces) throws Exception;
 

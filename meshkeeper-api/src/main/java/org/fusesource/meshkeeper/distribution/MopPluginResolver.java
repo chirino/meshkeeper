@@ -89,7 +89,7 @@ class MopPluginResolver implements PluginResolver {
             MOP_REPO = new MOPRepository();
             MOP_REPO.setOnline(true);
             MOP_REPO.setLocalRepo(new File(baseDir + File.separator + ".mop"));
-            //repo.setAlwaysCheckUserLocalRepo(true);
+            MOP_REPO.setAlwaysCheckUserLocalRepo(true);
         }
         return MOP_REPO;
     }

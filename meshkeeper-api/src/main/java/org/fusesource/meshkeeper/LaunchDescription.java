@@ -52,7 +52,7 @@ public class LaunchDescription implements Serializable {
         }
 
         public void execute(LocalProcess process) throws Exception {
-            process.getProcessLauncher().getDistributor().resolveResource(resource);
+            process.getProcessLauncher().getMeshKeeper().repository().resolveResource(resource);
         }
     }
 

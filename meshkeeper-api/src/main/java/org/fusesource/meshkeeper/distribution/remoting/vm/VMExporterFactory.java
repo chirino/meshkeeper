@@ -5,27 +5,28 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper.distribution.rmi;
+package org.fusesource.meshkeeper.distribution.remoting.vm;
 
+import org.fusesource.meshkeeper.distribution.remoting.RemotingFactory;
+import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
 
-import org.fusesource.meshkeeper.distribution.AbstractPluginFactory;
-import org.fusesource.meshkeeper.distribution.FactoryFinder;
-
-/**
- * ExporterFactory
+/** 
+ * VMExporterFactory
  * <p>
- * Description: Factory interface for creating {@link IExporter}s
+ * Description:
  * </p>
- * 
  * @author cmacnaug
  * @version 1.0
  */
-public class ExporterFactory extends AbstractPluginFactory<IExporter> {
+public class VMExporterFactory extends RemotingFactory{
 
-    private static final FactoryFinder EXPORTER_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/meshkeeper/distribution/exporter/");
-
+    /* (non-Javadoc)
+     * @see org.fusesource.meshkeeper.distribution.rmi.ExporterFactory#createExporter(java.lang.String)
+     */
     @Override
-    protected final FactoryFinder getFactoryFinder() {
-        return EXPORTER_FACTORY_FINDER;
+    protected RemotingClient createPlugin(String uri) throws Exception {
+        
+        return new VMExporter();
     }
+
 }

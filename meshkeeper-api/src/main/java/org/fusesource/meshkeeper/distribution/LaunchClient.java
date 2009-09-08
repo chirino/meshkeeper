@@ -5,7 +5,7 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper;
+package org.fusesource.meshkeeper.distribution;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,7 +21,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.Distributor;
+import org.fusesource.meshkeeper.HostProperties;
+import org.fusesource.meshkeeper.LaunchDescription;
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshProcess;
+import org.fusesource.meshkeeper.ProcessListener;
+import org.fusesource.meshkeeper.RegistryWatcher;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServerFactory;
@@ -37,11 +42,11 @@ import org.fusesource.meshkeeper.launcher.LaunchAgentService;
  * @author cmacnaug
  * @version 1.0
  */
-public class LaunchClient {
+class LaunchClient implements MeshKeeper.Launcher {
 
     Log log = LogFactory.getLog(this.getClass());
 
-    private Distributor distributor;
+    private MeshKeeper meshKeeper;
     RegistryWatcher agentWatcher;
     private long killTimeout = 1000 * 5;
     private long launchTimeout = 1000 * 60;
@@ -56,7 +61,7 @@ public class LaunchClient {
     private ClassLoaderServer classLoaderServer;
 
     public void start() throws Exception {
-        name = distributor.addRegistryObject("/launchclients/" + System.getProperty("user.name"), true, null);
+        name = meshKeeper.registry().addRegistryObject("/launchclients/" + System.getProperty("user.name"), true, null);
 
         agentWatcher = new RegistryWatcher() {
 
@@ -65,7 +70,7 @@ public class LaunchClient {
                     for (String agentId : children) {
                         if (!knownAgents.containsKey(agentId)) {
                             try {
-                                LaunchAgentService pl = distributor.getRegistryObject(path + "/" + agentId);
+                                LaunchAgentService pl = meshKeeper.registry().getRegistryObject(path + "/" + agentId);
                                 knownAgents.put(agentId, pl);
                                 HostProperties props = pl.getHostProperties();
                                 agentProps.put(agentId, props);
@@ -83,7 +88,7 @@ public class LaunchClient {
             }
         };
 
-        distributor.addRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
+        meshKeeper.registry().addRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
     }
 
     /**
@@ -152,14 +157,14 @@ public class LaunchClient {
         }
 
         try {
-            releaseAll();
+            releaseAllAgents();
         } catch (Exception e) {
             e.printStackTrace();
             //            listener.onTRException("Error releasing agents.", e);
         }
 
-        distributor.removeRegistryData(name, false);
-        distributor.removeRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
+        meshKeeper.registry().removeRegistryData(name, false);
+        meshKeeper.registry().removeRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
         knownAgents.clear();
         agentProps.clear();
         closed.set(true);
@@ -190,7 +195,7 @@ public class LaunchClient {
         }
 
         if (launcher == null) {
-            LaunchAgentService pl = distributor.getRegistryObject(LaunchAgentService.REGISTRY_PATH + "/" + agentName);
+            LaunchAgentService pl = meshKeeper.registry().getRegistryObject(LaunchAgentService.REGISTRY_PATH + "/" + agentName);
             if (pl != null) {
                 HostProperties props = pl.getHostProperties();
                 synchronized (this) {
@@ -239,7 +244,7 @@ public class LaunchClient {
         }
     }
 
-    public void releaseAll() throws Exception {
+    public void releaseAllAgents() throws Exception {
         checkNotClosed();
 
         ArrayList<String> failed = new ArrayList<String>();
@@ -261,17 +266,17 @@ public class LaunchClient {
         }
     }
 
-    public Process launchProcess(String agentId, final LaunchDescription launch, ProcessListener listener) throws Exception {
+    public MeshProcess launchProcess(String agentId, final LaunchDescription launch, ProcessListener listener) throws Exception {
         checkNotClosed();
 
         LaunchAgentService agent = getAgent(agentId);
-        return agent.launch(launch, (ProcessListener) distributor.export(listener));
+        return agent.launch(launch, (ProcessListener) meshKeeper.remoting().export(listener));
     }
 
-    public static void println(Process process, String line) {
+    public void println(MeshProcess process, String line) {
         byte[] data = (line + "\n").getBytes();
         try {
-            process.write(Process.FD_STD_IN, data);
+            process.write(MeshProcess.FD_STD_IN, data);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -292,12 +297,12 @@ public class LaunchClient {
         };
     }
 
-    public Process launch(String agentId, Runnable runnable, ProcessListener handler) throws Exception {
+    public MeshProcess launch(String agentId, Runnable runnable, ProcessListener handler) throws Exception {
         checkNotClosed();
         return launch(getAgent(agentId), runnable, handler);
     }
 
-    private Process launch(LaunchAgentService agent, Runnable runnable, ProcessListener handler) throws Exception {
+    private MeshProcess launch(LaunchAgentService agent, Runnable runnable, ProcessListener handler) throws Exception {
         checkNotClosed();
         ClassLoaderFactory factory = getClassLoaderServer().export(runnable.getClass().getClassLoader(), 100);
         Marshalled<Runnable> marshalled = new Marshalled<Runnable>(factory, runnable);
@@ -306,10 +311,10 @@ public class LaunchClient {
 
     public ClassLoaderServer getClassLoaderServer() throws Exception {
         if( classLoaderServer==null ) {
-            if( distributor == null ) {
+            if( meshKeeper == null ) {
                 throw new IllegalArgumentException("distributor or classLoaderServer property must be set");
             }
-            classLoaderServer = ClassLoaderServerFactory.create("basic:", distributor);
+            classLoaderServer = ClassLoaderServerFactory.create("basic:", meshKeeper);
             classLoaderServer.start();
         }
         return classLoaderServer;
@@ -343,11 +348,11 @@ public class LaunchClient {
         this.killTimeout = killTimeout;
     }
 
-    public Distributor getDistributor() {
-        return distributor;
+    public MeshKeeper getMeshKeeper() {
+        return meshKeeper;
     }
 
-    public void setDistributor(Distributor distributor) {
-        this.distributor = distributor;
+    public void setMeshKeeper(MeshKeeper distributor) {
+        this.meshKeeper = distributor;
     }
 }

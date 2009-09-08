@@ -10,7 +10,7 @@ package org.fusesource.meshkeeper.distribution.registry.vm;
 import java.io.Serializable;
 
 import org.fusesource.meshkeeper.RegistryWatcher;
-import org.fusesource.meshkeeper.distribution.registry.Registry;
+import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author cmacnaug
  * @version 1.0
  */
-public class VMRegistry implements Registry {
+public class VMRegistry implements RegistryClient {
 
     private static final VMRegistryServer SERVER = new VMRegistryServer();
     private HashMap<String, HashSet<RegistryWatcher>> watchers = new HashMap<String, HashSet<RegistryWatcher>>();

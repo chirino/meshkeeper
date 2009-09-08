@@ -7,7 +7,7 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.launcher;
 
-import org.fusesource.meshkeeper.Distributor;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.Marshalled;
 import org.fusesource.meshkeeper.distribution.DistributorFactory;
@@ -31,7 +31,7 @@ public class RemoteBootstrap {
     private String classLoader;
     private String mainClass;
     private String[] args;
-    private String distributor;
+    private String meshKeeperUri;
     private String runnable;
 
     static class SyntaxException extends Exception {
@@ -121,7 +121,7 @@ public class RemoteBootstrap {
 
         // Store our options in the System properties.. they might be usefull
         // to the booted application.
-        System.setProperty("meshkeeper.bootstrap.distributor", this.distributor);
+        System.setProperty("meshkeeper.bootstrap.meshkeeper", this.meshKeeperUri);
         System.setProperty("meshkeeper.bootstrap.cache", cache.getPath());
         if( runnable !=null ) {
             System.setProperty("meshkeeper.bootstrap.runnable", runnable);
@@ -130,15 +130,15 @@ public class RemoteBootstrap {
             System.setProperty("meshkeeper.bootstrap.mainclass", mainClass);
         }
 
-        DistributorFactory.setDefaultRegistryUri(this.distributor);
-        Distributor distributor = DistributorFactory.createDefaultDistributor();
+        DistributorFactory.setDefaultRegistryUri(this.meshKeeperUri);
+        MeshKeeper meshKeeper = DistributorFactory.createDefaultDistributor();
 
 
         System.out.println("bootstrap started...");
         if( runnable !=null ) {
             Runnable r = null;
             try {
-                Marshalled<Runnable> marshalled = distributor.getRegistryObject(runnable);
+                Marshalled<Runnable> marshalled = meshKeeper.registry().getRegistryObject(runnable);
                 if( marshalled == null ) {
                     throw new Exception("The runnable not found at: "+ runnable);
                 }
@@ -168,7 +168,7 @@ public class RemoteBootstrap {
         } else {
             Method mainMethod = null;
             try {
-                ClassLoaderFactory clf = distributor.getRegistryObject(this.classLoader);
+                ClassLoaderFactory clf = meshKeeper.registry().getRegistryObject(this.classLoader);
 
                 System.out.println("Setting up classloader...");
                 ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
@@ -195,12 +195,12 @@ public class RemoteBootstrap {
     ///////////////////////////////////////////////////////////////////
 
     public void setDistributor(String uri) {
-        distributor = uri;
+        meshKeeperUri = uri;
     }
     
     public String getDistributor()
     {
-        return distributor;
+        return meshKeeperUri;
     }
     
     public void setClassLoader(String classLoader) {

@@ -20,9 +20,9 @@ import junit.framework.TestCase;
 import static org.fusesource.meshkeeper.Expression.file;
 import static org.fusesource.meshkeeper.Expression.path;
 
-import org.fusesource.meshkeeper.LaunchClient;
 import org.fusesource.meshkeeper.LaunchDescription;
-import org.fusesource.meshkeeper.Process;
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.ProcessListener;
 import org.fusesource.meshkeeper.Expression.FileExpression;
 import org.fusesource.meshkeeper.distribution.PluginResolver;
@@ -45,7 +45,7 @@ import java.util.concurrent.TimeoutException;
 public class RemoteLaunchTest extends TestCase {
 
     ClassPathXmlApplicationContext context;
-    LaunchClient launchClient;
+    MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
         
@@ -65,7 +65,7 @@ public class RemoteLaunchTest extends TestCase {
         System.setProperty("local.repo.url", new File(basedir, "local-repo").getCanonicalPath() );
 
         context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
-        launchClient = (LaunchClient) context.getBean("launch-client");
+        meshKeeper = (MeshKeeper) context.getBean("meshkeeper");
 
     }
 
@@ -85,13 +85,13 @@ public class RemoteLaunchTest extends TestCase {
             context.destroy();
         }
 
-        launchClient = null;
+        meshKeeper = null;
     }
 
     private String getAgent() throws InterruptedException, TimeoutException
     {
-        launchClient.waitForAvailableAgents(5000);
-        return launchClient.getAvailableAgents()[0].getAgentId();
+        meshKeeper.launcher().waitForAvailableAgents(5000);
+        return meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
     }
 
     public void testDataOutput() throws Exception {
@@ -108,7 +108,7 @@ public class RemoteLaunchTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         DataOutputTester tester = new DataOutputTester();
-        tester.test(launchClient.launchProcess(getAgent(), ld, tester));
+        tester.test(meshKeeper.launcher().launchProcess(getAgent(), ld, tester));
 
     }
 
@@ -129,7 +129,7 @@ public class RemoteLaunchTest extends TestCase {
         public DataOutputTester() throws RemoteException {
         }
 
-        public void test(Process process) throws Exception {
+        public void test(MeshProcess process) throws Exception {
 
             try {
 
@@ -139,12 +139,12 @@ public class RemoteLaunchTest extends TestCase {
                         switch (state) {
                         case TEST_OUTPUT: {
                             System.out.println("Testing output");
-                            process.write(Process.FD_STD_IN, new String("echo:" + EXPECTED_OUTPUT + "\n").getBytes());
+                            process.write(MeshProcess.FD_STD_IN, new String("echo:" + EXPECTED_OUTPUT + "\n").getBytes());
                             break;
                         }
                         case TEST_ERROR: {
                             System.out.println("Testing error");
-                            process.write(Process.FD_STD_IN, new String("error:" + EXPECTED_ERROR + "\n").getBytes());
+                            process.write(MeshProcess.FD_STD_IN, new String("error:" + EXPECTED_ERROR + "\n").getBytes());
                             break;
                         }
                         case SUCCESS: {
@@ -177,7 +177,7 @@ public class RemoteLaunchTest extends TestCase {
         synchronized public void onProcessOutput(int fd, byte[] data) {
             String output = new String(data);
 
-            if (fd == Process.FD_STD_OUT) {
+            if (fd == MeshProcess.FD_STD_OUT) {
                 System.out.print("STDOUT: " + output + " [" + output.length() + " bytes]");
                 if (state == TEST_OUTPUT && EXPECTED_OUTPUT.equals(output.trim())) {
                     state = TEST_ERROR;
@@ -186,7 +186,7 @@ public class RemoteLaunchTest extends TestCase {
                     state = FAIL;
                 }
                 notifyAll();
-            } else if (fd == Process.FD_STD_ERR) {
+            } else if (fd == MeshProcess.FD_STD_ERR) {
                 System.out.print("STDERR: " + output + " [" + output.length() + " bytes]");
                 if (state == TEST_ERROR && EXPECTED_ERROR.equals(output.trim())) {
                     state = SUCCESS;

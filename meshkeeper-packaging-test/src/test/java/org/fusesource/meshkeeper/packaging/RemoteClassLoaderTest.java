@@ -20,11 +20,10 @@ import junit.framework.TestCase;
 import static org.fusesource.meshkeeper.Expression.file;
 import static org.fusesource.meshkeeper.Expression.path;
 
-import org.fusesource.meshkeeper.Distributor;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.Expression;
-import org.fusesource.meshkeeper.LaunchClient;
 import org.fusesource.meshkeeper.LaunchDescription;
-import org.fusesource.meshkeeper.Process;
+import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.ProcessListener;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
@@ -47,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RemoteClassLoaderTest extends TestCase {
 
     ClassPathXmlApplicationContext context;
-    LaunchClient client;
+    MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
         String dataDir = "target" + File.separator + "remote-classloader-test";
@@ -57,20 +56,20 @@ public class RemoteClassLoaderTest extends TestCase {
         System.setProperty("common.repo.url", commonRepo);
 
         context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
-        client = (LaunchClient) context.getBean("launch-client");
+        meshKeeper = (MeshKeeper) context.getBean("meshkeeper");
 
     }
 
     protected void tearDown() throws Exception {
 
         context.destroy();
-        client = null;
+        meshKeeper = null;
     }
 
     private String getAgent() throws InterruptedException, TimeoutException
     {
-        client.waitForAvailableAgents(5000);
-        return client.getAvailableAgents()[0].getAgentId();
+        meshKeeper.launcher().waitForAvailableAgents(5000);
+        return meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
     }
 
     /**
@@ -87,7 +86,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        Process process = client.launchProcess(getAgent(), ld, exitListener);
+        MeshProcess process = meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
         exitListener.assertExitCode(1);
     }
 
@@ -100,18 +99,17 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        Process process = client.launchProcess(getAgent(), ld, exitListener);
+        MeshProcess process = meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
         exitListener.assertExitCode(2);
         assertTrue(exitListener.getOutAsString().startsWith("Invalid Syntax:"));
     }
 
     public void testLoadRemoteClass() throws Exception {
-        Distributor distributor = client.getDistributor();
-        ClassLoaderServer server = ClassLoaderServerFactory.create("basic:", distributor);
+        ClassLoaderServer server = ClassLoaderServerFactory.create("basic:", meshKeeper);
         server.start();
 
         ClassLoaderFactory stub = server.export(DataInputTestApplication.class.getClassLoader(), 1);
-        String path = distributor.addRegistryObject("/test/classloader", true, stub);
+        String path = meshKeeper.registry().addRegistryObject("/test/classloader", true, stub);
 
         LaunchDescription ld = new LaunchDescription();
         ld.add("java");
@@ -121,14 +119,14 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add("--cache");
         ld.add(file("./classloader-cache"));
         ld.add("--distributor");
-        ld.add(client.getDistributor().getDistributorUri());
+        ld.add(meshKeeper.getDistributorUri());
         ld.add("--classloader");
         ld.add(path);
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        Process process = client.launchProcess(getAgent(), ld, exitListener);
-        process.write(Process.FD_STD_IN, "exit: 5\n".getBytes());
+        MeshProcess process = meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
+        process.write(MeshProcess.FD_STD_IN, "exit: 5\n".getBytes());
         try {
             exitListener.assertExitCode(5);
         } finally {
@@ -187,9 +185,9 @@ public class RemoteClassLoaderTest extends TestCase {
 
         synchronized public void onProcessOutput(int fd, byte[] output) {
             try {
-                if (fd == Process.FD_STD_OUT) {
+                if (fd == MeshProcess.FD_STD_OUT) {
                     out.write(output);
-                } else if (fd == Process.FD_STD_ERR) {
+                } else if (fd == MeshProcess.FD_STD_ERR) {
                     err.write(output);
                 }
             } catch (IOException e) {

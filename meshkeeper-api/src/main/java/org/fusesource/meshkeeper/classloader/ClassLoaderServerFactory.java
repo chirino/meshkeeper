@@ -7,7 +7,7 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.classloader;
 
-import org.fusesource.meshkeeper.Distributor;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.distribution.FactoryFinder;
 import org.fusesource.meshkeeper.util.internal.URISupport;
 import org.apache.commons.logging.Log;
@@ -25,12 +25,12 @@ public abstract class ClassLoaderServerFactory {
     private static final Log LOG = LogFactory.getLog(ClassLoaderServerFactory.class);
     private static final FactoryFinder FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/meshkeeper/classloader/");
 
-    public static final ClassLoaderServer create(String uri, Distributor distributor) throws Exception {
+    public static final ClassLoaderServer create(String uri, MeshKeeper meshKeeper) throws Exception {
         String parts[] = URISupport.extractScheme(uri);
         ClassLoaderServerFactory factory = FACTORY_FINDER.create(parts[0]);
-        return factory.createClassLoaderManager(parts[1], distributor);
+        return factory.createClassLoaderManager(parts[1], meshKeeper);
     }
 
-    protected abstract ClassLoaderServer createClassLoaderManager(String uri, Distributor distributor) throws Exception;
+    protected abstract ClassLoaderServer createClassLoaderManager(String uri, MeshKeeper meshKeeper) throws Exception;
 
 }

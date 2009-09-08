@@ -19,7 +19,7 @@ import org.fusesource.meshkeeper.RegistryWatcher;
  * @author cmacnaug
  * @version 1.0
  */
-public interface Registry {
+public interface RegistryClient {
 
     /**
      * Connects to the registry.

@@ -11,7 +11,7 @@ import java.rmi.Remote;
 
 import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.Oneway;
-import org.fusesource.meshkeeper.distribution.rmi.AbstractExporter;
+import org.fusesource.meshkeeper.distribution.remoting.AbstractRemotingClient;
 import org.fusesource.rmiviajms.JMSRemoteObject;
 
 /**
@@ -23,7 +23,7 @@ import org.fusesource.rmiviajms.JMSRemoteObject;
  * @author cmacnaug
  * @version 1.0
  */
-class RmiViaJmsExporter extends AbstractExporter {
+class RmiViaJmsExporter extends AbstractRemotingClient {
 
     String providerUri;
 

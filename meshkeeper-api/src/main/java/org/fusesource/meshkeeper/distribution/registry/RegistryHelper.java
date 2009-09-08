@@ -36,7 +36,7 @@ public class RegistryHelper {
      * @return
      * @throws Exception
      */
-    public static <T> Collection<T> waitForRegistrations(Registry reg, String path, int min, long timeout) throws TimeoutException, Exception
+    public static <T> Collection<T> waitForRegistrations(RegistryClient reg, String path, int min, long timeout) throws TimeoutException, Exception
     {
         return new RegistrationWatcher<T>(path, reg).waitForRegistrations(min, timeout).values();
     }
@@ -48,10 +48,10 @@ public class RegistryHelper {
     private static class RegistrationWatcher<T> implements RegistryWatcher {
 
         final HashMap<String, T> map = new HashMap<String, T>();
-        Registry registry;
+        RegistryClient registry;
         String path;
 
-        RegistrationWatcher(String path, Registry registry) throws Exception {
+        RegistrationWatcher(String path, RegistryClient registry) throws Exception {
             this.path = path;
             this.registry = registry;
             registry.addRegistryWatcher(path, this);

@@ -7,7 +7,7 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.registry.zk;
 
-import org.fusesource.meshkeeper.distribution.registry.Registry;
+import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
 import org.fusesource.meshkeeper.util.internal.IntrospectionSupport;
 import org.fusesource.meshkeeper.util.internal.URISupport;
@@ -21,7 +21,7 @@ import java.util.Map;
 public class ZooKeeperFactory extends RegistryFactory {
 
     @Override
-    public Registry createPlugin(String uri) throws Exception {
+    public RegistryClient createPlugin(String uri) throws Exception {
         URI connectUri = new URI(URISupport.stripPrefix(uri, "zk:"));
 
         ZooKeeperRegistry registry = new ZooKeeperRegistry();

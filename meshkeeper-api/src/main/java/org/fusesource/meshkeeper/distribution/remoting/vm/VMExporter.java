@@ -5,11 +5,11 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper.distribution.rmi.vm;
+package org.fusesource.meshkeeper.distribution.remoting.vm;
 
 
 import org.fusesource.meshkeeper.Distributable;
-import org.fusesource.meshkeeper.distribution.rmi.AbstractExporter;
+import org.fusesource.meshkeeper.distribution.remoting.AbstractRemotingClient;
 
 /**
  * VMExporter
@@ -20,7 +20,7 @@ import org.fusesource.meshkeeper.distribution.rmi.AbstractExporter;
  * @author cmacnaug
  * @version 1.0
  */
-public class VMExporter extends AbstractExporter {
+public class VMExporter extends AbstractRemotingClient {
 
     /*
      * (non-Javadoc)

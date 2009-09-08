@@ -7,7 +7,7 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.classloader.basic;
 
-import org.fusesource.meshkeeper.Distributor;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServerFactory;
 
@@ -15,7 +15,7 @@ import org.fusesource.meshkeeper.classloader.ClassLoaderServerFactory;
  * @author chirino
  */
 public class BasicClassLoaderServerFactory extends ClassLoaderServerFactory {
-    protected ClassLoaderServer createClassLoaderManager(String uri, Distributor distributor) throws Exception {
-        return new BasicClassLoaderServer(distributor);
+    protected ClassLoaderServer createClassLoaderManager(String uri, MeshKeeper meshKeeper) throws Exception {
+        return new BasicClassLoaderServer(meshKeeper);
     }
 }

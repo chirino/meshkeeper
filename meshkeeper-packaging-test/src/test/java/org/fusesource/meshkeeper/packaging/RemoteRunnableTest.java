@@ -4,7 +4,7 @@ import junit.framework.TestCase;
 import static org.fusesource.meshkeeper.Expression.file;
 
 import org.fusesource.meshkeeper.Distributable;
-import org.fusesource.meshkeeper.LaunchClient;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.distribution.PluginResolver;
 import org.fusesource.meshkeeper.util.DefaultProcessListener;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 public class RemoteRunnableTest extends TestCase {
 
     ClassPathXmlApplicationContext context;
-    LaunchClient client;
+    MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
         if( System.getProperty(PluginResolver.KEY_DEFAULT_PLUGINS_VERSION) == null ) {
@@ -43,7 +43,7 @@ public class RemoteRunnableTest extends TestCase {
         System.setProperty("local.repo.url", new File(basedir, "local-repo").getCanonicalPath() );
 
         context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
-        client = (LaunchClient) context.getBean("launch-client");
+        meshKeeper = (MeshKeeper) context.getBean("meshkeeper");
 
     }
 
@@ -83,13 +83,13 @@ public class RemoteRunnableTest extends TestCase {
 
     public void testRemoteRunnable() throws Exception {
         CallBack cb = new CallBack();
-        ICallBack cbp = (ICallBack) client.getDistributor().export(cb);
+        ICallBack cbp = (ICallBack) meshKeeper.remoting().export(cb);
 
-        client.waitForAvailableAgents(5000);
-        String agent = client.getAvailableAgents()[0].getAgentId();
+        meshKeeper.launcher().waitForAvailableAgents(5000);
+        String agent = meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
 
         // Note: the launched JVM will use the class path of this test case.
-        client.launch(agent, new RemoteTask(cbp), new DefaultProcessListener(client.getDistributor()));
+        meshKeeper.launcher().launch(agent, new RemoteTask(cbp), new DefaultProcessListener(meshKeeper));
 
         assertTrue(cb.latch.await(30, TimeUnit.SECONDS));
     }

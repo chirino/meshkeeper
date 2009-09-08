@@ -12,7 +12,7 @@ import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.Distributable;
-import org.fusesource.meshkeeper.Distributor.DistributionRef;
+import org.fusesource.meshkeeper.MeshKeeper.DistributionRef;
 
 /**
  * Exporter
