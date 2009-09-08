@@ -13,7 +13,7 @@ import org.fusesource.meshkeeper.Expression;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.LaunchTask;
 import org.fusesource.meshkeeper.MeshProcess;
-import org.fusesource.meshkeeper.ProcessListener;
+import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.util.internal.ProcessSupport;
 
 import java.io.*;
@@ -32,7 +32,7 @@ public class LocalProcess implements MeshProcess {
 
     private final Object mutex = new Object();
     private final LaunchDescription ld;
-    protected final ProcessListener listener;
+    protected final MeshProcessListener listener;
     private final int pid;
 
     java.lang.Process process;
@@ -41,7 +41,7 @@ public class LocalProcess implements MeshProcess {
     AtomicBoolean running = new AtomicBoolean();
     private LaunchAgent processLauncher;
 
-    public LocalProcess(LaunchAgent processLauncher, LaunchDescription ld, ProcessListener listener, int pid) {
+    public LocalProcess(LaunchAgent processLauncher, LaunchDescription ld, MeshProcessListener listener, int pid) {
         this.processLauncher = processLauncher;
         this.ld = ld;
         this.listener = listener;
@@ -52,7 +52,7 @@ public class LocalProcess implements MeshProcess {
         return processLauncher;
     }
 
-    public ProcessListener getListener() {
+    public MeshProcessListener getListener() {
         return listener;
     }
 

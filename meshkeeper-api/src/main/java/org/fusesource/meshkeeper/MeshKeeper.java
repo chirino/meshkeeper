@@ -49,7 +49,7 @@ public interface MeshKeeper {
         /**
          * Sends an event on the given topic.
          */
-        public void sendEvent(Event event, String topic) throws Exception;
+        public void sendEvent(MeshEvent event, String topic) throws Exception;
 
         /**
          * Opens a listener on the given event topic.
@@ -58,7 +58,7 @@ public interface MeshKeeper {
          * @param topic The topic
          * @throws Exception If there is an error opening the listener
          */
-        public void openEventListener(EventListener listener, String topic) throws Exception;
+        public void openEventListener(MeshEventListener listener, String topic) throws Exception;
 
         /**
          * Stops listening to events on the given topic.
@@ -67,7 +67,7 @@ public interface MeshKeeper {
          * @param topic The topic
          * @throws Exception If there is an error closing the listener
          */
-        public void closeEventListener(EventListener listener, String topic) throws Exception;
+        public void closeEventListener(MeshEventListener listener, String topic) throws Exception;
     }
 
     
@@ -149,7 +149,7 @@ public interface MeshKeeper {
          * @return The launched process. 
          * @throws Exception If there is an error launching the process. 
          */
-        public MeshProcess launchProcess(String agentId, final LaunchDescription launch, ProcessListener listener) throws Exception;
+        public MeshProcess launchProcess(String agentId, final LaunchDescription launch, MeshProcessListener listener) throws Exception;
 
         /**
          * Prints a line to the given process' standard input. 
@@ -180,7 +180,7 @@ public interface MeshKeeper {
          * @return The process in which the runnable is executed. 
          * @throws Exception If there is an error executing the runnable
          */
-        public MeshProcess launch(String agentId, Runnable runnable, ProcessListener listener) throws Exception;
+        public MeshProcess launch(String agentId, Runnable runnable, MeshProcessListener listener) throws Exception;
         
         /**
          * Gets the {@link ClassLoaderServer} used for remote executables. If the {@link ClassLoaderServer}
@@ -360,21 +360,21 @@ public interface MeshKeeper {
          * Factory method for creating a resource.
          * @return An empty resource.
          */
-        public Resource createResource();
+        public MeshArtifact createResource();
 
         /**
          * Called to locate the given resource.
          * @param resource The resource to locate.
          * @throws Exception If there is an error locating the resource.
          */
-        public void resolveResource(Resource resource) throws Exception;
+        public void resolveResource(MeshArtifact resource) throws Exception;
 
         /**
          * @param resource
          * @param data
          * @throws IOException
          */
-        public void deployFile(Resource resource, byte[] data) throws Exception;
+        public void deployFile(MeshArtifact resource, byte[] data) throws Exception;
 
         /**
          *
@@ -382,7 +382,7 @@ public interface MeshKeeper {
          * @param d
          * @throws Exception
          */
-        public void deployDirectory(Resource resource, File d) throws Exception;
+        public void deployDirectory(MeshArtifact resource, File d) throws Exception;
 
         /**
          * @return The path to the local resource directory.

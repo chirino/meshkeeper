@@ -22,7 +22,7 @@ import org.fusesource.meshkeeper.distribution.FactoryFinder;
  */
 public class RemotingFactory extends AbstractPluginFactory<RemotingClient> {
 
-    private static final FactoryFinder EXPORTER_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/meshkeeper/distribution/exporter/");
+    private static final FactoryFinder EXPORTER_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/meshkeeper/distribution/remoting/");
 
     @Override
     protected final FactoryFinder getFactoryFinder() {

@@ -17,11 +17,11 @@ import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.HostProperties;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.MeshProcess;
-import org.fusesource.meshkeeper.ProcessListener;
+import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.classloader.Marshalled;
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
 import org.fusesource.meshkeeper.distribution.PluginResolver;
-import org.fusesource.meshkeeper.distribution.resource.ResourceManager;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
 import org.fusesource.meshkeeper.util.internal.FileUtils;
 
 /**
@@ -75,7 +75,7 @@ public class LaunchAgent implements LaunchAgentService {
         }
     }
 
-    public MeshProcess launch(Marshalled<Runnable> runnable, ProcessListener handler) throws Exception {
+    public MeshProcess launch(Marshalled<Runnable> runnable, MeshProcessListener handler) throws Exception {
         String path = LaunchAgent.REGISTRY_PATH + "-runnable/" + getAgentId();
         path = meshKeeper.registry().addRegistryObject(path, true, runnable);
 
@@ -99,7 +99,7 @@ public class LaunchAgent implements LaunchAgentService {
     }
 
 
-    synchronized public MeshProcess launch(LaunchDescription launchDescription, ProcessListener handler) throws Exception {
+    synchronized public MeshProcess launch(LaunchDescription launchDescription, MeshProcessListener handler) throws Exception {
         int pid = pidCounter++;
         LocalProcess rc = createLocalProcess(launchDescription, handler, pid);
         processes.put(pid, rc);
@@ -113,7 +113,7 @@ public class LaunchAgent implements LaunchAgentService {
         return (MeshProcess) meshKeeper.remoting().export(rc);
     }
 
-    protected LocalProcess createLocalProcess(LaunchDescription launchDescription, ProcessListener handler, int pid) throws Exception {
+    protected LocalProcess createLocalProcess(LaunchDescription launchDescription, MeshProcessListener handler, int pid) throws Exception {
         return new LocalProcess(this, launchDescription, handler, pid);
     }
 

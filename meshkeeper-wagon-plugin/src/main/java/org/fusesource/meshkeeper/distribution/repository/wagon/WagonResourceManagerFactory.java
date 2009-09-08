@@ -5,11 +5,11 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper.distribution.resource.wagon;
+package org.fusesource.meshkeeper.distribution.repository.wagon;
 
-import org.fusesource.meshkeeper.distribution.resource.AuthenticationInfo;
-import org.fusesource.meshkeeper.distribution.resource.ResourceManager;
-import org.fusesource.meshkeeper.distribution.resource.ResourceManagerFactory;
+import org.fusesource.meshkeeper.distribution.repository.AuthenticationInfo;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryManagerFactory;
 
 /**
  * WagonResourceManagerFactory
@@ -20,7 +20,7 @@ import org.fusesource.meshkeeper.distribution.resource.ResourceManagerFactory;
  * @author cmacnaug
  * @version 1.0
  */
-public class WagonResourceManagerFactory extends ResourceManagerFactory {
+public class WagonResourceManagerFactory extends RepositoryManagerFactory {
 
     String localRepoDir;
     String commonRepoUrl;
@@ -34,7 +34,7 @@ public class WagonResourceManagerFactory extends ResourceManagerFactory {
      * #createResourceManager()
      */
     @Override
-    public ResourceManager createPlugin(String uri) throws Exception {
+    public RepositoryManager createPlugin(String uri) throws Exception {
         WagonResourceManager wrm = new WagonResourceManager();
         if (localRepoDir != null) {
             wrm.setLocalRepoDir(localRepoDir);

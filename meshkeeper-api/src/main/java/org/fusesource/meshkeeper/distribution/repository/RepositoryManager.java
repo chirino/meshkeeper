@@ -5,12 +5,12 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper.distribution.resource;
+package org.fusesource.meshkeeper.distribution.repository;
 
 import java.io.File;
 import java.io.IOException;
 
-import org.fusesource.meshkeeper.Resource;
+import org.fusesource.meshkeeper.MeshArtifact;
 
 /**
  * RepositoryManager
@@ -21,7 +21,7 @@ import org.fusesource.meshkeeper.Resource;
  * @author cmacnaug
  * @version 1.0
  */
-public interface ResourceManager {
+public interface RepositoryManager {
 
     /**
      * Set the location of the common repo
@@ -38,21 +38,21 @@ public interface ResourceManager {
      * Factory method for creating a resource.
      * @return An empty resource. 
      */
-    public Resource createResource();
+    public MeshArtifact createResource();
    
     /**
      * Called to locate the given resource. 
      * @param resource The resource to locate.
      * @throws Exception If there is an error locating the resource.
      */
-    public void locateResource(Resource resource) throws Exception;
+    public void locateResource(MeshArtifact resource) throws Exception;
 
     /**
      * @param resource
      * @param data
      * @throws IOException
      */
-    public void deployFile(Resource resource, byte[] data) throws Exception;
+    public void deployFile(MeshArtifact resource, byte[] data) throws Exception;
 
     /**
      * 
@@ -60,7 +60,7 @@ public interface ResourceManager {
      * @param d
      * @throws Exception
      */
-    public void deployDirectory(Resource resource, File d) throws Exception;
+    public void deployDirectory(MeshArtifact resource, File d) throws Exception;
 
     /**
      * 

@@ -7,16 +7,22 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper;
 
-/**
- * EventListener
- * <p>
- * Description:
- * </p>
- * 
- * @author cmacnaug
- * @version 1.0
- */
-public interface EventListener {
 
-    public void onEvent(Event e);
+/**
+ * @author chirino
+ */
+public interface MeshProcessListener extends Distributable{
+
+    @Oneway
+    public void onProcessExit(int exitCode);
+
+    @Oneway
+    public void onProcessError(Throwable thrown);
+
+    @Oneway
+    public void onProcessInfo(String message);
+    
+    @Oneway
+    public void onProcessOutput(int fd, byte [] output);
+
 }

@@ -10,7 +10,7 @@ package org.fusesource.meshkeeper.util;
 import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshProcess;
-import org.fusesource.meshkeeper.ProcessListener;
+import org.fusesource.meshkeeper.MeshProcessListener;
 
 import java.io.Serializable;
 import java.io.ObjectStreamException;
@@ -25,7 +25,7 @@ import java.io.ObjectStreamException;
  * @author cmacnaug
  * @version 1.0
  */
-public class DefaultProcessListener implements ProcessListener, Serializable {
+public class DefaultProcessListener implements MeshProcessListener, Serializable {
 
     protected String name = "";
     private Distributable proxy;

@@ -23,7 +23,7 @@ import static org.fusesource.meshkeeper.Expression.path;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshProcess;
-import org.fusesource.meshkeeper.ProcessListener;
+import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.Expression.FileExpression;
 import org.fusesource.meshkeeper.distribution.PluginResolver;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -112,7 +112,7 @@ public class RemoteLaunchTest extends TestCase {
 
     }
 
-    public class DataOutputTester implements ProcessListener {
+    public class DataOutputTester implements MeshProcessListener {
 
         private final int TEST_OUTPUT = 0;
         private final int TEST_ERROR = 1;

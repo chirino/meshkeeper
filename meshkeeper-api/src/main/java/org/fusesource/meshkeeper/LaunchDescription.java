@@ -45,9 +45,9 @@ public class LaunchDescription implements Serializable {
     }
 
     private static class InstallLaunchResourceTask implements Serializable, LaunchTask {
-        private final Resource resource;
+        private final MeshArtifact resource;
 
-        public InstallLaunchResourceTask(Resource resource) {
+        public InstallLaunchResourceTask(MeshArtifact resource) {
             this.resource = resource;
         }
 
@@ -57,7 +57,7 @@ public class LaunchDescription implements Serializable {
     }
 
 
-    private static class SubLaunchTask implements Serializable, LaunchTask, ProcessListener {
+    private static class SubLaunchTask implements Serializable, LaunchTask, MeshProcessListener {
         private final LaunchDescription launch;
 
         transient private CountDownLatch done = new CountDownLatch(1);
@@ -87,14 +87,14 @@ public class LaunchDescription implements Serializable {
             error = new Exception("Sub process failed", thrown);
         }
         public void onProcessInfo(String message) {
-            ProcessListener listener = process.getListener();
+            MeshProcessListener listener = process.getListener();
             if (listener!=null) {
                 listener.onProcessInfo(message);
             }
 
         }
         public void onProcessOutput(int fd, byte[] output) {
-            ProcessListener listener = process.getListener();
+            MeshProcessListener listener = process.getListener();
             if (listener!=null) {
                 listener.onProcessOutput(fd, output);
             }
@@ -108,7 +108,7 @@ public class LaunchDescription implements Serializable {
      * cache. 
      * 
      * To refer to the Resource on the command line call {@link #add(Expression)}
-     * with {@link Expression#resource(Resource)} e.g.
+     * with {@link Expression#resource(MeshArtifact)} e.g.
      * 
      * <code>
      * LaunchDescription ld = new LaunchDescription();
@@ -120,9 +120,9 @@ public class LaunchDescription implements Serializable {
      * 
      * 
      * @param resource
-     * @see Expression#resource(Resource)
+     * @see Expression#resource(MeshArtifact)
      */
-    public void installResource(Resource resource) {
+    public void installResource(MeshArtifact resource) {
         preLaunchTasks.add(new InstallLaunchResourceTask(resource));
     }
 

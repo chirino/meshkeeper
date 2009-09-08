@@ -13,8 +13,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.Event;
-import org.fusesource.meshkeeper.EventListener;
+import org.fusesource.meshkeeper.MeshEvent;
+import org.fusesource.meshkeeper.MeshEventListener;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import junit.framework.AssertionFailedError;
@@ -56,14 +56,14 @@ public class EventTest extends TestCase {
     public void testEvent() throws Exception {
         final CountDownLatch eventRcvd = new CountDownLatch(1);
         final AtomicReference<Throwable> failure = new AtomicReference<Throwable>();
-        final Event event = new Event();
+        final MeshEvent event = new MeshEvent();
         event.setAttachment("TestString");
         event.setSource("testSource");
         event.setType(1);
 
-        meshKeeper.eventing().openEventListener(new EventListener() {
+        meshKeeper.eventing().openEventListener(new MeshEventListener() {
 
-            public void onEvent(Event e) {
+            public void onEvent(MeshEvent e) {
                 switch (e.getType()) {
                 case 1: {
                     try {

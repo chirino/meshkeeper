@@ -39,7 +39,7 @@ import org.fusesource.meshkeeper.control.ControlService;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
-import org.fusesource.meshkeeper.distribution.resource.ResourceManager;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
 
 /**
  * PluginClassLoader
@@ -64,7 +64,7 @@ public class PluginClassLoader extends URLClassLoader {
     static {
         SPI_PACKAGES.add(DefaultDistributor.class.getPackage().getName());
         SPI_PACKAGES.add(RemotingClient.class.getPackage().getName());
-        SPI_PACKAGES.add(ResourceManager.class.getPackage().getName());
+        SPI_PACKAGES.add(RepositoryManager.class.getPackage().getName());
         SPI_PACKAGES.add(RegistryClient.class.getPackage().getName());
         SPI_PACKAGES.add(EventClient.class.getPackage().getName());
         SPI_PACKAGES.add(ControlService.class.getPackage().getName());

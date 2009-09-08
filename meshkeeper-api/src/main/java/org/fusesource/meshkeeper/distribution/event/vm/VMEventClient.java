@@ -11,8 +11,8 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.fusesource.meshkeeper.Event;
-import org.fusesource.meshkeeper.EventListener;
+import org.fusesource.meshkeeper.MeshEvent;
+import org.fusesource.meshkeeper.MeshEventListener;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
 
 /**
@@ -27,7 +27,7 @@ import org.fusesource.meshkeeper.distribution.event.EventClient;
 public class VMEventClient implements EventClient {
 
     private static final VMEventServer server = new VMEventServer();
-    private final HashMap<String, HashSet<EventListener>> eventListeners = new HashMap<String, HashSet<EventListener>>();
+    private final HashMap<String, HashSet<MeshEventListener>> eventListeners = new HashMap<String, HashSet<MeshEventListener>>();
 
     private boolean closed = false;
 
@@ -41,8 +41,8 @@ public class VMEventClient implements EventClient {
             closed = true;
         }
 
-        for (Map.Entry<String, HashSet<EventListener>> entry : eventListeners.entrySet()) {
-            for (EventListener l : entry.getValue()) {
+        for (Map.Entry<String, HashSet<MeshEventListener>> entry : eventListeners.entrySet()) {
+            for (MeshEventListener l : entry.getValue()) {
                 server.closeEventListener(l, entry.getKey());
             }
         }
@@ -57,11 +57,11 @@ public class VMEventClient implements EventClient {
      * (org.fusesource.meshkeeper.distribution.event.EventListener,
      * java.lang.String)
      */
-    public void closeEventListener(EventListener listener, String topic) throws Exception {
+    public void closeEventListener(MeshEventListener listener, String topic) throws Exception {
         boolean removed = false;
         synchronized (this) {
             checkClosed();
-            HashSet<EventListener> listeners = eventListeners.get(topic);
+            HashSet<MeshEventListener> listeners = eventListeners.get(topic);
             if (listeners != null) {
                 if (listeners.remove(listener)) {
                     removed = true;
@@ -84,13 +84,13 @@ public class VMEventClient implements EventClient {
      * (org.fusesource.meshkeeper.distribution.event.EventListener,
      * java.lang.String)
      */
-    public void openEventListener(EventListener listener, String topic) throws Exception {
+    public void openEventListener(MeshEventListener listener, String topic) throws Exception {
         boolean added = false;
         synchronized (this) {
             checkClosed();
-            HashSet<EventListener> listeners = eventListeners.get(topic);
+            HashSet<MeshEventListener> listeners = eventListeners.get(topic);
             if (listeners == null) {
-                listeners = new HashSet<EventListener>(1);
+                listeners = new HashSet<MeshEventListener>(1);
                 eventListeners.put(topic, listeners);
             }
             if (listeners.add(listener)) {
@@ -110,7 +110,7 @@ public class VMEventClient implements EventClient {
      * org.fusesource.meshkeeper.distribution.event.EventClient#sendEvent(org
      * .fusesource.meshkeeper.distribution.event.Event, java.lang.String)
      */
-    public void sendEvent(final Event event, String topic) throws Exception {
+    public void sendEvent(final MeshEvent event, String topic) throws Exception {
         checkClosed();
         server.sendEvent(event, topic);
     }

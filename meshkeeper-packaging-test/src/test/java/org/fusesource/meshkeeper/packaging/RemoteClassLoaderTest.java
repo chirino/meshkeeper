@@ -24,7 +24,7 @@ import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.Expression;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.MeshProcess;
-import org.fusesource.meshkeeper.ProcessListener;
+import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServerFactory;
@@ -154,7 +154,7 @@ public class RemoteClassLoaderTest extends TestCase {
         return new File(clazz.getProtectionDomain().getCodeSource().getLocation().getPath()).getCanonicalFile();
     }
 
-    private static class ExitProcessListener implements ProcessListener {
+    private static class ExitProcessListener implements MeshProcessListener {
 
         private final CountDownLatch exitLatch = new CountDownLatch(1);
         private final AtomicInteger exitCode = new AtomicInteger(0);

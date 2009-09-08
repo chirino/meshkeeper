@@ -18,15 +18,15 @@ import java.io.Serializable;
  * @author cmacnaug
  * @version 1.0
  */
-public class Event implements Serializable {
+public class MeshEvent implements Serializable {
 
     private static final long serialVersionUID = 1;
 
-    public Event() {
+    public MeshEvent() {
 
     }
 
-    public Event(int type, String source, Object attachment) {
+    public MeshEvent(int type, String source, Object attachment) {
         this.type = type;
         this.source = source;
         this.attachment = attachment;

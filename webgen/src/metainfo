@@ -16,23 +16,23 @@
   # Define the project properties here, these can be accessed in the
   # pages using the {var:} syntax.
   # -------------------------------------------------------------------
-  project_name: "Cloud Launch"
+  project_name: "MeshKeeper"
   project_slogan: 'Distributed process launching made easy'
-  project_id: 'cloudlaunch'
-  project_jira_key: 'CLOUDLAUNCH'
-  project_issue_url: 'http://fusesource.com/issues/browse/cloudlaunch'
+  project_id: 'meshkeeper'
+  project_jira_key: 'MeshKeeper'
+  project_issue_url: 'http://fusesource.com/issues/browse/meshkeeper'
   project_forums_url: 'http://fusesource.com/forums'
-  project_wiki_url: 'http://fusesource.com/wiki/display/cloudlaunch'
-  project_logo: '/images/cloudlaunch-logo.png'
+  project_wiki_url: 'http://fusesource.com/wiki/display/meshkeeper'
+  project_logo: '/images/meshkeeper-logo.png'
 
   # -------------------------------------------------------------------
   # TODO it would be nice to define these in terms of the project_id variable!
   # -------------------------------------------------------------------
-  project_svn_url: 'http://fusesource.com/forge/svn/cloudlaunch/trunk'
-  project_svn_branches_url: 'http://fusesource.com/forge/svn/cloudlaunch/branches'
-  project_svn_tags_url: 'http://fusesource.com/forge/svn/cloudlaunch/tags'
-  project_maven_groupId: 'org.fusesource.cloudlaunch'
-  project_maven_artifactId: cloudlaunch
+  project_svn_url: 'http://fusesource.com/forge/svn/meshkeeper/trunk'
+  project_svn_branches_url: 'http://fusesource.com/forge/svn/meshkeeper/branches'
+  project_svn_tags_url: 'http://fusesource.com/forge/svn/meshkeeper/tags'
+  project_maven_groupId: 'org.fusesource.meshkeeper'
+  project_maven_artifactId: meshkeeper
 
 blog/*/**/*:
   template: /styles/impact/blog.template

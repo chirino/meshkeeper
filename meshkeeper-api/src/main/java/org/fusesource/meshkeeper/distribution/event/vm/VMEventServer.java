@@ -13,8 +13,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.fusesource.meshkeeper.Event;
-import org.fusesource.meshkeeper.EventListener;
+import org.fusesource.meshkeeper.MeshEvent;
+import org.fusesource.meshkeeper.MeshEventListener;
 import org.fusesource.meshkeeper.control.ControlService;
 import org.fusesource.meshkeeper.distribution.DistributorFactory;
 
@@ -40,7 +40,7 @@ public class VMEventServer implements ControlService{
      * (org.fusesource.meshkeeper.distribution.event.EventListener,
      * java.lang.String)
      */
-    public synchronized void closeEventListener(EventListener listener, String topic) throws Exception {
+    public synchronized void closeEventListener(MeshEventListener listener, String topic) throws Exception {
         EventQueue queue = EVENT_QUEUES.get(topic);
         if (queue != null) {
             queue.removeListener(listener);
@@ -58,7 +58,7 @@ public class VMEventServer implements ControlService{
      * (org.fusesource.meshkeeper.distribution.event.EventListener,
      * java.lang.String)
      */
-    public synchronized void openEventListener(EventListener listener, String topic) throws Exception {
+    public synchronized void openEventListener(MeshEventListener listener, String topic) throws Exception {
         EventQueue queue = EVENT_QUEUES.get(topic);
         if (queue == null) {
             queue = new EventQueue(topic);
@@ -75,7 +75,7 @@ public class VMEventServer implements ControlService{
      * org.fusesource.meshkeeper.distribution.event.EventClient#sendEvent(org
      * .fusesource.meshkeeper.distribution.event.Event, java.lang.String)
      */
-    public synchronized void sendEvent(final Event event, String topic) throws Exception {
+    public synchronized void sendEvent(final MeshEvent event, String topic) throws Exception {
         EventQueue queue = EVENT_QUEUES.get(topic);
 
         if (queue != null) {
@@ -84,7 +84,7 @@ public class VMEventServer implements ControlService{
     }
 
     private class EventQueue implements Runnable {
-        final HashSet<EventListener> listeners = new HashSet<EventListener>(1);
+        final HashSet<MeshEventListener> listeners = new HashSet<MeshEventListener>(1);
         final LinkedBlockingQueue<Runnable> eventQueue = new LinkedBlockingQueue<Runnable>();
         final AtomicBoolean scheduled = new AtomicBoolean(false);
         final String topic;
@@ -97,25 +97,25 @@ public class VMEventServer implements ControlService{
             return listeners.isEmpty() && eventQueue.isEmpty();
         }
 
-        public synchronized void addListener(EventListener listener) {
+        public synchronized void addListener(MeshEventListener listener) {
             listeners.add(listener);
         }
 
-        public synchronized void removeListener(EventListener listener) {
+        public synchronized void removeListener(MeshEventListener listener) {
             listeners.remove(listener);
         }
 
-        public void add(final Event event) {
+        public void add(final MeshEvent event) {
             synchronized (this) {
                 if (listeners.isEmpty()) {
                     return;
                 }
 
-                final EventListener[] targets = (EventListener[]) listeners.toArray();
+                final MeshEventListener[] targets = (MeshEventListener[]) listeners.toArray();
                 eventQueue.add(new Runnable() {
 
                     public void run() {
-                        for (EventListener t : targets) {
+                        for (MeshEventListener t : targets) {
                             t.onEvent(event);
                         }
                     }

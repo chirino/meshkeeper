@@ -18,7 +18,7 @@ import java.io.Serializable;
  * @author cmacnaug
  * @version 1.0
  */
-public interface Resource extends Serializable {
+public interface MeshArtifact extends Serializable {
 
     /**
      * Constant indicating that the resource is a single file.

@@ -18,20 +18,20 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.Event;
-import org.fusesource.meshkeeper.EventListener;
+import org.fusesource.meshkeeper.MeshEvent;
+import org.fusesource.meshkeeper.MeshEventListener;
 import org.fusesource.meshkeeper.RegistryWatcher;
 import org.fusesource.meshkeeper.MeshKeeper.Remoting;
 import org.fusesource.meshkeeper.MeshKeeper.Eventing;
 import org.fusesource.meshkeeper.MeshKeeper.Registry;
 import org.fusesource.meshkeeper.MeshKeeper.Repository;
 import org.fusesource.meshkeeper.MeshKeeper.Launcher;
-import org.fusesource.meshkeeper.Resource;
+import org.fusesource.meshkeeper.MeshArtifact;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryHelper;
 import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
-import org.fusesource.meshkeeper.distribution.resource.ResourceManager;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
 
 /**
  * Distributor
@@ -49,7 +49,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
     private RemotingClient remoting;
     private RegistryClient registry;
     private EventClient eventClient;
-    private ResourceManager resourceManager;
+    private RepositoryManager resourceManager;
     private LaunchClient launchClient;
 
     private String registryUri;
@@ -152,7 +152,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @param resourceManager
      *            the resourceManager to set
      */
-    void setResourceManager(ResourceManager resourceManager) {
+    void setResourceManager(RepositoryManager resourceManager) {
         this.resourceManager = resourceManager;
     }
 
@@ -404,7 +404,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
     /**
      * Sends an event on the given topic.
      */
-    public void sendEvent(Event event, String topic) throws Exception {
+    public void sendEvent(MeshEvent event, String topic) throws Exception {
         eventClient.sendEvent(event, topic);
     }
 
@@ -418,7 +418,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If there is an error opening the listener
      */
-    public void openEventListener(EventListener listener, String topic) throws Exception {
+    public void openEventListener(MeshEventListener listener, String topic) throws Exception {
         eventClient.openEventListener(listener, topic);
     }
 
@@ -432,7 +432,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If there is an error closing the listener
      */
-    public void closeEventListener(EventListener listener, String topic) throws Exception {
+    public void closeEventListener(MeshEventListener listener, String topic) throws Exception {
         eventClient.closeEventListener(listener, topic);
     }
 
@@ -445,7 +445,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * 
      * @return An empty resource.
      */
-    public Resource createResource() {
+    public MeshArtifact createResource() {
         return resourceManager.createResource();
     }
 
@@ -457,7 +457,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If there is an error locating the resource.
      */
-    public void resolveResource(Resource resource) throws Exception {
+    public void resolveResource(MeshArtifact resource) throws Exception {
         resourceManager.locateResource(resource);
     }
 
@@ -466,7 +466,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @param data
      * @throws IOException
      */
-    public void deployFile(Resource resource, byte[] data) throws Exception {
+    public void deployFile(MeshArtifact resource, byte[] data) throws Exception {
         resourceManager.deployFile(resource, data);
     }
 
@@ -476,7 +476,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @param d
      * @throws Exception
      */
-    public void deployDirectory(Resource resource, File d) throws Exception {
+    public void deployDirectory(MeshArtifact resource, File d) throws Exception {
         resourceManager.deployDirectory(resource, d);
     }
 

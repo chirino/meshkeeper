@@ -21,8 +21,8 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
-import org.fusesource.meshkeeper.Event;
-import org.fusesource.meshkeeper.EventListener;
+import org.fusesource.meshkeeper.MeshEvent;
+import org.fusesource.meshkeeper.MeshEventListener;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.jms.JMSProvider;
 
@@ -57,7 +57,7 @@ public class JMSEventClient implements EventClient {
         this.listenerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
     }
 
-    public synchronized void closeEventListener(EventListener listener, String topic) throws Exception {
+    public synchronized void closeEventListener(MeshEventListener listener, String topic) throws Exception {
         TopicHandler th = listeners.get(topic);
         if (th != null) {
             th.listeners.remove(listener);
@@ -67,7 +67,7 @@ public class JMSEventClient implements EventClient {
         }
     }
 
-    public synchronized void openEventListener(EventListener listener, String topic) throws Exception {
+    public synchronized void openEventListener(MeshEventListener listener, String topic) throws Exception {
         TopicHandler th = listeners.get(topic);
         if (th == null) {
             th = new TopicHandler(topic);
@@ -76,7 +76,7 @@ public class JMSEventClient implements EventClient {
         th.addListener(listener);
     }
 
-    public synchronized void sendEvent(Event event, String topic) throws Exception {
+    public synchronized void sendEvent(MeshEvent event, String topic) throws Exception {
 
         sender.send(sendSession.createTopic(topicPrefix + topic), sendSession.createObjectMessage(event));
     }
@@ -90,7 +90,7 @@ public class JMSEventClient implements EventClient {
 
     private class TopicHandler implements MessageListener {
 
-        private HashSet<EventListener> listeners = new HashSet<EventListener>(1);
+        private HashSet<MeshEventListener> listeners = new HashSet<MeshEventListener>(1);
         private final MessageConsumer consumer;
 
         TopicHandler(String topic) throws JMSException {
@@ -98,7 +98,7 @@ public class JMSEventClient implements EventClient {
             consumer.setMessageListener(this);
         }
 
-        public synchronized void addListener(EventListener listener) {
+        public synchronized void addListener(MeshEventListener listener) {
             listeners.add(listener);
         }
 
@@ -112,11 +112,11 @@ public class JMSEventClient implements EventClient {
          * @see javax.jms.MessageListener#onMessage(javax.jms.Message)
          */
         public synchronized void onMessage(Message msg) {
-            for(EventListener l : listeners)
+            for(MeshEventListener l : listeners)
             {
-                Event event;
+                MeshEvent event;
                 try {
-                    event = (Event) ((ObjectMessage)msg).getObject();
+                    event = (MeshEvent) ((ObjectMessage)msg).getObject();
                     l.onEvent(event);
                 } catch (JMSException e) {
                     // TODO Auto-generated catch block

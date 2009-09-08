@@ -25,7 +25,7 @@ import org.fusesource.meshkeeper.HostProperties;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshProcess;
-import org.fusesource.meshkeeper.ProcessListener;
+import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.RegistryWatcher;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
@@ -266,11 +266,11 @@ class LaunchClient implements MeshKeeper.Launcher {
         }
     }
 
-    public MeshProcess launchProcess(String agentId, final LaunchDescription launch, ProcessListener listener) throws Exception {
+    public MeshProcess launchProcess(String agentId, final LaunchDescription launch, MeshProcessListener listener) throws Exception {
         checkNotClosed();
 
         LaunchAgentService agent = getAgent(agentId);
-        return agent.launch(launch, (ProcessListener) meshKeeper.remoting().export(listener));
+        return agent.launch(launch, (MeshProcessListener) meshKeeper.remoting().export(listener));
     }
 
     public void println(MeshProcess process, String line) {
@@ -297,12 +297,12 @@ class LaunchClient implements MeshKeeper.Launcher {
         };
     }
 
-    public MeshProcess launch(String agentId, Runnable runnable, ProcessListener handler) throws Exception {
+    public MeshProcess launch(String agentId, Runnable runnable, MeshProcessListener handler) throws Exception {
         checkNotClosed();
         return launch(getAgent(agentId), runnable, handler);
     }
 
-    private MeshProcess launch(LaunchAgentService agent, Runnable runnable, ProcessListener handler) throws Exception {
+    private MeshProcess launch(LaunchAgentService agent, Runnable runnable, MeshProcessListener handler) throws Exception {
         checkNotClosed();
         ClassLoaderFactory factory = getClassLoaderServer().export(runnable.getClass().getClassLoader(), 100);
         Marshalled<Runnable> marshalled = new Marshalled<Runnable>(factory, runnable);

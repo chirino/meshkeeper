@@ -18,8 +18,8 @@ import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
 import org.fusesource.meshkeeper.distribution.remoting.RemotingFactory;
 import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
-import org.fusesource.meshkeeper.distribution.resource.ResourceManager;
-import org.fusesource.meshkeeper.distribution.resource.ResourceManagerFactory;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryManagerFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -115,7 +115,7 @@ public class DistributorFactory {
         EventClient eventClient = new EventClientFactory().create(eventProviderUri);
 
         //Create ResourceManager:
-        ResourceManager resourceManager = new ResourceManagerFactory().create(resourceManagerProvider);
+        RepositoryManager resourceManager = new RepositoryManagerFactory().create(resourceManagerProvider);
         String commonRepoUrl = registry.getObject(ControlServer.COMMON_REPO_URL_PATH);
         if (commonRepoUrl != null) {
             resourceManager.setCommonRepoUrl(commonRepoUrl, null);

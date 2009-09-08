@@ -5,7 +5,7 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper.distribution.resource.wagon;
+package org.fusesource.meshkeeper.distribution.repository.wagon;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,9 +21,9 @@ import org.apache.maven.wagon.repository.Repository;
 import org.apache.maven.wagon.shared.http.AbstractHttpClientWagon;
 import org.apache.maven.wagon.shared.http.HttpConfiguration;
 import org.apache.maven.wagon.shared.http.HttpMethodConfiguration;
-import org.fusesource.meshkeeper.Resource;
-import org.fusesource.meshkeeper.distribution.resource.AuthenticationInfo;
-import org.fusesource.meshkeeper.distribution.resource.ResourceManager;
+import org.fusesource.meshkeeper.MeshArtifact;
+import org.fusesource.meshkeeper.distribution.repository.AuthenticationInfo;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
 import org.fusesource.meshkeeper.util.internal.FileUtils;
 
 /**
@@ -35,7 +35,7 @@ import org.fusesource.meshkeeper.util.internal.FileUtils;
  * @author cmacnaug
  * @version 1.0
  */
-public class WagonResourceManager implements ResourceManager {
+public class WagonResourceManager implements RepositoryManager {
 
     //Access to our local repo:
     private Wagon localWagon;
@@ -67,7 +67,7 @@ public class WagonResourceManager implements ResourceManager {
      * 
      * @return An empty resource.
      */
-    public Resource createResource() {
+    public MeshArtifact createResource() {
         return new WagonResource();
     }
 
@@ -89,7 +89,7 @@ public class WagonResourceManager implements ResourceManager {
         connectWagon(remoteRepo, authInfo);
     }
     
-    public void locateResource(Resource resource) throws Exception {
+    public void locateResource(MeshArtifact resource) throws Exception {
         Wagon w = null;
         long timestamp = 0;
         if (localWagon.resourceExists(resource.getRepoPath())) {
@@ -105,7 +105,7 @@ public class WagonResourceManager implements ResourceManager {
 
             if (w != null && w.resourceExists(resource.getRepoPath())) {
                 try {
-                    if (resource.getType() == Resource.DIRECTORY) {
+                    if (resource.getType() == MeshArtifact.DIRECTORY) {
                         String path = resource.getRepoPath();
                         if (!path.endsWith("/")) {
                             path = path + "/";
@@ -130,7 +130,7 @@ public class WagonResourceManager implements ResourceManager {
      * @param data
      * @throws IOException
      */
-    public void deployFile(Resource resource, byte[] data) throws Exception {
+    public void deployFile(MeshArtifact resource, byte[] data) throws Exception {
         // TODO Auto-generated method stub
         File f = File.createTempFile("tmp", "dat");
         FileOutputStream fw = new FileOutputStream(f);
@@ -144,11 +144,11 @@ public class WagonResourceManager implements ResourceManager {
         }
     }
 
-    public void deployDirectory(Resource resource, File d) throws Exception {
+    public void deployDirectory(MeshArtifact resource, File d) throws Exception {
         deployResource(resource, d);
     }
 
-    private void deployResource(Resource resource, File f) throws Exception {
+    private void deployResource(MeshArtifact resource, File f) throws Exception {
         Wagon w = null;
         synchronized (this) {
             w = connectedRepos.get(resource.getRepoName());
