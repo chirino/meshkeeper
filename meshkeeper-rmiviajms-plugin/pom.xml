@@ -23,7 +23,7 @@
   <artifactId>meshkeeper-rmiviajms-plugin</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>meshkeeper-rmiviajms-plugin</name>
+  <name>MeshKeeper :: RMI Via JMS Plugin</name>
 
   <repositories>
     <!-- for the rmiviajms dependency -->

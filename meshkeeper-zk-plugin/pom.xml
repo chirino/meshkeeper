@@ -23,7 +23,7 @@
   <artifactId>meshkeeper-zk-plugin</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>Mesh Keeper :: ZooKeeper Registry Plugin</name>
+  <name>MeshKeeper :: ZooKeeper Registry Plugin</name>
 
   <repositories>
     <repository>

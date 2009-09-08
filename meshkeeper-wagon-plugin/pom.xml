@@ -23,7 +23,7 @@
   <artifactId>meshkeeper-wagon-plugin</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>MESHKEEPER :: WAGON PLUGIN</name>
+  <name>MeshKeeper :: Wagon Resource Plugin</name>
 
   <dependencies>
     <dependency>

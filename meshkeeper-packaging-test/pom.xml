@@ -23,7 +23,7 @@
   <artifactId>meshkeeper-packaging-test</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>meshkeeper-packaging-test</name>
+  <name>MeshKeeper :: Packaging Test</name>
   
   <dependencies>
     <dependency>
