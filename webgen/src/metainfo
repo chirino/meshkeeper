@@ -20,10 +20,11 @@
   project_slogan: 'Distributed process launching made easy'
   project_id: 'meshkeeper'
   project_jira_key: 'MeshKeeper'
-  project_issue_url: 'http://fusesource.com/issues/browse/meshkeeper'
+  project_issue_url: 'http://fusesource.com/issues/browse/MESHKEEPER'
   project_forums_url: 'http://fusesource.com/forums'
-  project_wiki_url: 'http://fusesource.com/wiki/display/meshkeeper'
+  project_wiki_url: 'http://fusesource.com/wiki/display/MESHKEEPER'
   project_logo: '/images/meshkeeper-logo.png'
+  project_version: "1.0-SNAPSHOT"
 
   # -------------------------------------------------------------------
   # TODO it would be nice to define these in terms of the project_id variable!
@@ -32,7 +33,7 @@
   project_svn_branches_url: 'http://fusesource.com/forge/svn/meshkeeper/branches'
   project_svn_tags_url: 'http://fusesource.com/forge/svn/meshkeeper/tags'
   project_maven_groupId: 'org.fusesource.meshkeeper'
-  project_maven_artifactId: meshkeeper
+  project_maven_artifactId: meshkeeper-api
 
 blog/*/**/*:
   template: /styles/impact/blog.template
