@@ -16,7 +16,6 @@ import java.io.InputStream;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
@@ -56,10 +55,12 @@ public class PluginClassLoader extends URLClassLoader {
 
     private static final HashSet<String> SPI_PACKAGES = new HashSet<String>();
     private static final HashSet<String> PARENT_FIRST = new HashSet<String>();
-    private final String DEFAULT_PLUGIN_VERSION = getDefaultPluginVersion();
+    private static final String DEFAULT_PLUGIN_VERSION = getDefaultPluginVersion();
 
+    private static final PluginClassLoader DEFAULT_PLUGIN_CLASSLOADER = new PluginClassLoader(Thread.currentThread().getContextClassLoader());
     private static final boolean USE_PARENT_FIRST = false;
     private static PluginResolver PLUGIN_RESOLVER;
+    private static final HashMap<String, List<File>> RESOLVED_PLUGINS = new HashMap<String, List<File>>();
 
     static {
         SPI_PACKAGES.add(DefaultDistributor.class.getPackage().getName());
@@ -76,9 +77,7 @@ public class PluginClassLoader extends URLClassLoader {
         PARENT_FIRST.add("javax.jms");
     }
 
-    private static final PluginClassLoader DEFAULT_PLUGIN_CLASSLOADER = new PluginClassLoader(Thread.currentThread().getContextClassLoader());
-
-    private final HashSet<String> resolvedPlugins = new HashSet<String>();
+    //Keep track of files already added to the classpath:
     private final HashSet<String> resolvedFiles = new HashSet<String>();
 
     /**
@@ -278,11 +277,15 @@ public class PluginClassLoader extends URLClassLoader {
     }
 
     public void loadArtifact(String artifactId) throws IOException, Exception {
-        if (resolvedPlugins.contains(artifactId)) {
-            return;
+        List<File> resolved = null;
+        synchronized (RESOLVED_PLUGINS) {
+            if (!RESOLVED_PLUGINS.containsKey(artifactId)) {
+                LOG.info("Resolving plugin: " + artifactId);
+                resolved = getPluginResolver().resolvePlugin(artifactId);
+                RESOLVED_PLUGINS.put(artifactId, resolved);
+                LOG.info("Resolved plugin: " + artifactId);
+            }
         }
-
-        List<File> resolved = getPluginResolver().resolvePlugin(artifactId);
 
         for (File f : resolved) {
             if (resolvedFiles.add(f.getCanonicalPath())) {
@@ -290,8 +293,7 @@ public class PluginClassLoader extends URLClassLoader {
                 addUrl(f.toURL());
             }
         }
-        LOG.info("Resolved plugin: " + artifactId);
-        resolvedPlugins.add(artifactId);
+
     }
 
     private void loadPlugin(String key) throws IOException, Exception {
@@ -329,32 +331,59 @@ public class PluginClassLoader extends URLClassLoader {
         if (PLUGIN_RESOLVER == null) {
             PLUGIN_RESOLVER = new MopPluginResolver();
             PLUGIN_RESOLVER.setDefaultPluginVersion(getDefaultPluginVersion());
-        }
-
-//        if (PLUGIN_RESOLVER == null) {
-//            ClassLoader loader = PluginClassLoader.DEFAULT_PLUGIN_CLASSLOADER;
-//            try {
-//                URL url = PluginClassLoader.class.getClassLoader().getResource("mop-core-1.0-SNAPSHOT.jar");
-//                if (url != null) {
+            
+//            String[] defaultplugins = { "jms", "activemq", "zk", "wagon", "rmiviajms", "eventviajms" };
+//            String[] defaultArtifactIds = new String[defaultplugins.length];
 //
-//                    if (url.getProtocol().equals("jar")) {
-//                        InputStream jaris = PluginClassLoader.class.getClassLoader().getResourceAsStream("mop-core-1.0-SNAPSHOT.jar");
-//                        loader = new JarClassLoader(jaris, ClassLoader.getSystemClassLoader());
-//                    } else {
-//                        loader = new URLClassLoader(new URL[] { url });
-//                    }
-//                } else {
-//                    LOG.warn("mop-core-1.0-SNAPSHOT.jar was not found on the classpath");
-//                }
-//
-//                PLUGIN_RESOLVER = (PluginResolver) loader.loadClass("org.fusesource.meshkeeper.distribution.MopPluginResolver").newInstance();
-//
-//            } catch (Throwable thrown) {
-//                LOG.error("Error loading plugin resolver:" + thrown.getMessage(), thrown);
-//                throw new RuntimeException(thrown);
+//            int i = 0;
+//            for (String plugin : defaultplugins) {
+//                String version = System.getProperty(PluginResolver.KEY_PLUGIN_VERSION_PREFIX + plugin, getDefaultPluginVersion());
+//                defaultArtifactIds[i] = PluginResolver.PROJECT_GROUP_ID + ":meshkeeper-" + plugin + "-plugin:" + version;
+//                i++;
 //            }
 //
-//        }
+//            synchronized (RESOLVED_PLUGINS) {
+//
+//                LOG.info("Resolving default plugins");
+//                List<File> resolved;
+//                try {
+//                    resolved = PLUGIN_RESOLVER.resolvePlugin(defaultArtifactIds);
+//                    for (String plugin : defaultArtifactIds) {
+//                        RESOLVED_PLUGINS.put(plugin, resolved);
+//                    }
+//                    LOG.info("Resolved default plugins");
+//                } catch (Exception e) {
+//                    LOG.warn("Error resolving default plugins");
+//                }
+//            }
+
+        }
+
+
+        //        if (PLUGIN_RESOLVER == null) {
+        //            ClassLoader loader = PluginClassLoader.DEFAULT_PLUGIN_CLASSLOADER;
+        //            try {
+        //                URL url = PluginClassLoader.class.getClassLoader().getResource("mop-core-1.0-SNAPSHOT.jar");
+        //                if (url != null) {
+        //
+        //                    if (url.getProtocol().equals("jar")) {
+        //                        InputStream jaris = PluginClassLoader.class.getClassLoader().getResourceAsStream("mop-core-1.0-SNAPSHOT.jar");
+        //                        loader = new JarClassLoader(jaris, ClassLoader.getSystemClassLoader());
+        //                    } else {
+        //                        loader = new URLClassLoader(new URL[] { url });
+        //                    }
+        //                } else {
+        //                    LOG.warn("mop-core-1.0-SNAPSHOT.jar was not found on the classpath");
+        //                }
+        //
+        //                PLUGIN_RESOLVER = (PluginResolver) loader.loadClass("org.fusesource.meshkeeper.distribution.MopPluginResolver").newInstance();
+        //
+        //            } catch (Throwable thrown) {
+        //                LOG.error("Error loading plugin resolver:" + thrown.getMessage(), thrown);
+        //                throw new RuntimeException(thrown);
+        //            }
+        //
+        //        }
         return PLUGIN_RESOLVER;
     }
 
@@ -368,15 +397,15 @@ public class PluginClassLoader extends URLClassLoader {
             JarInputStream jis = new JarInputStream(jaris);
             JarEntry je = jis.getNextJarEntry();
             while (je != null) {
-                
+
                 if (!je.isDirectory()) {
                     String name = je.getName();
                     if (je.getName().endsWith(".class")) {
                         name = name.substring(0, name.length() - 6);
                         name = name.replaceAll("\\/", ".");
                     }
-                    
-                    byte[] bytes = new byte [] {};
+
+                    byte[] bytes = new byte[] {};
                     if (je.getSize() > 0) {
                         bytes = new byte[(int) je.getSize()];
                         int i = 0;
@@ -388,15 +417,12 @@ public class PluginClassLoader extends URLClassLoader {
                         }
                     }
                     //Unknown length;
-                    else if (je.getSize() < 0)
-                    {
+                    else if (je.getSize() < 0) {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
-                        while(jis.available() > 0)
-                        {
-                            byte [] chunk = new byte [1024];
+                        while (jis.available() > 0) {
+                            byte[] chunk = new byte[1024];
                             int read = jis.read(chunk);
-                            if(read > 0)
-                            {
+                            if (read > 0) {
                                 baos.write(chunk, 0, read);
                             }
                         }
@@ -404,7 +430,7 @@ public class PluginClassLoader extends URLClassLoader {
                     }
 
                     //LOG.debug("Read jar entry for " + name + " size " + bytes.length);
-                    
+
                     classBytes.put(name, bytes);
                 }
                 jis.closeEntry();
@@ -415,7 +441,7 @@ public class PluginClassLoader extends URLClassLoader {
         }
 
         protected Class<?> findClass(String name) throws ClassNotFoundException {
-            
+
             LOG.debug("Looking for class " + name);
             byte[] b = classBytes.get(name);
             if (b == null) {

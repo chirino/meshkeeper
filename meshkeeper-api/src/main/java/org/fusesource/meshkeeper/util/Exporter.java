@@ -5,20 +5,23 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper.distribution;
+package org.fusesource.meshkeeper.util;
 
 import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.Distributable;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeper.DistributionRef;
 
 /**
  * Exporter
  * <p>
- * Description:
- * </p>
+ * This is a helper class that is useful for exporting a single object. A common
+ * use for this class is within a spring definition; defining an Exporter bean and
+ * setting the source to another bean will cause the bean to be exported when this
+ * bean is initialized.
  * 
  * @author cmacnaug
  * @version 1.0
@@ -27,7 +30,7 @@ public class Exporter {
 
     Log log = LogFactory.getLog(this.getClass());
 
-    DefaultDistributor distributor;
+    MeshKeeper mesh;
     private Distributable source;
     private String path;
     private Distributable stub;
@@ -37,12 +40,12 @@ public class Exporter {
     public void export() throws Exception {
         if (stub == null) {
             if (this.path == null) {
-                stub = distributor.export(source);
+                stub = mesh.remoting().export(source);
                 if (log.isTraceEnabled())
                     log.trace("Exported:" + source);
 
             } else {
-                DistributionRef<Distributable> ref = distributor.distribute(path, true, source);
+                DistributionRef<Distributable> ref = mesh.distribute(path, true, source);
                 path = ref.getRegistryPath();
                 stub = ref.getProxy();
                 if (log.isTraceEnabled())
@@ -53,16 +56,16 @@ public class Exporter {
 
     public void destroy() throws Exception {
         if (stub != null) {
-            distributor.undistribute(source);
+            mesh.undistribute(source);
         }
     }
 
-    public void setDistributor(DefaultDistributor distributor) {
-        this.distributor = distributor;
+    public void setMeshKeeper(MeshKeeper mesh) {
+        this.mesh = mesh;
     }
 
-    public DefaultDistributor getRegistry() {
-        return distributor;
+    public MeshKeeper getMeshKeeper() {
+        return mesh;
     }
 
     public Distributable getSource() {

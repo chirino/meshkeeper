@@ -43,7 +43,7 @@ public interface PluginResolver {
      * @param artifactId The maven artifact id for the plugin
      * @return The artifactId's resolved resources.
      */
-    public List<File> resolvePlugin(String artifactId) throws Exception;
+    public List<File> resolvePlugin(String ... artifactId) throws Exception;
     
     /**
      * Resolves a classpath for the given maven artifact id.

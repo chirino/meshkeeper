@@ -37,10 +37,13 @@ class MopPluginResolver implements PluginResolver {
     private String defaultPluginVersion = "LATEST";
     private String baseDir = System.getProperty(PluginResolver.BASE_DIR, System.getProperty("user.home", "."));
 
-    public synchronized List<File> resolvePlugin(String mavenArtifact) throws Exception {
+    public synchronized List<File> resolvePlugin(String ... mavenArtifacts) throws Exception {
 
-        ArrayList<ArtifactId> artifactIds = new ArrayList<ArtifactId>(1);
-        artifactIds.add(ArtifactId.parse(mavenArtifact));
+        ArrayList<ArtifactId> artifactIds = new ArrayList<ArtifactId>(mavenArtifacts.length);
+        for(String artifact : mavenArtifacts)
+        {
+            artifactIds.add(ArtifactId.parse(artifact));
+        }
 
         return getMopRepository().resolveFiles(artifactIds, getArtifactFilter());
 
