@@ -26,51 +26,62 @@ sort_info: 1
 
 .left
   %h1 What is MeshKeeper?
+  %br
+  %img{:src=>"images/diagram-1.png"}      
 .right
   %p
-    %b MeshKeeper
-    Provides utilities for launching and controlling arbitrary scripts,
+    %b MeshKeeper is a platform for launching, coordinating and controlling arbitrary scripts,
     executables, java processes and objects within a mesh of computers.
     
   %p
-    %b MeshKeeper
-    Provides
+    :markdown 
+      A **MeshKeeper** [deployment topology][1] consists of clients, a control server, and agents.  All the components
+      can be fully distributed across a mesh of computers are all run collocated in a single JVM.  The control
+      server and agents provide several the following services to the clients so it can coordinate a distributed
+      application.
+      [1]: {relocatable:/documentation/deployment-topology.html}
+      
     %ul
-      %li Distributed resource management. Allows launch agents to download artifacts such as jvms,
-      configuration files, and jars from http, ftp, webdav, and file based repositories.
-      %li Distributed classloaders. When launching java processes you can expose your local classes
-      for the launched java application. This is particularly useful when MeshKeeper is used as a 
-      testing framework as it allows easy access to locall build classes that are not in a repository.
-      %li An easy Distributed Registry API. MeshKeeper allows you to add both Seriailizable object, or
-      raw data in a tree like structure that all entities in the mesh can access. This flexible mechanism
-      makes sharing of data between launched process a breeze. 
-      %li Built in Remoting support. MeshKeeper provides easy mechanisms for enabling remote method 
-      invocation. While traditional java rmi is supported, MeshKeeper also provides additional mechanisms
-      for distributing objects that don't implement the Remote interface (or its irritating RemoteExceptions)
-      %li Built in Eventing support. MeshKeeper provides an simple topic based eventing api, which can
-      be used to coordinate the activities of the distributed processes. 
-    
-.left
-  %h1 Launching A MeshKeeper Coordinator Server
-.right
-  %p
-    First
-    %a{:href=>'download.html'} download and install MeshKeeper
-    then you can launch the coordination server from the command line as follows:
-    
-  :plain
-    {coderay::plain}
-    TODO MeshKeeper server script
-    {coderay}
+      %li
+        :markdown 
+          [`Launcher`][1]: Allows clients to start, monitor, and terminate processes across all the computers
+          that have the MeshKeeper Launcher Agent installed.  The Launcher also allows you to 
+          easily remotely execute your `Serializable` `Runnable` objects on remote box.  It 
+          takes care of properly replicating your application's `CLASSPATH` to the launched 
+          JVM.  For example:
+          [1]: {relocatable:/documentation/launcher.html}
+          
+        :raw
+          {coderay::java}
+          Executor executor = mk.getLauncher().createRemoteExecutor("fastbox");
+          executor.execute(runnable);
+          {coderay}   
+               
+      %li 
+        :markdown 
+          [`Remoting`][1]: Provides easy mechanisms for enabling remote method invocation. While traditional java rmi 
+          is supported, MeshKeeper also provides additional mechanismsfor distributing objects that don't implement 
+          the Remote interface (or its irritating RemoteExceptions).  Best of all, unlike traditional RMI, remote
+          objects don't open TCP ports, all method invocations are routed via the MeshKeeper control server.
+          [1]: {relocatable:/documentation/remoting.html}
 
-.left
-  %h1 Launching A MeshKeeper Agent
-.right
-  %p
-  TODO
-  
-.left
-  %h1 Testing the agent
-.right
-  %p
-  TODO
+      %li 
+        :markdown 
+          [`Eventing`][1]: Provides an simple topic based eventing API, which can be used to coordinate the activities 
+          of the distributed processes.
+          [1]: {relocatable:/documentation/eventing.html}
+
+      %li 
+        :markdown 
+          [`Registry`][1]: Provides a central location to store/retrieve remote objects and data.  It uses a file system 
+          like tree structure but unlike file systems, the `Registry` allows you to watch for changes.  
+          This flexible mechanism makes sharing of data between launched process a breeze. 
+          [1]: {relocatable:/documentation/registry.html}
+      
+      %li 
+        :markdown 
+          [`Repository`][1]: Allows you to stage artifacts which are subsequently used by launch agents 
+          to download artifacts such as jvms, configuration files, and jars from http, ftp, webdav, 
+          and file based repositories.
+          [1]: {relocatable:/documentation/repository.html}
+    
