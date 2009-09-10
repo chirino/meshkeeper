@@ -1,0 +1,100 @@
+---
+# Copyright (C) 2009, Progress Software Corporation and/or its
+# subsidiaries or affiliates.  All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+title: Getting Started with Embedded Development
+in_menu: false
+--- name:overview pipeline:haml,tags
+%h1 {title:}
+
+--- name:content pipeline:haml,tags
+:markdown
+  Overview
+  ========
+  
+  It is easy to embed the MeshKeeper server side services into your application.
+  This feature is extremely useful when you are in development mode to avoid having
+  to setup all the server infrastructure. 
+  
+  Using Java
+  ==========
+  
+  With just a few lines of java code, you can get it all going:
+  
+:raw
+  {coderay::java}
+  File directory = new File("target/data");
+  String registry = "zk:tcp://localhost:2101";
+  server = MeshKeeperFactory.createControlServer(registry, directory);
+  meshKeeper = MeshKeeperFactory.createMeshKeeper(registry, directory);
+  agent = MeshKeeperFactory.createAgent(meshKeeper, directory);
+  {coderay}   
+
+:markdown
+  Once the above runs, you will have a deployment similar to to the diagram bellow.  
+  Your application should use the `meshKeeper` object to access the distributed services
+  like remote process launching.
+
+%img{:src=>"images/diagram-2.png", :style=>"margin-top:1em"}
+
+:markdown
+
+  But Spring Is More Flexible
+  ===========================
+   
+  While starting up everything in Java is very easy, We recommend that spring 
+  be used to to create the objects for you.  This gives you the flexibility to switch
+  you application between the embedded and distributed modes with just some configuration changes:
+  
+  The following listing shows you the spring bean configurations needed to start up 
+  the the MeshKeeper server services.
+  
+.div{:style=>"font-size:100%;"}
+  :raw
+    {coderay::xml}
+    <bean id="server" class="org.fusesource.meshkeeper.control.ControlServer"
+      init-method="start" destroy-method="destroy">
+      <property name="directory" value="control-data" />
+      <property name="registryUri" value="zk:tcp://localhost:2101" />
+    </bean>
+
+    <bean id="meshKeeper" class="org.fusesource.meshkeeper.spring.MeshKeeperFactory">
+      <property name="registryUri" value="zk:tcp://localhost:2101" />
+      <property name="directory" value="client-data" />
+    </bean>
+
+    <bean id="agent" class="org.fusesource.meshkeeper.launcher.LaunchAgent"
+      depends-on="meshkeeper" init-method="start" destroy-method="stop">
+      <property name="meshKeeper" ref="meshkeeper" />
+      <property name="directory" value="launcher-data" />
+    </bean>
+    {coderay}
+        
+:markdown
+
+
+  Next Steps
+  ===========================
+  
+  Now that you know how to start up the MeshKeeper services in your Java Application, perhaps you 
+  want to use some of them like [Launching a Remote Process][1] or access a remote process via 
+  [Remoting][2] or [Eventing][3].
+  with a remote process.
+    
+  [1]: {relocatable:/documentation/embedded-development.html}
+  [2]: {relocatable:/documentation/remoting.html}
+  [2]: {relocatable:/documentation/eventing.html}
+
+    

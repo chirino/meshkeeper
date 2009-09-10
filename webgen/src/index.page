@@ -26,174 +26,70 @@ sort_info: 1
 
 .left
   %h1 What is MeshKeeper?
-  %br
-  %img{:src=>"images/diagram-1.png"}      
 .right
-  %p
-    %b MeshKeeper is a platform for launching, coordinating and controlling arbitrary scripts,
-    executables, java processes and objects within a mesh of computers.
+  :markdown 
+    **MeshKeeper** is a platform that provides Mesh Services that allow to discover,
+    launch, coordinate, and control processes across a grid of computers.
     
-  %p
-    :markdown 
-      A **MeshKeeper** [deployment topology][1] consists of clients, a control server, and agents.  All the components
-      can be fully distributed across a mesh of computers are all run collocated in a single JVM.  The control
-      server and agents provide several the following services to the clients so it can coordinate a distributed
-      application.
-      [1]: {relocatable:/documentation/deployment-topology.html}
-      
-    %ul
-      %li
-        :markdown 
-          [`Launcher`][1]: Allows clients to start, monitor, and terminate processes across all the computers
-          that have the MeshKeeper Launcher Agent installed.  The Launcher also allows you to 
-          easily remotely execute your `Serializable` `Runnable` objects on remote box.  It 
-          takes care of properly replicating your application's `CLASSPATH` to the launched 
-          JVM.  For example:
-          [1]: {relocatable:/documentation/launcher.html}
-          
-        :raw
-          {coderay::java}
-          Executor executor = mk.getLauncher().createRemoteExecutor("fastbox");
-          executor.execute(runnable);
-          {coderay}   
-               
-      %li 
-        :markdown 
-          [`Remoting`][1]: Provides easy mechanisms for enabling remote method invocation. While traditional java rmi 
-          is supported, MeshKeeper also provides additional mechanismsfor distributing objects that don't implement 
-          the Remote interface (or its irritating RemoteExceptions).  Best of all, unlike traditional RMI, remote
-          objects don't open TCP ports, all method invocations are routed via the MeshKeeper control server.
-          [1]: {relocatable:/documentation/remoting.html}
-
-      %li 
-        :markdown 
-          [`Eventing`][1]: Provides an simple topic based eventing API, which can be used to coordinate the activities 
-          of the distributed processes.
-          [1]: {relocatable:/documentation/eventing.html}
-
-      %li 
-        :markdown 
-          [`Registry`][1]: Provides a central location to store/retrieve remote objects and data.  It uses a file system 
-          like tree structure but unlike file systems, the `Registry` allows you to watch for changes.  
-          This flexible mechanism makes sharing of data between launched process a breeze. 
-          [1]: {relocatable:/documentation/registry.html}
-      
-      %li 
-        :markdown 
-          [`Repository`][1]: Allows you to stage artifacts which are subsequently used by launch agents 
-          to download artifacts such as jvms, configuration files, and jars from http, ftp, webdav, 
-          and file based repositories.
-          [1]: {relocatable:/documentation/repository.html}
-.left
-  %h1 Getting Started
-
-.right
-
-  :markdown
-    The easiest way to get started with MeshKeeper is to just colocate the server parts with your client.  See the
-    [deployment topology page][1] for more information on more advanced topologies.
+    A MeshKeeper [deployment topology][1] consists of you applications acting as
+    clients, a control server, and launch agents. The control server and agents are
+    used to provide mesh services to your client applications. The topology can scale
+    out to run on a grid of of computers or scale down and run collocated in a single
+    JVM.
+    
+    See our user guides:
+    
+    *  [Getting Started with Embedded Development][2]
+    *  [Getting Started with Starting Standalone Servers and Agents][3]
+    
     [1]: {relocatable:/documentation/deployment-topology.html}
-
-  %img{:src=>"images/diagram-2.png"}
-
-  %p
-    This is one way to boot up that topology in java code:
-  
-  .div{:style=>"font-size:75%;"}
-    :raw
-      {coderay::java}
-      server = MeshKeeperFactory.createControlServer("zk:tcp://localhost:2101", new File("control-data"));
-      meshKeeper = MeshKeeperFactory.createMeshKeeper("zk:tcp://localhost:2101", new File("client-data"));
-      agent = MeshKeeperFactory.createAgent(meshKeeper, new File("launcher-data"));
-      {coderay}   
-
-  :markdown
-    What we recommend you do is to use spring to to create the objects for you.  This gives you the flexibility to switch
-    you application between topologies with a minimal configuration change:
-    
-  .div{:style=>"font-size:75%;"}
-    :raw
-      {coderay::xml}
-      <bean id="server" class="org.fusesource.meshkeeper.control.ControlServer"
-        init-method="start" destroy-method="destroy">
-        <property name="directory" value="control-data" />
-        <property name="registryUri" value="zk:tcp://localhost:2101" />
-      </bean>
-
-      <bean id="meshKeeper" class="org.fusesource.meshkeeper.spring.MeshKeeperFactory">
-        <property name="registryUri" value="zk:tcp://localhost:2101" />
-        <property name="directory" value="client-data" />
-      </bean>
-
-      <bean id="agent" class="org.fusesource.meshkeeper.launcher.LaunchAgent"
-        depends-on="meshkeeper" init-method="start" destroy-method="stop">
-        <property name="meshKeeper" ref="meshkeeper" />
-        <property name="directory" value="launcher-data" />
-      </bean>
-      {coderay}   
+    [2]: {relocatable:/documentation/embedded-development.html}
+    [3]: {relocatable:/documentation/starting-servers-and-agents.html}
 
 .left
-  %h1 Launching Remote Processes
+  %h1 Mesh Services
+  %br
+  %img{:src=>"images/diagram-1.png", :style=>"float:right"}      
 .right
-  :markdown
-    Once you have a `MeshKeeper` object connected to a `ControlServer` with at least one `LaunchAgent` attached, you can 
-    launch remote processes:
+  :markdown 
+    [Process Launching][1]: Allows clients to start, monitor, and terminate processes across all the computers
+    that have the MeshKeeper Launcher Agent installed.  The Launcher also allows you to 
+    easily remotely execute your `Serializable` `Runnable` objects on remote box.  It 
+    takes care of properly replicating your application's `CLASSPATH` to the launched 
+    JVM.  For example:
+    [1]: {relocatable:/documentation/launcher.html}
+    
+  :raw
+    {coderay::java}
+    Executor executor = 
+            mk.getLauncher().createRemoteExecutor("fastbox");
+    executor.execute(runnable);
+    {coderay}   
+         
+  :markdown 
+    [Remoting][1]: Provides easy mechanisms for enabling remote method invocation. While traditional java rmi 
+    is supported, MeshKeeper also provides additional mechanismsfor distributing objects that don't implement 
+    the Remote interface (or its irritating RemoteExceptions).  Best of all, unlike traditional RMI, remote
+    objects don't open TCP ports, all method invocations are routed via the MeshKeeper control server.
+    [1]: {relocatable:/documentation/remoting.html}
 
-    You will first need to inspect the list of available agents and pick one for you to use.
-    
-  .div{:style=>"font-size:90%;"}
-    :raw
-      {coderay::java}
-      HostProperties hosts[] = meshKeeper.launcher().getAvailableAgents()
-      {coderay}   
+  :markdown 
+    [Eventing][1]: Provides an simple topic based eventing API, which can be used to coordinate the activities 
+    of the distributed processes.
+    [1]: {relocatable:/documentation/eventing.html}
 
-  :markdown
-    The `HostProperties` lets you know details about the host the agent is running on like the CPU count, host name, and system 
-    properties of the agent.  Each agent has a unique agent id, which will be how you identify which agent you want to launch
-    processes on.
-    
-  .div{:style=>"font-size:90%;"}
-    :raw
-      {coderay::java}
-      String agentId = hosts[0].getAgentId();
-      {coderay}   
-    
-  :markdown
-    The next step will be to create a `LaunchDescription` which is a command line builder for the command that you want to 
-    remotely execute.  Command line arguments can be strings or `Expression` objects which will get evaluated on the Agent.
-    
-  .div{:style=>"font-size:90%;"}
-    :raw
-      {coderay::java}
-      LaunchDescription ld = new LaunchDescription();
-      ld.add("echo");
-      ld.add("hello");
-      ld.add(file("path/to/a/file"));
-      {coderay}   
+  :markdown 
+    [Data Registry][1]: Provides a central location to store/retrieve remote objects and data.  It uses a file system 
+    like tree structure but unlike file systems, the `Registry` allows you to watch for changes.  
+    This flexible mechanism makes sharing of data between launched process a breeze. 
+    [1]: {relocatable:/documentation/registry.html}
 
-  :markdown
-    The `file()` method call creates an expression which will convert the file separators to match the agents platform.  So if the 
-    Agent was running on windows the executed command would be:
-    
-        echo hello path\to\a\file
-        
-    We recommend you use a static import of `Expression.*` when building `LaunchDescription` objects.  There are many other [handy expressions][1].
-    [1]: {relocatable:/documentation/expressions.html}
-    
-    Once you have your `LaunchDescription` built, you are ready ask an agent to launch it.
-    
-  .div{:style=>"font-size:90%;"}
-    :raw
-      {coderay::java}
-      MeshProcessListener listener = null;
-      MeshProcess process = meshKeeper.launcher().launchProcess(agentId, ld, listener);
-      {coderay}       
-    
-    In the example above, we launch a the process with a null `MeshProcessListener`, which means we will not be given sent process output.  If you 
-    wanted to capture process stdout, stderr, or be notifed of the process exist code, you should implement the listener.  If you just want to
-    log process output to your console window you can use the `DefaultProcessListener` implementation.
-    
-    The returned `MeshProcess` object can be used to write data to the process stdin, check to see if it's still running or to kill the running process.
-    
-    
-  
+  :markdown 
+    [Artifact Repository][1]: Allows you to stage artifacts which are subsequently used by launch agents 
+    to download artifacts such as jvms, configuration files, and jars from http, ftp, webdav, 
+    and file based repositories.
+    [1]: {relocatable:/documentation/repository.html}
+
+
+
+

@@ -14,6 +14,82 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-title: Launcher
+title: Launching Remote Processes
 in_menu: false
+--- name:overview pipeline:haml,tags
+%h1 {title:}
+
 --- name:content pipeline:haml,tags
+
+:markdown
+  Selecting the Agent
+  ===================
+  
+  A MeshKeeper control server can have many launched agents attached to it.  To launch a remote 
+  process you must first pick agent to launch on.  Once you have [created a `MeshKeeper` object][1], you
+  can use the following code fragment to a list of all available agents.
+  
+  [1]: {relocatable:/documentation/embedded-development.html}
+  
+:raw
+  {coderay::java}
+  HostProperties hosts[] = meshKeeper.launcher().getAvailableAgents()
+  String agentId = hosts[0].getAgentId();
+  {coderay}   
+
+:markdown
+
+  The `HostProperties` lets you know details about the host the agent is running on like the CPU count, host name, and system 
+  properties of the agent.  Each agent has a unique agent id, which will be how you identify which agent you want to launch
+  processes on.
+  
+  Creating the Launch Description
+  ===============================
+  
+  The next step will be to create a `LaunchDescription` which is a command line builder for the process that you want to 
+  remotely execute.  Command line arguments can be strings or expressions. Expressions get evaluated on the Agent.  The following
+  listing shows how a `LaunchDescription` is initialized.
+  
+:raw
+  {coderay::java}
+  LaunchDescription ld = new LaunchDescription();
+  ld.add("echo");
+  ld.add("hello");
+  ld.add(file("path/to/a/file"));
+  {coderay}   
+
+:markdown
+  In the example above, the `file()` method creates an expression which will convert the file separators of the given path 
+  to use the conventions of the agents platform.  So if the  agent was running on Windows, the executed command would be:
+  
+:raw
+  {coderay::plain}
+  echo hello path\to\a\file
+  {coderay}
+      
+:markdown
+  We recommend you use a static import of `Expression.*` when building `LaunchDescription` objects.  There are many 
+  other [handy expressions][1] that can be used.
+
+  [1]: {relocatable:/documentation/expressions.html}
+  
+  Launching the Process
+  =====================
+
+  Once you have a `LaunchDescription` built, you are ready ask an agent to launch it.
+  
+:raw
+  {coderay::java}
+  MeshProcessListener listener = null;
+  MeshProcess process = meshKeeper.launcher().launchProcess(agentId, ld, listener);
+  {coderay}       
+  
+:markdown
+  In the example above, we launch a the process with a null `MeshProcessListener`, which means we will not be given sent process output.  If you 
+  wanted to capture process stdout, stderr, or be notifed of the process exist code, you should implement the listener.  If you just want to
+  log process output to your console window you can use the `DefaultProcessListener` implementation.
+  
+  The returned `MeshProcess` object can be used to write data to the process stdin, check to see if it's still running or to kill the running process.
+  
+  
+    
