@@ -1,6 +1,6 @@
 echo off
 setlocal
-TITLE MeshKeeper Agent
+TITLE MeshKeeper Server
 
 REM  runagent.bat
 
@@ -29,7 +29,8 @@ goto :END
 CALL setenv.bat
 if ERRORLEVEL 1 goto warn
 
-%JAVA_EXE% %OPTS% -classpath %CLASSPATH% org.fusesource.meshkeeper.launcher.Main -dataDir "%CL_HOME%\data" %*
+echo ------- Starting Agent -------
+%JAVA_EXE% %OPTS% -classpath %CLASSPATH% org.fusesource.meshkeeper.control.Main -dataDir "%MESHKEEPER_HOME%\data" %*
 
 :END
 echo Paused to catch any errors. Press any key to continue.

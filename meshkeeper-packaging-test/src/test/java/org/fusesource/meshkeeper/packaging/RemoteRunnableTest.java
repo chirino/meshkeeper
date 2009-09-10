@@ -36,7 +36,7 @@ public class RemoteRunnableTest extends TestCase {
             System.setProperty(PluginResolver.KEY_DEFAULT_PLUGINS_VERSION, "LATEST");
         }
 
-        System.setProperty(PluginResolver.BASE_DIR, new File(basedir, "mop").getCanonicalPath());
+        System.setProperty("mop.base", new File(basedir, "mop").getCanonicalPath());
         System.setProperty("basedir", basedir.getCanonicalPath());
         String commonRepo = new File(basedir, "common-repo").toURI().toString();
         System.setProperty("common.repo.url", commonRepo);

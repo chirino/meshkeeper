@@ -24,18 +24,10 @@ public interface PluginResolver {
     public static final String KEY_PLUGIN_VERSION_PREFIX = "meshkeeper.plugin.version.";
     // Sets the default plugin version.. for example: meshkeeper.plugin.version.default=1.0
     public static final String KEY_DEFAULT_PLUGINS_VERSION = KEY_PLUGIN_VERSION_PREFIX +"default";
-    // Allows setting of the plugin resolver directory via system property:
-    public static final String BASE_DIR = "meshkeeper.plugin.basedir";
     
     
     static final String PROJECT_GROUP_ID = "org.fusesource.meshkeeper";
     static final String PROJECT_ARTIFACT_ID = "meshkeeper-api";
-    
-    /**
-     * Sets the base in which the resolver can store resolved plugins.
-     * @param dir the base in which the resolver can store resolved plugins.
-     */
-    public void setBaseDir(String dir);
     
     /**
      * Finds plugin classpath resources, and returns them as URLs.
@@ -47,7 +39,7 @@ public interface PluginResolver {
     
     /**
      * Resolves a classpath for the given maven artifact id.
-     * @param artifactId The maven artifact id.
+     * @param artifact The maven artifact id.
      * @return A locally resolved classpath. 
      * @throws Exception If there is an error resolving the classpath
      */

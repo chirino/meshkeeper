@@ -47,6 +47,7 @@
       <directory>src/main/distribution/windows-text</directory>
       <outputDirectory>/</outputDirectory>
       <lineEnding>dos</lineEnding>
+      <filtered>true</filtered>
     </fileSet>
     <fileSet>
       <directory>target/classes/etc</directory>
@@ -77,24 +78,12 @@
       </directory>
       <outputDirectory>/</outputDirectory>
     </fileSet>  
+    
+    <!-- Copy over the mop repository -->
+    <fileSet>
+      <directory>target/mop</directory>
+      <outputDirectory>/</outputDirectory>
+    </fileSet>
+    
   </fileSets>
-  
-  <!-- Copy over jar files -->
-  <dependencySets>
-    <dependencySet> 
-      <outputDirectory>/lib/</outputDirectory>
-      <unpack>false</unpack>
-      <includes>
-        <include>${pom.groupId}:meshkeeper-api</include>
-        <include>${pom.groupId}:meshkeeper-zk-plugin</include>
-        <include>${pom.groupId}:meshkeeper-jms-plugin</include>
-        <include>${pom.groupId}:meshkeeper-rmiviajms-plugin</include>
-        <include>${pom.groupId}:meshkeeper-eventviajms-plugin</include>
-        <include>${pom.groupId}:meshkeeper-wagon-plugin</include>
-        <include>${pom.groupId}:meshkeeper-activemq-plugin</include>
-      </includes>
-      <useTransitiveDependencies>true</useTransitiveDependencies>
-    </dependencySet>
-  </dependencySets>
-  
 </assembly>

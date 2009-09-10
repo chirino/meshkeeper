@@ -30,7 +30,7 @@
     <dependency>
       <groupId>org.fusesource.mop</groupId>
       <artifactId>mop-core</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${mop-version}</version>
       <scope>compile</scope>
     </dependency>
       
@@ -90,6 +90,8 @@
                   <dependency>org.fusesource.mop:mop-core</dependency>
                 </classpath>
                 <argument>org.fusesource.mop.MOP</argument>
+                <argument>--scope</argument>
+                <argument>runtime</argument>
                 <argument>classpath</argument>
                 <argument>org.fusesource.meshkeeper:meshkeeper-api:${project.version}</argument>
                 <argument>+org.fusesource.meshkeeper:meshkeeper-rmiviajms-plugin:${project.version}</argument>

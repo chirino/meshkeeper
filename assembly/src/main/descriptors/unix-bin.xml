@@ -87,26 +87,15 @@
       <outputDirectory>/</outputDirectory>
       <lineEnding>unix</lineEnding>
       <fileMode>0755</fileMode>
+      <filtered>true</filtered>
     </fileSet>
-    
+
+    <!-- Copy over the mop repository -->
     <fileSet>
       <directory>target/mop</directory>
       <outputDirectory>/</outputDirectory>
     </fileSet>
     
   </fileSets>
-  
-  <!-- Copy over jar files -->
-  <dependencySets>
-    <dependencySet> 
-      <outputDirectory>/lib/</outputDirectory>
-      <!-- In case we need to exclude dependencies...
-      <excludes>
-        <exclude>something:something</exclude>
-      </excludes> -->
-      <useProjectArtifact>false</useProjectArtifact>
-      <useTransitiveDependencies>true</useTransitiveDependencies>
-    </dependencySet>
-  </dependencySets>
-  
+
 </assembly>

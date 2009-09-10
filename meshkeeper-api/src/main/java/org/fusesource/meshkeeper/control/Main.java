@@ -24,11 +24,17 @@ public class Main {
     private static final void showUsage() {
         System.out.println("Usage:");
         System.out.println("Args:");
-        System.out.println(" -(h)elp -- this message");
-        System.out.println(" [-jms <uri>] -- specifies listening address for jms.");
-        System.out.println(" [-registry <uri>] -- specifies listening address for the regsitry.");
-        System.out.println(" [-directory <directory>] -- specifies data directory used by control server.");
-        System.out.println(" [-repository <uri>] -- specifies a uri to a centralized common repository.");
+        System.out.println("  -h, --help                  -- this message");
+        System.out.println("  [--jms <uri>]               -- specifies listening address for jms.");
+        System.out.println("  [--registry <uri>]          -- specifies listening address for the regsitry.");
+        System.out.println("  [--directory <directory>]   -- specifies data directory used by control server.");
+        System.out.println("  [--repository <uri>]        -- specifies a uri to a centralized common repository.");
+    }
+
+    static class UsageException extends Exception {
+        UsageException(String message) {
+            super(message);
+        }
     }
 
     /*
@@ -53,33 +59,36 @@ public class Main {
         try {
             while (!alist.isEmpty()) {
                 String arg = alist.removeFirst();
-                if (arg.equals("-help") || arg.equals("-h")) {
+                if (arg.equals("--help") || arg.equals("-h")) {
                     showUsage();
                     return;
-                } else if (arg.equals("-jms")) {
-                    if (alist.isEmpty()) {
-                        throw new Exception("Expected uri after -jms");
-                    }
+                } else if (arg.equals("--jms")) {
+                    assertHasAdditionalArg(alist, "Expected uri after --jms");
                     jms = alist.removeFirst();
-
-                }  else if (arg.equals("-directory")) {
-                    if (alist.isEmpty()) {
-                        throw new Exception("Directory expected after -directory");
-                    }
+                }  else if (arg.equals("--directory")) {
+                    assertHasAdditionalArg(alist, "Directory expected after --directory");
                     directory = alist.removeFirst();
-                } else if (arg.equals("-registry")) {
-                    if (alist.isEmpty()) {
-                        throw new Exception("Expected uri after -registry");
-                    }
+                } else if (arg.equals("--registry")) {
+                    String message = "Expected uri after --registry";
+                    assertHasAdditionalArg(alist, message);
                     registry = alist.removeFirst();
-                } else if (arg.equals("-repository")) {
-                    if (alist.isEmpty()) {
-                        throw new Exception("Expected url after -repository");
-                    }
+                } else if (arg.equals("--repository")) {
+                    assertHasAdditionalArg(alist, "Expected url after --repository");
                     repository = alist.removeFirst();
                 }
             }
 
+        } catch (UsageException e) {
+            System.out.println("Invalid usage: "+e.getMessage());
+            System.out.println();
+            showUsage();
+            System.exit(-1);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-2);
+        }
+
+        try {
             ControlServer server = new ControlServer();
             server.setDirectory(directory);
             server.setJmsUri(jms);
@@ -88,7 +97,13 @@ public class Main {
             server.start();
         } catch (Exception e) {
             e.printStackTrace();
-            System.exit(-1);
+            System.exit(-3);
+        }
+    }
+
+    private static void assertHasAdditionalArg(LinkedList<String> alist, String message) throws Exception {
+        if (alist.isEmpty()) {
+            throw new UsageException(message);
         }
     }
 

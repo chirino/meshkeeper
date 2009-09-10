@@ -30,6 +30,7 @@
   </organization>
 
   <properties>
+    <mop-version>1.0-SNAPSHOT</mop-version>
     <spring-version>2.5.5</spring-version>
   </properties>
 

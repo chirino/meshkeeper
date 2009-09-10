@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.distribution.DistributorFactory;
 
 /**
@@ -28,9 +29,15 @@ public class Main {
     private static final void showUsage() {
         System.out.println("Usage:");
         System.out.println("Args:");
-        System.out.println(" -(h)elp -- this message");
-        System.out.println(" -uri <registry uri> -- specifies the uri of a control server registry.");
-        System.out.println(" [-dataDir <directory>] -- specifies data directory used by the Launcher.");
+        System.out.println("  -h,--help                   -- this message");
+        System.out.println("  --registry <uri>            -- specifies the uri of a control server registry.");
+        System.out.println("  [--directory <directory>]   -- specifies data directory used by the Launcher.");
+    }
+
+    static class UsageException extends Exception {
+        UsageException(String message) {
+            super(message);
+        }
     }
 
     /*
@@ -47,43 +54,47 @@ public class Main {
         }
 
         MeshKeeper meshKeeper = null;
-        String distributorUri = null;
-        String dataDir = ".";
+        String regisitry = null;
+        String directory = ".";
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
         try {
             while (!alist.isEmpty()) {
                 String arg = alist.removeFirst();
-                if (arg.equals("-help") || arg.equals("-h")) {
+                if (arg.equals("--help") || arg.equals("-h")) {
                     showUsage();
                     return;
-                } else if (arg.equals("-uri")) {
-                    if (alist.isEmpty()) {
-                        throw new Exception("Expected url after -url");
-                    }
-                    distributorUri = alist.removeFirst();
+                } else if (arg.equals("--registry")) {
+                    assertHasAdditionalArg(alist, "Expected uri after --registry");
+                    regisitry = alist.removeFirst();
 
-                } else if (arg.equals("-dataDir")) {
-                    if (alist.isEmpty()) {
-                        throw new Exception("Directory expected after -dataDir");
-                    }
-                    dataDir = alist.removeFirst();
+                } else if (arg.equals("--directory")) {
+                    assertHasAdditionalArg(alist, "Directory expected after --directory");
+                    directory = alist.removeFirst();
                 } 
             }
 
-            DistributorFactory.setDefaultDirectory(dataDir);
-            DistributorFactory.setDefaultRegistryUri(distributorUri);
-            meshKeeper = DistributorFactory.createDefaultDistributor();
-            
-            LaunchAgent agent = new LaunchAgent();
-            agent.setDirectory(new File(dataDir));
-            meshKeeper.start();
-            agent.setMeshKeeper(meshKeeper);
+            if( regisitry==null ) {
+                throw new UsageException("The --registry option is required.");
+            }
 
+
+            System.out.println("Starting Launch Agent against registry: "+regisitry);
+            meshKeeper = MeshKeeperFactory.createMeshKeeper(regisitry, new File(directory));
+
+            LaunchAgent agent = new LaunchAgent();
+            agent.setDirectory(new File(directory));
+            agent.setMeshKeeper(meshKeeper);
             agent.start();
+            
+        } catch (UsageException e) {
+            System.out.println("Invalid usage: "+e.getMessage());
+            System.out.println();
+            showUsage();
+            System.exit(-1);
         } catch (Exception e) {
             e.printStackTrace();
-            System.exit(-1);
+            System.exit(-2);
         } finally {
             try {
                 if (meshKeeper != null) {
@@ -91,7 +102,14 @@ public class Main {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                System.exit(-3);
             }
+        }
+    }
+
+    private static void assertHasAdditionalArg(LinkedList<String> alist, String message) throws Exception {
+        if (alist.isEmpty()) {
+            throw new UsageException(message);
         }
     }
 }

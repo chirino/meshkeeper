@@ -1,28 +1,23 @@
 #!/bin/sh
-#Copyright (C) 2009 Progress Software, Inc. All rights reserved.                    #
-#http://fusesource.com                                                              #
-#---------------------------------------------------------------------------------- #
-#The software in this package is published under the terms of the AGPL license      #
-#a copy of which has been included with this distribution in the license.txt file.  #
-#####################################################################################
+######################################################################################
+# Copyright (C) 2009 Progress Software, Inc. All rights reserved.                    #
+# http://fusesource.com                                                              #
+# ---------------------------------------------------------------------------------- #
+# The software in this package is published under the terms of the AGPL license      #
+# a copy of which has been included with this distribution in the license.txt file.  #
+######################################################################################
 
+# =====================================================================
+# User customization area.  You can set your defaults here.
+# =====================================================================
+JAVA_MIN_MEM=16m
+JAVA_MAX_MEM=64m
+
+# =====================================================================
+# This section holds MeshKeeper environment setup routines
+# =====================================================================
 DIRNAME=`dirname $0`
 PROGNAME=`basename $0`
-
-#
-# Check/Set up some easily accessible MIN/MAX params for JVM mem usage
-#
-
-if [ "x$JAVA_MIN_MEM" = "x" ]; then
-    JAVA_MIN_MEM=16M
-    export JAVA_MIN_MEM
-fi
-
-if [ "x$JAVA_MAX_MEM" = "x" ]; then
-    JAVA_MAX_MEM=256M
-    export JAVA_MAX_MEM
-fi
-
 warn() {
     echo "${PROGNAME}: $*"
 }
@@ -97,23 +92,23 @@ unlimitFD() {
 }
 
 locateHome() {
-    if [ "x$CL_HOME" != "x" ]; then
-        warn "Ignoring predefined value for CL_HOME"
+    if [ "x$MESHKEEPER_HOME" != "x" ]; then
+        warn "Ignoring predefined value for MESHKEEPER_HOME"
     fi
 
-    CL_HOME=`cd $DIRNAME/..; pwd`
-    if [ ! -d "$CL_HOME" ]; then
-        die "CL_HOME is not valid: $CL_HOME"
+    MESHKEEPER_HOME=`cd $DIRNAME/..; pwd`
+    if [ ! -d "$MESHKEEPER_HOME" ]; then
+        die "MESHKEEPER_HOME is not valid: $MESHKEEPER_HOME"
     fi
 }
 
 locateBase() {
-    if [ "x$CL_BASE" != "x" ]; then
-        if [ ! -d "$CL_BASE" ]; then
-            die "CL_BASE is not valid: $CL_BASE"
+    if [ "x$MESHKEEPER_BASE" != "x" ]; then
+        if [ ! -d "$MESHKEEPER_BASE" ]; then
+            die "MESHKEEPER_BASE is not valid: $MESHKEEPER_BASE"
         fi
     else
-        CL_BASE=$CL_BASE
+        MESHKEEPER_BASE=$MESHKEEPER_HOME
     fi
 }
 
@@ -166,7 +161,7 @@ setupDebugOptions() {
     export JAVA_OPTS
 
     # Set Debug options if enabled
-    if [ "x$CL_DEBUG" != "x" ]; then
+    if [ "x$MESHKEEPER_DEBUG" != "x" ]; then
         # Use the defaults if JAVA_DEBUG_OPTS was not set
         if [ "x$JAVA_DEBUG_OPTS" = "x" ]; then
             JAVA_DEBUG_OPTS="$DEFAULT_JAVA_DEBUG_OPTS"
@@ -193,22 +188,12 @@ setupDefaults() {
         fi
     fi
 
-    # Add the jars in the lib dir
-    CLASSPATH=
-    for file in $CL_HOME/lib/*.jar
-    do
-        if [ "x$CLASSPATH" != "x" ]; then
-            file=":$file"
-		fi
-
-		if $cygwin; then
-		   file=`cygpath  $CYGPATHOPS "$file"`
-		fi
-		CLASSPATH="$CLASSPATH$file"
-
-    done
-
-
+    # Setup the classpath..
+    CLASSPATH="$MESHKEEPER_HOME/repository/org/fusesource/meshkeeper/meshkeeper-api/${project.version}/meshkeeper-api-${project.version}.jar"
+    CLASSPATH="$CLASSPATH:$MESHKEEPER_HOME/repository/org/fusesource/mop/mop-core/${mop-version}/mop-core-${mop-version}.jar"
+  	if $cygwin; then
+  	    CLASSPATH=`cygpath $CYGPATHOPS "$CLASSPATH"`
+  	fi
 
     DEFAULT_JAVA_DEBUG_OPTS="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"
 
@@ -218,20 +203,38 @@ setupDefaults() {
     # Uncomment to enable YourKit profiling
     #DEFAULT_JAVA_DEBUG_OPTS="-Xrunyjpagent"
 	
-	LOG4J="$CL_HOME/etc/log4j.properties"
-	if $cygwin; then
-	    LOG4J=`cygpath $CYGPATHOPS "$LOG4J"`
-	fi
+  	LOG4J="$MESHKEEPER_BASE/etc/log4j.properties"
+  	if $cygwin; then
+  	    LOG4J=`cygpath $CYGPATHOPS "$LOG4J"`
+  	fi
 
-    OPTS="-Dlog4j.configuration=file:$LOG4J"
 
     if $cygwin; then
-        CL_HOME=`cygpath  $CYGPATHOPS "$CL_HOME"`
-        CL_BASE=`cygpath  $CYGPATHOPS "$CL_BASE"`
+        MESHKEEPER_HOME=`cygpath  $CYGPATHOPS "$MESHKEEPER_HOME"`
+        MESHKEEPER_BASE=`cygpath  $CYGPATHOPS "$MESHKEEPER_BASE"`
     fi
+    
+    OPTS="$OPTS -Dlog4j.configuration=file:$LOG4J"
+    OPTS="$OPTS -Dmop.base=$MESHKEEPER_HOME"
+    OPTS="$OPTS -Dmop.online=false"
 }
 
 setenv() {
+  
+    #
+    # Check/Set up some easily accessible MIN/MAX params for JVM mem usage
+    #
+
+    if [ "x$JAVA_MIN_MEM" = "x" ]; then
+        JAVA_MIN_MEM=16M
+        export JAVA_MIN_MEM
+    fi
+
+    if [ "x$JAVA_MAX_MEM" = "x" ]; then
+        JAVA_MAX_MEM=256M
+        export JAVA_MAX_MEM
+    fi
+    
     # Determine if there is special OS handling we must perform
     detectOS
 
@@ -255,7 +258,10 @@ setenv() {
 
     # Install debug options
     setupDebugOptions
-
 }
 
+# =====================================================================
+# Execute the Control Server
+# =====================================================================
 setenv $@
+exec $JAVA $JAVA_OPTS $OPTS -classpath "$CLASSPATH" org.fusesource.meshkeeper.control.Main --directory $MESHKEEPER_BASE/data $*

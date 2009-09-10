@@ -11,13 +11,13 @@ goto :END
 
 :BEGIN
 
-REM Set CL_HOME
+REM Set MESHKEEPER_HOME
 cd %~dp0%
 cd ..
-set CL_HOME=%cd%
+set MESHKEEPER_HOME=%cd%
 
-if not exist "%CL_HOME%" (
-    call :warn MeshKeeper home directory is not valid: %CL_HOME%
+if not exist "%MESHKEEPER_HOME%" (
+    call :warn MeshKeeper home directory is not valid: %MESHKEEPER_HOME%
     goto END
 )
 
@@ -35,7 +35,7 @@ if not "%JAVA_EXE%" == "" goto :Check_JAVA_END
 
 REM Setup the classpath
 set CLASSPATH=
-pushd "%CL_HOME%\lib"
+pushd "%MESHKEEPER_HOME%\lib"
 for %%G in (*.*) do call:APPEND_TO_CLASSPATH %%G
 popd
 goto CLASSPATH_END
@@ -43,14 +43,14 @@ goto CLASSPATH_END
 : APPEND_TO_CLASSPATH
 set filename=%~1
 set suffix=%filename:~-4%
-if %suffix% equ .jar set CLASSPATH=%CLASSPATH%;%CL_HOME%\lib\%filename%
+if %suffix% equ .jar set CLASSPATH=%CLASSPATH%;%MESHKEEPER_HOME%\lib\%filename%
 goto :EOF
 
 :CLASSPATH_END
 
 REM setup of defaults
-set OPTS=-Dlog4j.configuration=file:%CL_HOME%\etc\log4j.properties
+set OPTS=-Dlog4j.configuration=file:%MESHKEEPER_HOME%\etc\log4j.properties
 
-cd %CL_HOME%
+cd %MESHKEEPER_HOME%
 
 :END

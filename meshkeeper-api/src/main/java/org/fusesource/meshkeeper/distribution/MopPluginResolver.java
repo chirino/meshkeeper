@@ -35,7 +35,6 @@ class MopPluginResolver implements PluginResolver {
     private static final Log LOG = LogFactory.getLog(PluginClassLoader.class);
     private static MOPRepository MOP_REPO;
     private String defaultPluginVersion = "LATEST";
-    private String baseDir = System.getProperty(PluginResolver.BASE_DIR, System.getProperty("user.home", "."));
 
     public synchronized List<File> resolvePlugin(String ... mavenArtifacts) throws Exception {
 
@@ -90,21 +89,8 @@ class MopPluginResolver implements PluginResolver {
     private synchronized MOPRepository getMopRepository() {
         if (MOP_REPO == null) {
             MOP_REPO = new MOPRepository();
-            MOP_REPO.setOnline(true);
-            MOP_REPO.setLocalRepo(new File(baseDir + File.separator + ".mop"));
-            MOP_REPO.setAlwaysCheckUserLocalRepo(true);
         }
         return MOP_REPO;
-    }
-
-    /**
-     * Sets the base in which the resolver can store resolved plugins.
-     * 
-     * @param dir
-     *            the base in which the resolver can store resolved plugins.
-     */
-    public void setBaseDir(String baseDir) {
-        this.baseDir = baseDir;
     }
 
     /**
