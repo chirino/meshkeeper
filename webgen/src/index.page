@@ -84,4 +84,116 @@ sort_info: 1
           to download artifacts such as jvms, configuration files, and jars from http, ftp, webdav, 
           and file based repositories.
           [1]: {relocatable:/documentation/repository.html}
+.left
+  %h1 Getting Started
+
+.right
+
+  :markdown
+    The easiest way to get started with MeshKeeper is to just colocate the server parts with your client.  See the
+    [deployment topology page][1] for more information on more advanced topologies.
+    [1]: {relocatable:/documentation/deployment-topology.html}
+
+  %img{:src=>"images/diagram-2.png"}
+
+  %p
+    This is one way to boot up that topology in java code:
+  
+  .div{:style=>"font-size:75%;"}
+    :raw
+      {coderay::java}
+      server = MeshKeeperFactory.createControlServer("zk:tcp://localhost:2101", new File("control-data"));
+      meshKeeper = MeshKeeperFactory.createMeshKeeper("zk:tcp://localhost:2101", new File("client-data"));
+      agent = MeshKeeperFactory.createAgent(meshKeeper, new File("launcher-data"));
+      {coderay}   
+
+  :markdown
+    What we recommend you do is to use spring to to create the objects for you.  This gives you the flexibility to switch
+    you application between topologies with a minimal configuration change:
     
+  .div{:style=>"font-size:75%;"}
+    :raw
+      {coderay::xml}
+      <bean id="server" class="org.fusesource.meshkeeper.control.ControlServer"
+        init-method="start" destroy-method="destroy">
+        <property name="directory" value="control-data" />
+        <property name="registryUri" value="zk:tcp://localhost:2101" />
+      </bean>
+
+      <bean id="meshKeeper" class="org.fusesource.meshkeeper.spring.MeshKeeperFactory">
+        <property name="registryUri" value="zk:tcp://localhost:2101" />
+        <property name="directory" value="client-data" />
+      </bean>
+
+      <bean id="agent" class="org.fusesource.meshkeeper.launcher.LaunchAgent"
+        depends-on="meshkeeper" init-method="start" destroy-method="stop">
+        <property name="meshKeeper" ref="meshkeeper" />
+        <property name="directory" value="launcher-data" />
+      </bean>
+      {coderay}   
+
+.left
+  %h1 Launching Remote Processes
+.right
+  :markdown
+    Once you have a `MeshKeeper` object connected to a `ControlServer` with at least one `LaunchAgent` attached, you can 
+    launch remote processes:
+
+    You will first need to inspect the list of available agents and pick one for you to use.
+    
+  .div{:style=>"font-size:90%;"}
+    :raw
+      {coderay::java}
+      HostProperties hosts[] = meshKeeper.launcher().getAvailableAgents()
+      {coderay}   
+
+  :markdown
+    The `HostProperties` lets you know details about the host the agent is running on like the CPU count, host name, and system 
+    properties of the agent.  Each agent has a unique agent id, which will be how you identify which agent you want to launch
+    processes on.
+    
+  .div{:style=>"font-size:90%;"}
+    :raw
+      {coderay::java}
+      String agentId = hosts[0].getAgentId();
+      {coderay}   
+    
+  :markdown
+    The next step will be to create a `LaunchDescription` which is a command line builder for the command that you want to 
+    remotely execute.  Command line arguments can be strings or `Expression` objects which will get evaluated on the Agent.
+    
+  .div{:style=>"font-size:90%;"}
+    :raw
+      {coderay::java}
+      LaunchDescription ld = new LaunchDescription();
+      ld.add("echo");
+      ld.add("hello");
+      ld.add(file("path/to/a/file"));
+      {coderay}   
+
+  :markdown
+    The `file()` method call creates an expression which will convert the file separators to match the agents platform.  So if the 
+    Agent was running on windows the executed command would be:
+    
+        echo hello path\to\a\file
+        
+    We recommend you use a static import of `Expression.*` when building `LaunchDescription` objects.  There are many other [handy expressions][1].
+    [1]: {relocatable:/documentation/expressions.html}
+    
+    Once you have your `LaunchDescription` built, you are ready ask an agent to launch it.
+    
+  .div{:style=>"font-size:90%;"}
+    :raw
+      {coderay::java}
+      MeshProcessListener listener = null;
+      MeshProcess process = meshKeeper.launcher().launchProcess(agentId, ld, listener);
+      {coderay}       
+    
+    In the example above, we launch a the process with a null `MeshProcessListener`, which means we will not be given sent process output.  If you 
+    wanted to capture process stdout, stderr, or be notifed of the process exist code, you should implement the listener.  If you just want to
+    log process output to your console window you can use the `DefaultProcessListener` implementation.
+    
+    The returned `MeshProcess` object can be used to write data to the process stdin, check to see if it's still running or to kill the running process.
+    
+    
+  
