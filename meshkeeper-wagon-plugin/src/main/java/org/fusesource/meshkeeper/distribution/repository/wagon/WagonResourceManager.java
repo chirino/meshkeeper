@@ -92,37 +92,37 @@ public class WagonResourceManager implements RepositoryManager {
     public void locateResource(MeshArtifact resource) throws Exception {
         Wagon w = null;
         long timestamp = 0;
-        if (localWagon.resourceExists(resource.getRepoPath())) {
-            timestamp = new File(localWagon.getRepository().getBasedir() + File.separator + resource.getRepoPath()).lastModified();
+        if (localWagon.resourceExists(resource.getRepositoryPath())) {
+            timestamp = new File(localWagon.getRepository().getBasedir() + File.separator + resource.getRepositoryPath()).lastModified();
         } else {
             synchronized (this) {
-                w = connectedRepos.get(resource.getRepoName());
+                w = connectedRepos.get(resource.getRepositoryId());
                 if (w == null) {
-                    Repository remote = new Repository(resource.getRepoName(), resource.getRepoUrl());
+                    Repository remote = new Repository(resource.getRepositoryId(), resource.getRepositoryUri());
                     w = connectWagon(remote, null);
                 }
             }
 
-            if (w != null && w.resourceExists(resource.getRepoPath())) {
+            if (w != null && w.resourceExists(resource.getRepositoryPath())) {
                 try {
                     if (resource.getType() == MeshArtifact.DIRECTORY) {
-                        String path = resource.getRepoPath();
+                        String path = resource.getRepositoryPath();
                         if (!path.endsWith("/")) {
                             path = path + "/";
                         }
                         downloadDirectory(w, new File(localWagon.getRepository().getBasedir()), path);
                     } else {
-                        w.getIfNewer(resource.getRepoPath(), new File(localWagon.getRepository().getBasedir(), resource.getRepoPath()), timestamp);
+                        w.getIfNewer(resource.getRepositoryPath(), new File(localWagon.getRepository().getBasedir(), resource.getRepositoryPath()), timestamp);
 
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             } else if (timestamp == 0) {
-                throw new Exception("Resource not found: " + resource.getRepoPath());
+                throw new Exception("Resource not found: " + resource.getRepositoryPath());
             }
         }
-        resource.setLocalPath(localWagon.getRepository().getBasedir() + File.separator + resource.getRepoPath());
+        resource.setLocalPath(localWagon.getRepository().getBasedir() + File.separator + resource.getRepositoryPath());
     }
 
     /**
@@ -151,13 +151,13 @@ public class WagonResourceManager implements RepositoryManager {
     private void deployResource(MeshArtifact resource, File f) throws Exception {
         Wagon w = null;
         synchronized (this) {
-            w = connectedRepos.get(resource.getRepoName());
+            w = connectedRepos.get(resource.getRepositoryId());
             if (w == null) {
-                Repository remote = new Repository(resource.getRepoName(), resource.getRepoUrl());
+                Repository remote = new Repository(resource.getRepositoryId(), resource.getRepositoryUri());
                 w = connectWagon(remote, null);
             }
         }
-        w.put(f, resource.getRepoPath());
+        w.put(f, resource.getRepositoryPath());
     }
 
     private Wagon connectWagon(Repository repo, AuthenticationInfo authInfo) throws Exception {

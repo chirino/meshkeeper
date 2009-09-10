@@ -52,7 +52,7 @@ public interface HostProperties extends Serializable {
     /**
      * @return Returns a directory on the host that is free for tests to use.
      */
-    public String getDataDirectory();
+    public String getDirectory();
     
     public Properties getSystemProperties();
 }

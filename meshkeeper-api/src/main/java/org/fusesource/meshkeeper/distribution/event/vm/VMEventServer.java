@@ -189,9 +189,9 @@ public class VMEventServer implements ControlService{
     }
 
     /* (non-Javadoc)
-     * @see org.fusesource.meshkeeper.control.ControlService#setDataDirectory(java.lang.String)
+     * @see org.fusesource.meshkeeper.control.ControlService#setDirectory(java.lang.String)
      */
-    public void setDataDirectory(String directory) {
+    public void setDirectory(String directory) {
         //Noop
     }
 

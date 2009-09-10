@@ -71,12 +71,12 @@ public class Main {
                 } 
             }
 
-            DistributorFactory.setDefaultDataDirectory(dataDir);
+            DistributorFactory.setDefaultDirectory(dataDir);
             DistributorFactory.setDefaultRegistryUri(distributorUri);
             meshKeeper = DistributorFactory.createDefaultDistributor();
             
             LaunchAgent agent = new LaunchAgent();
-            agent.setDataDirectory(new File(dataDir));
+            agent.setDirectory(new File(dataDir));
             meshKeeper.start();
             agent.setMeshKeeper(meshKeeper);
 

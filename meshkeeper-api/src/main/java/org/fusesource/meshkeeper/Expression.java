@@ -68,7 +68,7 @@ abstract public class Expression implements Serializable {
     }
 
     public static FileExpression resource(MeshArtifact resource) {
-        return new FileExpression(append(property(LaunchAgent.LOCAL_REPO_PROP, string("local-repo")), file(File.separator + resource.getRepoPath())));
+        return new FileExpression(append(property(LaunchAgent.LOCAL_REPO_PROP, string("local-repo")), file(File.separator + resource.getRepositoryPath())));
     }
 
     public static class StringExpression extends Expression {

@@ -87,7 +87,7 @@ public class ZooKeeperServer implements ControlService {
         return directory;
     }
 
-    public void setDataDirectory(String directory) {
+    public void setDirectory(String directory) {
         this.directory = directory;
     }
 
@@ -119,5 +119,5 @@ public class ZooKeeperServer implements ControlService {
         return serviceUri;
     }
 
-    
+
 }

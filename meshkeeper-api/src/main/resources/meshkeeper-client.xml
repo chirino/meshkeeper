@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <beans xmlns="http://www.springframework.org/schema/beans"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jms="http://servicemix.apache.org/jms/1.0"
-  xmlns:tns="http://a/b/amq/http"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.springframework.org/schema/beans
   http://www.springframework.org/schema/beans/spring-beans.xsd">
 
@@ -14,14 +13,9 @@
   </bean>
 
   <!--Set up a meshkeeper client-->
-  <bean id="meshkeeper" class="org.fusesource.meshkeeper.MeshKeeper"
-    init-method="start" destroy-method="destroy"
-    factory-bean="distributorFactory" factory-method="create">
+  <bean id="meshkeeper" class="org.fusesource.meshkeeper.spring.MeshKeeperFactory">
+    <property name="registryUri" value="zk:tcp://localhost:2101" />
+    <property name="directory" value="${basedir}" />
   </bean>
 
-  <bean id="distributorFactory"
-    class="org.fusesource.meshkeeper.distribution.DistributorFactory">
-    <property name="registryProviderUri" value="zk:tcp://localhost:2101" />
-    <property name="dataDirectory" value="${basedir}" />
-  </bean>
 </beans>

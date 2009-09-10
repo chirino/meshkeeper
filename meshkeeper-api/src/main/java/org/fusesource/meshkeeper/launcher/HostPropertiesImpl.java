@@ -28,16 +28,16 @@ class HostPropertiesImpl implements HostProperties {
     public int numProcessors;
     public String defaultHostName;
     public String defaultExternalHostName;
-    public String dataDirectory;
+    public String directory;
     private Properties systemProperties;
     private String agentId;
 
-    
+
     void fillIn(LaunchAgent launcher) throws Exception
     {
         this.agentId = launcher.getAgentId();
         this.systemProperties = System.getProperties();
-        this.dataDirectory = launcher.getDataDirectory().getCanonicalPath();
+        this.directory = launcher.getDirectory().getCanonicalPath();
         defaultHostName = java.net.InetAddress.getLocalHost().getHostName();
         defaultExternalHostName = defaultHostName;
         this.numProcessors = Runtime.getRuntime().availableProcessors();
@@ -87,8 +87,8 @@ class HostPropertiesImpl implements HostProperties {
     /**
      * @return Returns a directory on the host that is free for tests to use.
      */
-    public String getDataDirectory() {
-        return dataDirectory;
+    public String getDirectory() {
+        return directory;
     }
 
     public Properties getSystemProperties() {

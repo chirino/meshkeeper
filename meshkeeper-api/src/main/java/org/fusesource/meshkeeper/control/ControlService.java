@@ -22,7 +22,7 @@ public interface ControlService {
 
     public String getServiceUri();
     
-    public void setDataDirectory(String directory);
+    public void setDirectory(String directory);
 
     public void start() throws Exception;
 

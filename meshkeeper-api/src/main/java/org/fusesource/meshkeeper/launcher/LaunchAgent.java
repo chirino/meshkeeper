@@ -21,7 +21,6 @@ import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.classloader.Marshalled;
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
 import org.fusesource.meshkeeper.distribution.PluginResolver;
-import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
 import org.fusesource.meshkeeper.util.internal.FileUtils;
 
 /**
@@ -36,7 +35,7 @@ public class LaunchAgent implements LaunchAgentService {
 
     private String agentId; //The unique identifier for this agent (specified in ini file);
     private boolean started = false;
-    private File dataDirectory = new File(".");
+    private File directory = new File(".");
 
     //ProcessHandlers:
     private final Map<Integer, LocalProcess> processes = new HashMap<Integer, LocalProcess>();
@@ -90,7 +89,7 @@ public class LaunchAgent implements LaunchAgentService {
         ld.add(classpath);
         ld.add(RemoteBootstrap.class.getName());
         ld.add("--cache");
-        ld.add(new File(getDataDirectory(), "bootstrap-cache").getCanonicalPath());
+        ld.add(new File(getDirectory(), "bootstrap-cache").getCanonicalPath());
         ld.add("--distributor");
         ld.add(getMeshKeeper().getDistributorUri());
         ld.add("--runnable");
@@ -202,17 +201,17 @@ public class LaunchAgent implements LaunchAgentService {
     /**
      * Sets the base directory where the agent puts it's data.
      * 
-     * @param dataDirectory
+     * @param directory
      */
-    public void setDataDirectory(File dataDirectory) {
-        this.dataDirectory = dataDirectory;
+    public void setDirectory(File directory) {
+        this.directory = directory;
     }
 
     /**
      * @return Gets the data directory where the launcher stores files.
      */
-    public File getDataDirectory() {
-        return dataDirectory;
+    public File getDirectory() {
+        return directory;
     }
 
     /**
@@ -281,7 +280,7 @@ public class LaunchAgent implements LaunchAgentService {
         }
 
         public void start() {
-            tempDirectory = processLauncher.getDataDirectory() + File.separator + processLauncher.getAgentId() + File.separator + "temp";
+            tempDirectory = processLauncher.getDirectory() + File.separator + processLauncher.getAgentId() + File.separator + "temp";
             thread = new Thread(this, processLauncher.getAgentId() + "-Process Monitor");
             thread.start();
         }

@@ -30,28 +30,30 @@ public class ControlServer {
 
     Log log = LogFactory.getLog(ControlServer.class);
     private static final ControlServiceFactory SERVICE_FACTORY = new ControlServiceFactory();
-    public static final String DEFAULT_JMS_PROVIDER_URI= "activemq:tcp://localhost:4041";
-    public static final String DEFAULT_REGISTRY_PROVIDER_URI = "zk:tcp://localhost:4040";
-    public static final String DEFAULT_RMI_URI = "rmiviajms:" + DEFAULT_JMS_PROVIDER_URI;
-    public static final String DEFAULT_REGISTRY_URI = DEFAULT_REGISTRY_PROVIDER_URI;
-    public static final String DEFAULT_EVENT_URI = "eventviajms:" + DEFAULT_JMS_PROVIDER_URI;
-    public static final String EXPORTER_CONNECT_URI_PATH = "/control/exporter-uri";
-    public static final String EVENT_CONNECT_URI_PATH = "/control/event-uri";
-    public static final String COMMON_REPO_URL_PATH = "/control/common-repo-url";
+
+    public static final String DEFAULT_JMS_URI = "activemq:tcp://localhost:4041";
+    public static final String DEFAULT_REMOTING_URI = "rmiviajms:" + DEFAULT_JMS_URI;
+    public static final String DEFAULT_REGISTRY_URI = "zk:tcp://localhost:4040";
+    public static final String DEFAULT_EVENT_URI = "eventviajms:" + DEFAULT_JMS_URI;
+
+    public static final String REMOTING_URI_PATH = "/control/remoting-uri";
+    public static final String EVENTING_URI_PATH = "/control/eventing-uri";
+    public static final String REPOSITORY_URI_PATH = "/control/repository-uri";
     
     ControlService rmiServer;
     ControlService registryServer;
     RegistryClient registry;
 
-    private String jmsProviderUri = DEFAULT_JMS_PROVIDER_URI;
-    private String registryProviderUri = DEFAULT_REGISTRY_PROVIDER_URI;
-    private String dataDirectory = ".";
-    private String commonRepoUrl;
+    private String jmsUri = DEFAULT_JMS_URI;
+    private String registryUri = DEFAULT_REGISTRY_URI;
+    private String repositoryUri;
+    
+    private String directory = ".";
     private Thread shutdownHook;
 
     public void start() throws Exception {
         
-        dataDirectory = dataDirectory + File.separator + "control-server";
+        directory = directory + File.separator + "control-server";
         shutdownHook = new Thread("MeshKeeper Control Server Shutdown Hook") {
             public void run() {
                 log.debug("Executing Shutdown Hook for " + ControlServer.this);
@@ -65,10 +67,10 @@ public class ControlServer {
 
         
         //Start the jms server:
-        log.info("Creating JMS Server at " + jmsProviderUri);
+        log.info("Creating JMS Server at " + jmsUri);
         try {
-            rmiServer = SERVICE_FACTORY.create(jmsProviderUri);
-            rmiServer.setDataDirectory(dataDirectory + File.separator + "jms");
+            rmiServer = SERVICE_FACTORY.create(jmsUri);
+            rmiServer.setDirectory(directory + File.separator + "jms");
             rmiServer.start();
             log.info("JMS Server started: " + rmiServer.getName());
             
@@ -79,10 +81,10 @@ public class ControlServer {
         }
         
         //Start the registry server:
-        log.info("Creating Registry Server at " + registryProviderUri);
+        log.info("Creating Registry Server at " + registryUri);
         try {
-            registryServer = SERVICE_FACTORY.create(registryProviderUri);
-            registryServer.setDataDirectory(dataDirectory + File.separator + "registry");
+            registryServer = SERVICE_FACTORY.create(registryUri);
+            registryServer.setDirectory(directory + File.separator + "registry");
             registryServer.start();
             log.info("Registry Server started: " + registryServer.getName());
             
@@ -95,24 +97,24 @@ public class ControlServer {
         //Connect to the registry and publish service connection info:
         try {
             
-            registry = new RegistryFactory().create("zk:" + registryProviderUri);
+            registry = new RegistryFactory().create("zk:" + registryUri);
 
             //Register the control services:
             
             //(note that we delete these first since
             //in some instances zoo-keeper doesn't shutdown cleanly and hangs
             //on to file handles so that the registry isn't purged:
-            registry.remove(EXPORTER_CONNECT_URI_PATH, true);
-            registry.addObject(EXPORTER_CONNECT_URI_PATH, false, new String("rmiviajms:" + rmiServer.getServiceUri()));
-            log.info("Registered RMI control server at " + EXPORTER_CONNECT_URI_PATH + "=rmiviajms:" + rmiServer.getServiceUri());
+            registry.remove(REMOTING_URI_PATH, true);
+            registry.addObject(REMOTING_URI_PATH, false, new String("rmiviajms:" + rmiServer.getServiceUri()));
+            log.info("Registered RMI control server at " + REMOTING_URI_PATH + "=rmiviajms:" + rmiServer.getServiceUri());
             
-            registry.remove(EVENT_CONNECT_URI_PATH, true);
-            registry.addObject(EVENT_CONNECT_URI_PATH, false, new String("eventviajms:" + rmiServer.getServiceUri()));
-            log.info("Registered event server at " + EVENT_CONNECT_URI_PATH + "=eventviajms:" + rmiServer.getServiceUri());
+            registry.remove(EVENTING_URI_PATH, true);
+            registry.addObject(EVENTING_URI_PATH, false, new String("eventviajms:" + rmiServer.getServiceUri()));
+            log.info("Registered event server at " + EVENTING_URI_PATH + "=eventviajms:" + rmiServer.getServiceUri());
             
-            registry.remove(COMMON_REPO_URL_PATH, true);
-            registry.addObject(COMMON_REPO_URL_PATH, false, commonRepoUrl);
-            log.info("Registered common repo url at " + COMMON_REPO_URL_PATH + "=" + commonRepoUrl);
+            registry.remove(REPOSITORY_URI_PATH, true);
+            registry.addObject(REPOSITORY_URI_PATH, false, repositoryUri);
+            log.info("Registered common repo url at " + REPOSITORY_URI_PATH + "=" + repositoryUri);
             
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -152,35 +154,35 @@ public class ControlServer {
 
     }
 
-    public void setCommonRepoUrl(String commonRepoUrl) {
-        this.commonRepoUrl = commonRepoUrl;
+    public void setRepositoryUri(String repositoryProvider) {
+        this.repositoryUri = repositoryProvider;
     }
     
-    public String getCommonRepoUrl() {
-        return commonRepoUrl;
+    public String getRepositoryUri() {
+        return repositoryUri;
     }
     
-    public String getJmsProviderUri() {
-        return jmsProviderUri;
+    public String getJmsUri() {
+        return jmsUri;
     }
 
-    public void setJmsProviderUri(String jmsProviderUri) {
-        this.jmsProviderUri = jmsProviderUri;
+    public void setJmsUri(String jmsProvider) {
+        this.jmsUri = jmsProvider;
     }
 
-    public String getRegistryProviderUri() {
-        return registryProviderUri;
+    public String getRegistryUri() {
+        return registryUri;
     }
 
-    public void setRegistryProviderUri(String registryProviderUri) {
-        this.registryProviderUri = registryProviderUri;
+    public void setRegistryUri(String registryProvider) {
+        this.registryUri = registryProvider;
     }
 
-    public void setDataDirectory(String dataDirectory) {
-        this.dataDirectory = dataDirectory;
+    public void setDirectory(String directory) {
+        this.directory = directory;
     }
 
-    public String getDataDirectory() {
-        return dataDirectory;
+    public String getDirectory() {
+        return directory;
     }
 }

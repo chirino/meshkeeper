@@ -30,7 +30,7 @@ import org.fusesource.rmiviajms.internal.JMSRemoteSystem;
 public class MeshKeeperRemoteJMSSystem extends JMSRemoteSystem {
 
     public final static String QUEUE_PREFIX = System.getProperty("org.fusesource.rmiviajms.QUEUE_PREFIX", "rmiviajms.");
-    static String PROVIDER_URI = ControlServer.DEFAULT_RMI_URI;
+    static String PROVIDER_URI = ControlServer.DEFAULT_REMOTING_URI;
     private static JMSProvider provider;
 
     private static URI CONNECT_URI;

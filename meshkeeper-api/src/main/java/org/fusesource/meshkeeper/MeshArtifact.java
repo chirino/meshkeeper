@@ -33,35 +33,35 @@ public interface MeshArtifact extends Serializable {
     /**
      * @return the id
      */
-    public String getRepoPath();
+    public String getRepositoryPath();
 
     /**
      * @param id
      *            the id to set
      */
-    public void setRepoPath(String id);
+    public void setRepositoryPath(String id);
 
     /**
      * @return the repoUrl
      */
-    public String getRepoUrl();
+    public String getRepositoryUri();
 
     /**
      * @param repoUrl
      *            the repoUrl to set
      */
-    public void setRepoUrl(String repoUrl);
+    public void setRepositoryUri(String repoUrl);
 
     /**
      * @return the repoName
      */
-    public String getRepoName();
+    public String getRepositoryId();
 
     /**
      * @param repoName
      *            the repoName to set
      */
-    public void setRepoName(String repoName);
+    public void setRepositoryId(String repoName);
     
     /**
      * @return the type

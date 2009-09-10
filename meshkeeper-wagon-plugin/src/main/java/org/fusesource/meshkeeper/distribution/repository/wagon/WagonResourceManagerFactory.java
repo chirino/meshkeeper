@@ -50,7 +50,7 @@ public class WagonResourceManagerFactory extends RepositoryManagerFactory {
      * 
      * @see
      * org.fusesource.meshkeeper.distribution.resource.ResourceManagerFactory
-     * #setCommonRepoUrl(java.lang.String)
+     * #setRepositoryUri(java.lang.String)
      */
     public void setCommonRepoUrl(String commonRepoUrl) {
         this.commonRepoUrl = commonRepoUrl;

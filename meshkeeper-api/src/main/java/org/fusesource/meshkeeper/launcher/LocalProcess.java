@@ -102,7 +102,7 @@ public class LocalProcess implements MeshProcess {
         if (ld.getWorkingDirectory() != null) {
             workingDirectory = new File(ld.getWorkingDirectory().evaluate());
         } else {
-            workingDirectory = new File(processLauncher.getDataDirectory(), "pid-" + this.pid);
+            workingDirectory = new File(processLauncher.getDirectory(), "pid-" + this.pid);
         }
         workingDirectory.mkdirs();
 

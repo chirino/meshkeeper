@@ -27,16 +27,16 @@ import org.fusesource.meshkeeper.control.ControlService;
 public class ActiveMQControlService implements ControlService {
 
     BrokerService controlBroker;
-    String serviceUrl;
-    String dataDirectory = "activemq-control-service";
+    String serviceUri;
+    String directory = "activemq-control-service";
 
     /*
      * (non-Javadoc)
      *
-     * @see org.fusesource.meshkeeper.control.ControlService#setDataDirectory()
+     * @see org.fusesource.meshkeeper.control.ControlService#setDirectory()
      */
-    public void setDataDirectory(String path) {
-        this.dataDirectory = path;
+    public void setDirectory(String path) {
+        this.directory = path;
     }
 
     /*
@@ -45,10 +45,10 @@ public class ActiveMQControlService implements ControlService {
      * @see org.fusesource.meshkeeper.control.ControlService#start()
      */
     public void start() throws Exception {
-        controlBroker.setDataDirectory(dataDirectory);
+        controlBroker.setDataDirectory(directory);
         controlBroker.start();
         List<TransportConnector> connectors = controlBroker.getTransportConnectors();
-        serviceUrl = "activemq:" + connectors.get(0).getConnectUri();
+        serviceUri = "activemq:" + connectors.get(0).getConnectUri();
     }
 
     /*
@@ -79,7 +79,7 @@ public class ActiveMQControlService implements ControlService {
      * @see org.fusesource.meshkeeper.control.ControlService#getServiceUri()
      */
     public String getServiceUri() {
-        return serviceUrl;
+        return serviceUri;
     }
 
     static ActiveMQControlService create(URI uri) throws Exception {

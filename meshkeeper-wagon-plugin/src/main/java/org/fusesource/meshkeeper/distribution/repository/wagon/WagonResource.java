@@ -24,57 +24,57 @@ public class WagonResource implements MeshArtifact{
     public static final short DIRECTORY = 1;
     
     private short type = DIRECTORY;
-    private String repoPath;
-    private String repoUrl;
-    private String repoName = "common";
+    private String repositoryPath;
+    private String repositoryUri;
+    private String repositoryId = "common";
     
     //Resolved by a resource manager to a local file system
-    //path after the resource is downloaded.
+    //repositoryPath after the resource is downloaded.
     private transient String resolvedPath;
 
     /**
-     * @return the id
+     * @return the path
      */
-    public String getRepoPath() {
-        return repoPath;
+    public String getRepositoryPath() {
+        return repositoryPath;
     }
 
     /**
-     * @param id
+     * @param repositoryPath
      *            the id to set
      */
-    public void setRepoPath(String id) {
-        this.repoPath = id;
+    public void setRepositoryPath(String repositoryPath) {
+        this.repositoryPath = repositoryPath;
     }
 
     /**
      * @return the repoUrl
      */
-    public String getRepoUrl() {
-        return repoUrl;
+    public String getRepositoryUri() {
+        return repositoryUri;
     }
 
     /**
-     * @param repoUrl
+     * @param repositoryUri
      *            the repoUrl to set
      */
-    public void setRepoUrl(String repoUrl) {
-        this.repoUrl = repoUrl;
+    public void setRepositoryUri(String repositoryUri) {
+        this.repositoryUri = repositoryUri;
     }
 
     /**
      * @return the repoName
      */
-    public String getRepoName() {
-        return repoName;
+    public String getRepositoryId() {
+        return repositoryId;
     }
 
     /**
-     * @param repoName
+     * @param repositoryId
      *            the repoName to set
      */
-    public void setRepoName(String repoName) {
-        this.repoName = repoName;
+    public void setRepositoryId(String repositoryId) {
+        this.repositoryId = repositoryId;
     }
     
     /**

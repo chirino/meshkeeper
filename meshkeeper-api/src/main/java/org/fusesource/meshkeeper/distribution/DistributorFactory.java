@@ -39,8 +39,8 @@ public class DistributorFactory {
 
     private Log log = LogFactory.getLog(DistributorFactory.class);
 
-    private static String DEFAULT_RESOURCE_MANAGER_PROVIDER_URI = "wagon";
-    private static String DEFAULT_DATA_DIR = ".";
+    private static String DEFAULT_REPOSITORY_PROVIDER = "wagon";
+    private static String DEFAULT_DIR = ".";
     private static String DEFAULT_REGISTRY_URI = ControlServer.DEFAULT_REGISTRY_URI;
     private static final ScheduledExecutorService EXECUTOR;
     private static final AtomicInteger EXECUTOR_COUNT = new AtomicInteger(0);
@@ -50,7 +50,7 @@ public class DistributorFactory {
             repoDir = System.getProperty("user.home");
         } catch (SecurityException se) {
         }
-        DEFAULT_DATA_DIR = repoDir;
+        DEFAULT_DIR = repoDir;
 
         EXECUTOR = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
 
@@ -60,12 +60,12 @@ public class DistributorFactory {
         });
     }
 
-    private String resourceManagerProvider = DEFAULT_RESOURCE_MANAGER_PROVIDER_URI;
-    private String registryProviderUri = DEFAULT_REGISTRY_URI;
-    private String dataDirectory = DEFAULT_DATA_DIR;
-    private String eventProviderUri;
-    private String rmiProviderUri;
-    private String commonRepoUrl;
+    private String repositoryProvider = DEFAULT_REPOSITORY_PROVIDER;
+    private String registryUri = DEFAULT_REGISTRY_URI;
+    private String directory = DEFAULT_DIR;
+    private String eventingUri;
+    private String remotingUri;
+    private String repositoryUri;
 
     /**
      * This convenience method creates a Distributor by connecting to a control
@@ -78,8 +78,8 @@ public class DistributorFactory {
         return df.create();
     }
 
-    public static void setDefaultDataDirectory(String dataDirectory) {
-        DEFAULT_DATA_DIR = dataDirectory;
+    public static void setDefaultDirectory(String directory) {
+        DEFAULT_DIR = directory;
     }
 
     public static void setDefaultRegistryUri(String defaultRegistryUri) {
@@ -93,41 +93,41 @@ public class DistributorFactory {
     public DefaultDistributor create() throws Exception {
 
         //Create Registry:
-        RegistryClient registry = new RegistryFactory().create(registryProviderUri);
+        RegistryClient registry = new RegistryFactory().create(registryUri);
         registry.start();
 
         //Create Exporter:
-        if (rmiProviderUri == null) {
-            rmiProviderUri = registry.getObject(ControlServer.EXPORTER_CONNECT_URI_PATH);
-            if (rmiProviderUri == null) {
-                rmiProviderUri = ControlServer.DEFAULT_RMI_URI;
+        if (remotingUri == null) {
+            remotingUri = registry.getObject(ControlServer.REMOTING_URI_PATH);
+            if (remotingUri == null) {
+                remotingUri = ControlServer.DEFAULT_REMOTING_URI;
             }
         }
-        RemotingClient exporter = new RemotingFactory().create(rmiProviderUri);
+        RemotingClient exporter = new RemotingFactory().create(remotingUri);
 
         //Create Event Client:
-        if (eventProviderUri == null) {
-            eventProviderUri = registry.getObject(ControlServer.EVENT_CONNECT_URI_PATH);
-            if (eventProviderUri == null) {
-                eventProviderUri = ControlServer.DEFAULT_EVENT_URI;
+        if (eventingUri == null) {
+            eventingUri = registry.getObject(ControlServer.EVENTING_URI_PATH);
+            if (eventingUri == null) {
+                eventingUri = ControlServer.DEFAULT_EVENT_URI;
             }
         }
-        EventClient eventClient = new EventClientFactory().create(eventProviderUri);
+        EventClient eventClient = new EventClientFactory().create(eventingUri);
 
         //Create ResourceManager:
-        RepositoryManager resourceManager = new RepositoryManagerFactory().create(resourceManagerProvider);
-        String commonRepoUrl = registry.getObject(ControlServer.COMMON_REPO_URL_PATH);
+        RepositoryManager resourceManager = new RepositoryManagerFactory().create(repositoryProvider);
+        String commonRepoUrl = registry.getObject(ControlServer.REPOSITORY_URI_PATH);
         if (commonRepoUrl != null) {
             resourceManager.setCommonRepoUrl(commonRepoUrl, null);
         }
-        resourceManager.setLocalRepoDir(dataDirectory + File.separator + "local-repo");
+        resourceManager.setLocalRepoDir(directory + File.separator + "local-repo");
 
         DefaultDistributor ret = new DefaultDistributor();
         ret.setRemotingClient(exporter);
         ret.setRegistry(registry);
         ret.setEventClient(eventClient);
         ret.setResourceManager(resourceManager);
-        ret.setRegistryUri(registryProviderUri);
+        ret.setRegistryUri(registryUri);
 
         ret.start();
         if (log.isTraceEnabled()) {
@@ -137,51 +137,51 @@ public class DistributorFactory {
 
     }
 
-    public String getResourceManagerProvider() {
-        return resourceManagerProvider;
+    public String getRepositoryProvider() {
+        return repositoryProvider;
     }
 
-    public void setResourceManagerProvider(String resourceManagerProvider) {
-        this.resourceManagerProvider = resourceManagerProvider;
+    public void setRepositoryProvider(String repositoryProvider) {
+        this.repositoryProvider = repositoryProvider;
     }
 
-    public String getRegistryProviderUri() {
-        return registryProviderUri;
+    public String getRegistryUri() {
+        return registryUri;
     }
 
-    public void setRegistryProviderUri(String registryProviderUri) {
-        this.registryProviderUri = registryProviderUri;
+    public void setRegistryUri(String registryUri) {
+        this.registryUri = registryUri;
     }
 
-    public String getEventProviderUri() {
-        return eventProviderUri;
+    public String getEventingUri() {
+        return eventingUri;
     }
 
-    public void setEventProviderUri(String eventProviderUri) {
-        this.eventProviderUri = eventProviderUri;
+    public void setEventingUri(String eventingUri) {
+        this.eventingUri = eventingUri;
     }
 
-    public String getRmiProviderUri() {
-        return rmiProviderUri;
+    public String getRemotingUri() {
+        return remotingUri;
     }
 
-    public void setRmiProviderUri(String rmiProviderUri) {
-        this.rmiProviderUri = rmiProviderUri;
+    public void setRemotingUri(String remotingUri) {
+        this.remotingUri = remotingUri;
     }
 
-    public String getCommonRepoUrl() {
-        return commonRepoUrl;
+    public String getRepositoryUri() {
+        return repositoryUri;
     }
 
-    public void setCommonRepoUrl(String commonRepoUrl) {
-        this.commonRepoUrl = commonRepoUrl;
+    public void setRepositoryUri(String repositoryUri) {
+        this.repositoryUri = repositoryUri;
     }
 
-    public String getDataDirectory() {
-        return dataDirectory;
+    public String getDirectory() {
+        return directory;
     }
 
-    public void setDataDirectory(String dataDirectory) {
-        this.dataDirectory = dataDirectory;
+    public void setDirectory(String directory) {
+        this.directory = directory;
     }
 }

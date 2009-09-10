@@ -82,7 +82,7 @@ class ZooKeeperRegistry implements RegistryClient {
         // Wait for the client to establish a connection.
         if (connectTimeout > 0) {
             if (!connected.await(connectTimeout, TimeUnit.MILLISECONDS)) {
-                throw new IOException("Failed to connect to ZooKeeper within " + connectTimeout + " milliseconds.");
+                throw new IOException("Failed to connect to ZooKeeper at "+connectUrl+" within " + connectTimeout + " milliseconds.");
             }
         } else {
             connected.await();

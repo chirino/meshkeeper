@@ -25,10 +25,10 @@ public class Main {
         System.out.println("Usage:");
         System.out.println("Args:");
         System.out.println(" -(h)elp -- this message");
-        System.out.println(" [-rmi <rmi url>] -- specifies listening address for rmi.");
-        System.out.println(" [-registry <registry url>] -- specifies listening address for the regsitry.");
-        System.out.println(" [-dataDir <directory>] -- specifies data directory used by control server.");
-        System.out.println(" [-commonRepoUrl <url>] -- specifies a url to a centralized common repository.");
+        System.out.println(" [-jms <uri>] -- specifies listening address for jms.");
+        System.out.println(" [-registry <uri>] -- specifies listening address for the regsitry.");
+        System.out.println(" [-directory <directory>] -- specifies data directory used by control server.");
+        System.out.println(" [-repository <uri>] -- specifies a uri to a centralized common repository.");
     }
 
     /*
@@ -44,10 +44,10 @@ public class Main {
             return;
         }
 
-        String rmi = ControlServer.DEFAULT_JMS_PROVIDER_URI;
-        String registry = ControlServer.DEFAULT_REGISTRY_PROVIDER_URI;
-        String commonRepoUrl = null;
-        String dataDir = ".";
+        String jms = ControlServer.DEFAULT_JMS_URI;
+        String registry = "zk:tcp://localhost:4040";
+        String repository = null;
+        String directory = ".";
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
         try {
@@ -56,35 +56,35 @@ public class Main {
                 if (arg.equals("-help") || arg.equals("-h")) {
                     showUsage();
                     return;
-                } else if (arg.equals("-rmi")) {
+                } else if (arg.equals("-jms")) {
                     if (alist.isEmpty()) {
-                        throw new Exception("Expected uri after -rmi");
+                        throw new Exception("Expected uri after -jms");
                     }
-                    rmi = alist.removeFirst();
+                    jms = alist.removeFirst();
 
-                }  else if (arg.equals("-dataDir")) {
+                }  else if (arg.equals("-directory")) {
                     if (alist.isEmpty()) {
-                        throw new Exception("Directory expected after -dataDir");
+                        throw new Exception("Directory expected after -directory");
                     }
-                    dataDir = alist.removeFirst();
+                    directory = alist.removeFirst();
                 } else if (arg.equals("-registry")) {
                     if (alist.isEmpty()) {
                         throw new Exception("Expected uri after -registry");
                     }
                     registry = alist.removeFirst();
-                } else if (arg.equals("-commonRepoUrl")) {
+                } else if (arg.equals("-repository")) {
                     if (alist.isEmpty()) {
-                        throw new Exception("Expected url after -commonRepoUrl");
+                        throw new Exception("Expected url after -repository");
                     }
-                    commonRepoUrl = alist.removeFirst();
+                    repository = alist.removeFirst();
                 }
             }
 
             ControlServer server = new ControlServer();
-            server.setJmsProviderUri(rmi);
-            server.setCommonRepoUrl(commonRepoUrl);
-            server.setDataDirectory(dataDir);
-            server.setRegistryProviderUri(registry);
+            server.setDirectory(directory);
+            server.setJmsUri(jms);
+            server.setRepositoryUri(repository);
+            server.setRegistryUri(registry);
             server.start();
         } catch (Exception e) {
             e.printStackTrace();
