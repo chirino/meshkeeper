@@ -76,14 +76,25 @@
       <directory>src/main/distribution/windows-binary
       </directory>
       <outputDirectory>/</outputDirectory>
-    </fileSet>
-
-    <!-- Copy over jar files -->
-    <fileSet>
-      <directory>../meshkeeper-all/target/dependencies</directory>
-      <outputDirectory>/lib/</outputDirectory>
-    </fileSet>
-
+    </fileSet>  
   </fileSets>
-
+  
+  <!-- Copy over jar files -->
+  <dependencySets>
+    <dependencySet> 
+      <outputDirectory>/lib/</outputDirectory>
+      <unpack>false</unpack>
+      <includes>
+        <include>${pom.groupId}:meshkeeper-api</include>
+        <include>${pom.groupId}:meshkeeper-zk-plugin</include>
+        <include>${pom.groupId}:meshkeeper-jms-plugin</include>
+        <include>${pom.groupId}:meshkeeper-rmiviajms-plugin</include>
+        <include>${pom.groupId}:meshkeeper-eventviajms-plugin</include>
+        <include>${pom.groupId}:meshkeeper-wagon-plugin</include>
+        <include>${pom.groupId}:meshkeeper-activemq-plugin</include>
+      </includes>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+    </dependencySet>
+  </dependencySets>
+  
 </assembly>

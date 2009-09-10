@@ -26,45 +26,119 @@
 
   <name>MeshKeeper :: Assembly</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.fusesource.mop</groupId>
+      <artifactId>mop-core</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+      
+    <!-- <dependency>
+      <groupId>org.fusesource.meshkeeper</groupId>
+      <artifactId>meshkeeper-api</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.meshkeeper</groupId>
+      <artifactId>meshkeeper-rmiviajms-plugin</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.meshkeeper</groupId>
+      <artifactId>meshkeeper-wagon-plugin</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.meshkeeper</groupId>
+      <artifactId>meshkeeper-eventviajms-plugin</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.meshkeeper</groupId>
+      <artifactId>meshkeeper-zk-plugin</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.meshkeeper</groupId>
+      <artifactId>meshkeeper-activemq-plugin</artifactId>
+      <scope>compile</scope>
+    </dependency> -->
+  </dependencies>
+
   <build>
     <defaultGoal>install</defaultGoal>
     <plugins>
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-assembly-plugin</artifactId>
-      <version>2.2-beta-3</version>
-      <executions>
-      <execution>
-          <id>unix-bin</id>
-          <phase>package</phase>
-          <goals>
-            <goal>single</goal>
-          </goals>
-          <configuration>
-            <descriptors>
-              <descriptor>assembly/src/main/descriptors/unix-bin.xml</descriptor>
-            </descriptors>
-            <finalName>meshkeeper-${pom.version}</finalName>
-            <tarLongFileMode>gnu</tarLongFileMode>
-          </configuration>
-        </execution>
-        <execution>
-          <id>windows-bin</id>
-          <phase>package</phase>
-          <goals>
-            <goal>single</goal>
-          </goals>
-          <configuration>
-            <descriptors>
-              <descriptor>assembly/src/main/descriptors/windows-bin.xml</descriptor>
-            </descriptors>
-            <finalName>meshkeeper-${pom.version}</finalName>
-            <appendAssemblyId>true</appendAssemblyId>
-            <assemblyId />
-          </configuration>
-        </execution>
-      </executions>
-    </plugin>
+      
+      <!-- Create a mop repository that we can include in the distribution -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <argument>-Dmop.base=${basedir}/target/mop</argument>
+                <argument>-classpath</argument>
+                <classpath>
+                  <dependency>org.fusesource.mop:mop-core</dependency>
+                </classpath>
+                <argument>org.fusesource.mop.MOP</argument>
+                <argument>classpath</argument>
+                <argument>org.fusesource.meshkeeper:meshkeeper-api:${project.version}</argument>
+                <argument>+org.fusesource.meshkeeper:meshkeeper-rmiviajms-plugin:${project.version}</argument>
+                <argument>+org.fusesource.meshkeeper:meshkeeper-wagon-plugin:${project.version}</argument>
+                <argument>+org.fusesource.meshkeeper:meshkeeper-eventviajms-plugin:${project.version}</argument>
+                <argument>+org.fusesource.meshkeeper:meshkeeper-zk-plugin:${project.version}</argument>
+                <argument>+org.fusesource.meshkeeper:meshkeeper-activemq-plugin:${project.version}</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.2-beta-4</version>
+        <executions>
+          <execution>
+            <id>unix-bin</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>${basedir}/src/main/descriptors/unix-bin.xml</descriptor>
+              </descriptors>
+              <finalName>meshkeeper-${pom.version}</finalName>
+              <tarLongFileMode>gnu</tarLongFileMode>
+            </configuration>
+          </execution>
+          <execution>
+            <id>windows-bin</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>${basedir}/src/main/descriptors/windows-bin.xml</descriptor>
+              </descriptors>
+              <finalName>meshkeeper-${pom.version}</finalName>
+              <appendAssemblyId>true</appendAssemblyId>
+              <assemblyId />
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

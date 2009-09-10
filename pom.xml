@@ -48,7 +48,6 @@
     <module>meshkeeper-wagon-plugin</module>
     <module>meshkeeper-eventviajms-plugin</module>
     <module>meshkeeper-activemq-plugin</module>
-    <module>meshkeeper-all</module>
     <module>assembly</module>
     <module>meshkeeper-packaging-test</module>
   </modules>
@@ -140,7 +139,42 @@
       <version>1.1.1</version>
     </dependency>
   </dependencies>
-
+  
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.fusesource.meshkeeper</groupId>
+        <artifactId>meshkeeper-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.fusesource.meshkeeper</groupId>
+        <artifactId>meshkeeper-rmiviajms-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.fusesource.meshkeeper</groupId>
+        <artifactId>meshkeeper-wagon-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.fusesource.meshkeeper</groupId>
+        <artifactId>meshkeeper-eventviajms-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.fusesource.meshkeeper</groupId>
+        <artifactId>meshkeeper-zk-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.fusesource.meshkeeper</groupId>
+        <artifactId>meshkeeper-activemq-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+    
   <build>
     <defaultGoal>install</defaultGoal>
     <plugins>
