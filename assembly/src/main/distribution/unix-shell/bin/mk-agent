@@ -27,13 +27,6 @@ die() {
     exit 1
 }
 
-maybeSource() {
-    file="$1"
-    if [ -f "$file" ] ; then
-        . $file
-    fi
-}
-
 detectOS() {
     # OS specific support (must be 'true' or 'false').
     cygwin=false;
