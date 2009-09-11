@@ -13,7 +13,7 @@ import org.apache.zookeeper.server.NIOServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.fusesource.meshkeeper.control.ControlService;
-import org.fusesource.meshkeeper.util.internal.FileUtils;
+import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -40,7 +40,7 @@ public class ZooKeeperServer implements ControlService {
         File file = new File(directory);
         if (purge && file.exists()) {
             try {
-                FileUtils.recursiveDelete(file.getCanonicalPath());
+                FileSupport.recursiveDelete(file.getCanonicalPath());
             } catch (Exception e) {
                 log.error("Error purging store", e);
             }

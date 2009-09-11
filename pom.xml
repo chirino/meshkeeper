@@ -43,6 +43,7 @@
   </licenses>
   <modules>
     <module>meshkeeper-api</module>
+    <module>meshkeeper-mop-resolver</module>
     <module>meshkeeper-jms-plugin</module>
     <module>meshkeeper-rmiviajms-plugin</module>
     <module>meshkeeper-zk-plugin</module>
@@ -102,50 +103,17 @@
       <url>dav:http://fusesource.com/forge/dav/meshkeeper/maven/${project.version}</url>
     </site>
   </distributionManagement>
-
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.15</version>
-      <scope>runtime</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>javax.jms</groupId>
-          <artifactId>jms</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.sun.jmx</groupId>
-          <artifactId>jmxri</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.sun.jdmk</groupId>
-          <artifactId>jmxtools</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>javax.mail</groupId>
-          <artifactId>mail</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.1.1</version>
-    </dependency>
-  </dependencies>
   
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.fusesource.meshkeeper</groupId>
         <artifactId>meshkeeper-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.fusesource.meshkeeper</groupId>
+        <artifactId>meshkeeper-mop-resolver</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -173,6 +141,43 @@
         <artifactId>meshkeeper-activemq-plugin</artifactId>
         <version>${project.version}</version>
       </dependency>
+      
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.15</version>
+        <scope>runtime</scope>
+        
+        <!-- log4j sucks.. it does not properly mark these dependencies 
+             as optional or provided -->
+        <exclusions>
+          <exclusion>
+            <groupId>com.sun.jdmk</groupId>
+            <artifactId>jmxtools</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jmx</groupId>
+            <artifactId>jmxri</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.jms</groupId>
+            <artifactId>jms</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+          
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>3.8.1</version>
+        <scope>test</scope>
+      </dependency>
+          
     </dependencies>
   </dependencyManagement>
     

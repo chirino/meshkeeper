@@ -7,22 +7,25 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.classloader.basic;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import static org.fusesource.meshkeeper.util.internal.FileSupport.jar;
+import static org.fusesource.meshkeeper.util.internal.FileSupport.read;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.Serializable;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.zip.ZipOutputStream;
-import java.util.zip.ZipEntry;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author chirino
@@ -204,66 +207,5 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         elements.add(exportedFile);
     }
 
-    private static File jar(File source) throws IOException {
-        File tempJar = File.createTempFile("temp", ".jar");
-        ZipOutputStream os = new ZipOutputStream(new FileOutputStream(tempJar));
-        os.setMethod(ZipOutputStream.DEFLATED);
-        os.setLevel(5);
-        recusiveAdd(os, source, null);
-        os.close();
-        return tempJar;
-    }
-    
-    private static void recusiveAdd(ZipOutputStream os, File source, String jarpath) throws IOException {
-        String prefix = "";
-        if (jarpath != null) {
-            ZipEntry entry = new ZipEntry(jarpath);
-            entry.setTime(source.lastModified() + ROUNDUP_MILLIS);
-            os.putNextEntry(entry);
-            prefix = jarpath + "/";
-        }
 
-        if (source.isDirectory()) {
-            for (File file : source.listFiles()) {
-                recusiveAdd(os, file, prefix + file.getName());
-            }
-        } else {
-            FileInputStream is = new FileInputStream(source);
-            try {
-                copy(is, os);
-            } finally {
-                try {
-                    is.close();
-                } catch (Throwable e) {
-                }
-            }
-        }
-    }
-
-    private byte[] read(File file, long pos, int length) throws IOException {
-        RandomAccessFile is = new RandomAccessFile(file, "r");
-        try {
-            long remaining = is.length()-pos;
-            if( remaining < 0) {
-                remaining = 0;
-            }
-            byte rc[] = new byte[(int) Math.min(remaining, length)];
-            if( rc.length == 0 ) {
-                return rc;
-            }
-            is.seek(pos);
-            is.readFully(rc);
-            return rc;
-        } finally {
-            is.close();
-        }
-    }
-
-    private static void copy(InputStream is, OutputStream os) throws IOException {
-        byte buffer[] = new byte[1024 * 4];
-        int c;
-        while ((c = is.read(buffer)) > 0) {
-            os.write(buffer, 0, c);
-        }
-    }
 }

@@ -21,7 +21,7 @@ import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.classloader.Marshalled;
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
 import org.fusesource.meshkeeper.distribution.PluginResolver;
-import org.fusesource.meshkeeper.util.internal.FileUtils;
+import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 /**
  * @author chirino
@@ -79,7 +79,7 @@ public class LaunchAgent implements LaunchAgentService {
         path = meshKeeper.registry().addRegistryObject(path, true, runnable);
 
         // Figure out the boostrap classpath using mop.
-        PluginResolver resolver = PluginClassLoader.getPluginResolver();
+        PluginResolver resolver = PluginClassLoader.getDefaultPluginLoader().getPluginResolver();
         String artifactId = PluginResolver.PROJECT_GROUP_ID + ":meshkeeper-api:" + PluginClassLoader.getModuleVersion();
         String classpath = resolver.resolveClassPath(artifactId);
 
@@ -324,7 +324,7 @@ public class LaunchAgent implements LaunchAgentService {
                 log.debug("*************Cleaning up temporary parts*************");
                 for (int i = 0; subDirs != null && i < subDirs.length; i++) {
                     try {
-                        FileUtils.recursiveDelete(tempDir + File.separator + subDirs[i]);
+                        FileSupport.recursiveDelete(tempDir + File.separator + subDirs[i]);
                     } catch (Exception e) {
                         log.warn("ERROR cleaning up temporary parts:", e);
                     }

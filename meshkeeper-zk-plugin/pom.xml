@@ -34,21 +34,32 @@
   </repositories>
 
   <dependencies>
+    
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
+      <groupId>org.fusesource.meshkeeper</groupId>
+      <artifactId>meshkeeper-api</artifactId>
     </dependency>
+
     <dependency>
       <groupId>org.apache.hadoop.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
       <version>3.0.0</version>
     </dependency>
     <dependency>
-      <groupId>org.fusesource.meshkeeper</groupId>
-      <artifactId>meshkeeper-api</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <scope>compile</scope>
     </dependency>
+
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    
   </dependencies>
 </project>

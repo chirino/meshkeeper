@@ -24,7 +24,7 @@ import org.apache.maven.wagon.shared.http.HttpMethodConfiguration;
 import org.fusesource.meshkeeper.MeshArtifact;
 import org.fusesource.meshkeeper.distribution.repository.AuthenticationInfo;
 import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
-import org.fusesource.meshkeeper.util.internal.FileUtils;
+import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 /**
  * RepositoryManager
@@ -210,7 +210,7 @@ public class WagonResourceManager implements RepositoryManager {
     }
 
     public void purgeLocalRepo() throws IOException {
-        FileUtils.recursiveDelete(localWagon.getRepository().getBasedir());
+        FileSupport.recursiveDelete(localWagon.getRepository().getBasedir());
     }
 
     /**

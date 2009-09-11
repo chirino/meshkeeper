@@ -10,7 +10,7 @@ package org.fusesource.meshkeeper.distribution;
 import java.io.File;
 import java.util.List;
 
-/** 
+/**
  * PluginResolver
  * <p>
  * Description:
@@ -24,27 +24,27 @@ public interface PluginResolver {
     public static final String KEY_PLUGIN_VERSION_PREFIX = "meshkeeper.plugin.version.";
     // Sets the default plugin version.. for example: meshkeeper.plugin.version.default=1.0
     public static final String KEY_DEFAULT_PLUGINS_VERSION = KEY_PLUGIN_VERSION_PREFIX +"default";
-    
-    
+
+
     static final String PROJECT_GROUP_ID = "org.fusesource.meshkeeper";
     static final String PROJECT_ARTIFACT_ID = "meshkeeper-api";
-    
+
     /**
      * Finds plugin classpath resources, and returns them as URLs.
-     * 
+     *
      * @param artifactId The maven artifact id for the plugin
      * @return The artifactId's resolved resources.
      */
     public List<File> resolvePlugin(String ... artifactId) throws Exception;
-    
+
     /**
      * Resolves a classpath for the given maven artifact id.
      * @param artifact The maven artifact id.
-     * @return A locally resolved classpath. 
+     * @return A locally resolved classpath.
      * @throws Exception If there is an error resolving the classpath
      */
     public String resolveClassPath(String artifact) throws Exception;
-    
+
     /**
      * Sets the default version to use when searching for artifacts (in the case that one isn't supplied)
      * @param defaultVersion The default version to use when searching for artifacts

@@ -39,6 +39,8 @@ import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
 import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
+import org.fusesource.meshkeeper.util.internal.IOSupport;
+import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 /**
  * PluginClassLoader
@@ -326,204 +328,28 @@ public class PluginClassLoader extends URLClassLoader {
         return DEFAULT_VERSION;
     }
 
-    public static synchronized PluginResolver getPluginResolver() {
-
+    public synchronized PluginResolver getPluginResolver() {
         if (PLUGIN_RESOLVER == null) {
-            PLUGIN_RESOLVER = new MopPluginResolver();
-            PLUGIN_RESOLVER.setDefaultPluginVersion(getDefaultPluginVersion());
-            
-//            String[] defaultplugins = { "jms", "activemq", "zk", "wagon", "rmiviajms", "eventviajms" };
-//            String[] defaultArtifactIds = new String[defaultplugins.length];
-//
-//            int i = 0;
-//            for (String plugin : defaultplugins) {
-//                String version = System.getProperty(PluginResolver.KEY_PLUGIN_VERSION_PREFIX + plugin, getDefaultPluginVersion());
-//                defaultArtifactIds[i] = PluginResolver.PROJECT_GROUP_ID + ":meshkeeper-" + plugin + "-plugin:" + version;
-//                i++;
-//            }
-//
-//            synchronized (RESOLVED_PLUGINS) {
-//
-//                LOG.info("Resolving default plugins");
-//                List<File> resolved;
-//                try {
-//                    resolved = PLUGIN_RESOLVER.resolvePlugin(defaultArtifactIds);
-//                    for (String plugin : defaultArtifactIds) {
-//                        RESOLVED_PLUGINS.put(plugin, resolved);
-//                    }
-//                    LOG.info("Resolved default plugins");
-//                } catch (Exception e) {
-//                    LOG.warn("Error resolving default plugins");
-//                }
-//            }
-
-        }
-
-
-        //        if (PLUGIN_RESOLVER == null) {
-        //            ClassLoader loader = PluginClassLoader.DEFAULT_PLUGIN_CLASSLOADER;
-        //            try {
-        //                URL url = PluginClassLoader.class.getClassLoader().getResource("mop-core-1.0-SNAPSHOT.jar");
-        //                if (url != null) {
-        //
-        //                    if (url.getProtocol().equals("jar")) {
-        //                        InputStream jaris = PluginClassLoader.class.getClassLoader().getResourceAsStream("mop-core-1.0-SNAPSHOT.jar");
-        //                        loader = new JarClassLoader(jaris, ClassLoader.getSystemClassLoader());
-        //                    } else {
-        //                        loader = new URLClassLoader(new URL[] { url });
-        //                    }
-        //                } else {
-        //                    LOG.warn("mop-core-1.0-SNAPSHOT.jar was not found on the classpath");
-        //                }
-        //
-        //                PLUGIN_RESOLVER = (PluginResolver) loader.loadClass("org.fusesource.meshkeeper.distribution.MopPluginResolver").newInstance();
-        //
-        //            } catch (Throwable thrown) {
-        //                LOG.error("Error loading plugin resolver:" + thrown.getMessage(), thrown);
-        //                throw new RuntimeException(thrown);
-        //            }
-        //
-        //        }
-        return PLUGIN_RESOLVER;
-    }
-
-    private static class JarClassLoader extends ClassLoader {
-        HashMap<String, byte[]> classBytes = new HashMap<String, byte[]>();
-        private final ReferenceQueue<URL> cleanupQueue = new ReferenceQueue<URL>();
-        private final AtomicInteger cleanupUrls = new AtomicInteger();
-
-        JarClassLoader(InputStream jaris, ClassLoader parent) throws IOException {
-            super(parent);
-            JarInputStream jis = new JarInputStream(jaris);
-            JarEntry je = jis.getNextJarEntry();
-            while (je != null) {
-
-                if (!je.isDirectory()) {
-                    String name = je.getName();
-                    if (je.getName().endsWith(".class")) {
-                        name = name.substring(0, name.length() - 6);
-                        name = name.replaceAll("\\/", ".");
-                    }
-
-                    byte[] bytes = new byte[] {};
-                    if (je.getSize() > 0) {
-                        bytes = new byte[(int) je.getSize()];
-                        int i = 0;
-                        while (i < bytes.length) {
-                            int read = jis.read(bytes, i, bytes.length - 1);
-                            if (read > 0) {
-                                i += read;
-                            }
-                        }
-                    }
-                    //Unknown length;
-                    else if (je.getSize() < 0) {
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
-                        while (jis.available() > 0) {
-                            byte[] chunk = new byte[1024];
-                            int read = jis.read(chunk);
-                            if (read > 0) {
-                                baos.write(chunk, 0, read);
-                            }
-                        }
-                        bytes = baos.toByteArray();
-                    }
-
-                    //LOG.debug("Read jar entry for " + name + " size " + bytes.length);
-
-                    classBytes.put(name, bytes);
-                }
-                jis.closeEntry();
-                je = jis.getNextJarEntry();
-            }
-
-            jis.close();
-        }
-
-        protected Class<?> findClass(String name) throws ClassNotFoundException {
-
-            LOG.debug("Looking for class " + name);
-            byte[] b = classBytes.get(name);
-            if (b == null) {
-                throw new ClassNotFoundException(name);
-            }
-            LOG.debug("Defining class " + name);
-            return defineClass(name, b, 0, b.length);
-        }
-
-        protected URL findResource(String name) {
-
-            byte[] b = classBytes.get(name);
-            if (b == null) {
-                return null;
-            }
+            ClassLoader loader = PluginClassLoader.DEFAULT_PLUGIN_CLASSLOADER;
             try {
-                File f = File.createTempFile(UUID.randomUUID().toString(), name);
-
-                f.deleteOnExit();
-                FileOutputStream fos = new FileOutputStream(f);
-                fos.write(b);
-                fos.flush();
-                fos.close();
-
-                URL ret = f.toURL();
-                final String cleanupPath = f.getCanonicalPath();
-                new PhantomReference<URL>(ret, cleanupQueue) {
-                    String toDelete = cleanupPath;
-
-                    public void clear() {
-                        super.clear();
-                        try {
-                            LOG.info("DELETING: " + toDelete);
-                            new File(toDelete).delete();
-                        } catch (Throwable thrown) {
-                        }
-                    }
-                };
-
-                if (cleanupUrls.incrementAndGet() == 1) {
-                    scheduleCleanup();
+                // Extract the jar to temp file...
+                InputStream is = PluginClassLoader.class.getClassLoader().getResourceAsStream("meshkeeper-mop-resolver.jar");
+                File tempJar = File.createTempFile("meshkeeper-mop-resolver", ".jar");
+                tempJar.deleteOnExit();
+                try {
+                    FileSupport.write(is, tempJar);
+                } finally {
+                    IOSupport.close(is);
                 }
-
-                return ret;
-
-            } catch (IOException ioe) {
-                LOG.warn("Error creating resource temp file for" + name, ioe);
-                return null;
+                addUrl(tempJar.toURL());
+                PLUGIN_RESOLVER = (PluginResolver) loader.loadClass("org.fusesource.meshkeeper.distribution.MopPluginResolver").newInstance();
+            } catch (Throwable thrown) {
+                LOG.error("Error loading plugin resolver:" + thrown.getMessage(), thrown);
+                throw new RuntimeException(thrown);
             }
-
+            PLUGIN_RESOLVER.setDefaultPluginVersion(getDefaultPluginVersion());
         }
-
-        public void cleanupTempFiles() {
-            Reference<?> ref = cleanupQueue.poll();
-            while (ref != null) {
-                ref.clear();
-                cleanupUrls.decrementAndGet();
-            }
-
-            if (cleanupUrls.get() > 0) {
-                scheduleCleanup();
-            }
-        }
-
-        private void scheduleCleanup() {
-            DistributorFactory.getExecutorService().schedule(new Runnable() {
-                public void run() {
-                    cleanupTempFiles();
-                }
-            }, 1, TimeUnit.SECONDS);
-        }
-
-        public Enumeration<URL> findResources(String name) {
-            URL u = findResource(name);
-            if (u == null) {
-                return null;
-            }
-            Vector<URL> r = new Vector<URL>(1);
-            r.add(u);
-            return r.elements();
-        }
-
+        return PLUGIN_RESOLVER;
     }
 
 }
