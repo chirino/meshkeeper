@@ -7,8 +7,12 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.util.internal;
 
-import java.io.File;
-import java.io.IOException;
+import static org.fusesource.meshkeeper.util.internal.IOSupport.close;
+import static org.fusesource.meshkeeper.util.internal.IOSupport.copy;
+
+import java.io.*;
+import java.util.zip.ZipOutputStream;
+import java.util.zip.ZipEntry;
 
 /** 
  * FileUtils
@@ -18,8 +22,9 @@ import java.io.IOException;
  * @author cmacnaug
  * @version 1.0
  */
-public class FileUtils {
+public class FileSupport {
 
+    static final long ROUNDUP_MILLIS = 1999;
     
     public static void recursiveDelete(String srcDir) throws IOException {
         //String srcFileName = "";
@@ -82,4 +87,74 @@ public class FileUtils {
         if (minDepth > depth)
             throw new IOException(message);
     }
+
+    public static void write(InputStream source, File target) throws IOException {
+        FileOutputStream os = new FileOutputStream(target);
+        try {
+            IOSupport.copy(source, os);
+        } finally {
+            IOSupport.close(os);
+        }
+    }
+    
+    static public byte[] read(File file, long pos, int length) throws IOException {
+        RandomAccessFile is = new RandomAccessFile(file, "r");
+        try {
+            long remaining = is.length()-pos;
+            if( remaining < 0) {
+                remaining = 0;
+            }
+            byte rc[] = new byte[(int) Math.min(remaining, length)];
+            if( rc.length == 0 ) {
+                return rc;
+            }
+            is.seek(pos);
+            is.readFully(rc);
+            return rc;
+        } finally {
+            is.close();
+        }
+    }
+
+    
+    public static File jar(File source) throws IOException {
+        File tempJar = File.createTempFile("temp", ".jar");
+        jar(source, tempJar);
+        return tempJar;
+    }
+
+    public static void jar(File source, File target) throws IOException {
+        ZipOutputStream os = new ZipOutputStream(new FileOutputStream(target));
+        try {
+            os.setMethod(ZipOutputStream.DEFLATED);
+            os.setLevel(5);
+            recusiveJar(os, source, null);
+        } finally {
+            close(os);
+        }
+    }
+
+    private static void recusiveJar(ZipOutputStream os, File source, String jarpath) throws IOException {
+        String prefix = "";
+        if (jarpath != null) {
+            ZipEntry entry = new ZipEntry(jarpath);
+            entry.setTime(source.lastModified() + ROUNDUP_MILLIS);
+            os.putNextEntry(entry);
+            prefix = jarpath + "/";
+        }
+
+        if (source.isDirectory()) {
+            for (File file : source.listFiles()) {
+                recusiveJar(os, file, prefix + file.getName());
+            }
+        } else {
+            FileInputStream is = new FileInputStream(source);
+            try {
+                copy(is, os);
+            } finally {
+                close(is);
+            }
+        }
+    }
+
 }
