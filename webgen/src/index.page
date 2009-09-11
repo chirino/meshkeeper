@@ -20,7 +20,8 @@ sort_info: 1
 --- name:overview pipeline:haml,tags
 
 %h1 MeshKeeper
-{project_slogan:}
+%p 
+  {project_slogan:}
 
 --- name:content pipeline:haml,tags
 

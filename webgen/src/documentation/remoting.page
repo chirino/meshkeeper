@@ -18,4 +18,4 @@ title: Remoting
 in_menu: false
 --- name:content pipeline:haml,tags
 %center
-  %h1{:style=>"margin-top: 50px"} Coming Soon!
+  %h1{:style=>"margin-top: 50px"} Coming Soon!  

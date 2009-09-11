@@ -7,28 +7,33 @@ body, html, table, tr, td, tbody {
     margin:0;
     vertical-align: top;
 }
-body {
-    padding-top: 20px;
-}
 
 h1, h2, h3, h4, h5, h6 {
     overflow: visible;
-    color: #004b85;
+    margin:0;
+    color: #000;
+}
+
+/* Padding is simpler to work with than margins. */
+h1 { padding: .7em 0 .7em 0;  }
+h2 { padding: .8em 0 .8em 0;  }
+h3 { padding: 1.0em 0 1.0em 0;  }
+h4 { padding: 1.4em 0 1.4em 0;  }
+h5 { padding: 1.7em 0 1.7em 0;  }
+h6 { padding: 2.3em 0 2.3em 0;  }
+
+strong {
+    color: #000;
 }
 
 ul { padding-left: 2em; }
 
-/*
-h1 {
-	margin-top: 0em;
-    margin-bottom: 2em;
+p { 
+  padding-top:1em;  margin:0; 
 }
-*/
-
-p { margin-bottom:0px; }
 
 a {
-	color: #004B85;
+	color: #68584E;
 	font-weight:bold;
 	text-decoration: none;
 }
@@ -36,37 +41,33 @@ a {
 a:hover { 
 	color: #6699CC; 
 	text-decoration: underline;
-	}
+}
 
 img {
 	border: none;
-/*
-	padding-right:2em
-*/
 }
 
-.wrapper { min-width: 762px; width: 762px; margin: 0 auto; }
+.wrapper { min-width: 700px; width: 700px; margin: 0 auto; }
 
-#navigation { width: 100%; float: left;
-    font-family: Helvetica,Verdana,Arial,sans-serif; 
-    background: #0D4D82; 
-	text-align:center; padding: 8px;
-    color: white; 
-	font-size: 10pt; 
-	font-weight: bold;
-  position: absolute;  
-    top: 0px;
+#navigation { 
+    width: 100%; clear: both;
+    font-family: HelveticaNeue,"Helvetica Neue",Helvetica,Arial,Verdana,sans-serif; 
+    background: #0F0F0F; text-align:center; padding: 8px;
+    border-bottom:5px solid #B0B08F;
+    color: white; font-size: 10pt; font-weight: bold;
 }
 #navigation a { color: white; }
 #navigation ul { display: block; margin:0; padding:0; }
 #navigation li { list-style-type: none; display: inline; margin:0 5px 0 5px;}
 
-#overview { width: 100%; float: left; margin-top:20px}
-#overview div.logo {float: left; padding-right: 20px; }
+#overview { width: 100%; float: left; }
+#overview div.logo {float: left; width:180px; }
 #overview div.message { 
-    font-size: 14pt; 
+    min-height: 160px;
+    font-size: 14pt;
+     
 }
-#overview div.message h1{ margin-bottom: 5px; }
+#overview div.message h1{ padding-bottom: 5px; }
 
 #spot { width: 100%; float: left; 
     margin-top: 15px;
@@ -138,7 +139,7 @@ img {
 #blog h2 {
   border-bottom: thin dashed #DDD;
   font-size: 16pt;
-  margin-bottom: 5px;
+  padding-bottom: 5px;
 }
 #blog div.post p {
   padding-left: 10px;
@@ -151,20 +152,20 @@ img {
 }
 
 #content .post h2 {
-  margin-bottom:5px;
+  padding-bottom:5px;
 }
 #content .post .details {
   color: #ccc;
   font-size: 10pt;
   font-family: HelveticaNeue,"Helvetica Neue",Helvetica,Arial,Verdana,sans-serif; 
-  margin-top:0px;
+  padding-top:0px;
 }
 
 div.CodeRay div.code pre {
   border-color:#EEEEEE;
   border-style:solid;
   border-width:1px 1px 1px 20px;
-  margin-top: 1em;
+  padding-top: 1em;
   overflow:auto;
   padding:6px 4px 4px 6px;
   font-family:'Lucida Console','Bitstream Vera Sans Mono','Courier New',Monaco,Courier,monospace;
