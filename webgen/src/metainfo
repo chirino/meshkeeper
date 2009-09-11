@@ -25,7 +25,8 @@
   project_wiki_url: 'http://fusesource.com/wiki/display/MESHKEEPER'
   project_logo: '/images/meshkeeper-logo.png'
   project_version: "1.0-SNAPSHOT"
-
+  api_base: "http://meshkeeper.fusesource.org/maven/1.0-SNAPSHOT/meshkeeper-api/apidocs/org/fusesource/meshkeeper"
+  
   # -------------------------------------------------------------------
   # TODO it would be nice to define these in terms of the project_id variable!
   # -------------------------------------------------------------------

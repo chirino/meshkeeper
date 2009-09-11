@@ -39,16 +39,21 @@ in_menu: false
 
 :markdown
 
-  The `HostProperties` lets you know details about the host the agent is running on like the CPU count, host name, and system 
+  The [`HostProperties`][1] lets you know details about the host the agent is running on like the CPU count, host name, and system 
   properties of the agent.  Each agent has a unique agent id, which will be how you identify which agent you want to launch
   processes on.
+  
+  [1]: {api_base:}/HostProperties.html
+
   
   Creating the Launch Description
   ===============================
   
-  The next step will be to create a `LaunchDescription` which is a command line builder for the process that you want to 
-  remotely execute.  Command line arguments can be strings or expressions. Expressions get evaluated on the Agent.  The following
-  listing shows how a `LaunchDescription` is initialized.
+  The next step will be to create a [`LaunchDescription`][1] which is a command line builder for the process that you want to 
+  remotely execute.  Command line arguments can be strings or expressions. Expressions get evaluated on the launch agent.  The following
+  listing shows how a [`LaunchDescription`][1] is initialized.
+  
+  [1]: {api_base:}/LaunchDescription.html
   
 :raw
   {coderay::java}
@@ -59,8 +64,9 @@ in_menu: false
   {coderay}   
 
 :markdown
-  In the example above, the `file()` method creates an expression which will convert the file separators of the given path 
+  In the example above, the [`file()`][1] method creates an expression which will convert the file separators of the given path 
   to use the conventions of the agents platform.  So if the  agent was running on Windows, the executed command would be:
+  [1]: {api_base:}/Expression.html#file(java.lang.String)
   
 :raw
   {coderay::plain}
@@ -71,7 +77,7 @@ in_menu: false
   We recommend you use a static import of `Expression.*` when building `LaunchDescription` objects.  There are many 
   other [handy expressions][1] that can be used.
 
-  [1]: {relocatable:/documentation/expressions.html}
+  [1]: {api_base:}/Expression.html#method_summary
   
   Launching the Process
   =====================
@@ -85,11 +91,13 @@ in_menu: false
   {coderay}       
   
 :markdown
-  In the example above, we launch a the process with a null `MeshProcessListener`, which means we will not be given sent process output.  If you 
+  In the example above, we launch a the process with a null [`MeshProcessListener`][1], which means we will not be given sent process output.  If you 
   wanted to capture process stdout, stderr, or be notifed of the process exist code, you should implement the listener.  If you just want to
-  log process output to your console window you can use the `DefaultProcessListener` implementation.
+  log process output to your console window you can use the [`DefaultProcessListener`][2] implementation.
   
-  The returned `MeshProcess` object can be used to write data to the process stdin, check to see if it's still running or to kill the running process.
+  The returned [`MeshProcess`][3] object can be used to write data to the process stdin, check to see if it's still running or to kill the running process.
   
-  
+  [1]: {api_base:}/MeshProcessListener.html
+  [2]: {api_base:}/util/DefaultProcessListener.html
+  [3]: {api_base:}/MeshProcess.html
     

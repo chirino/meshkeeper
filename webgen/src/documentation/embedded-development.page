@@ -44,8 +44,10 @@ in_menu: false
 
 :markdown
   Once the above runs, you will have a deployment similar to to the diagram bellow.  
-  Your application should use the `meshKeeper` object to access the distributed services
+  Your application should use the [`MeshKeeper`][1] object to access the distributed services
   like remote process launching.
+  
+  [1]: {api_base:}/MeshKeeper.html
 
 %img{:src=>"images/diagram-2.png", :style=>"margin-top:1em"}
 
@@ -96,5 +98,6 @@ in_menu: false
   [1]: {relocatable:/documentation/embedded-development.html}
   [2]: {relocatable:/documentation/remoting.html}
   [3]: {relocatable:/documentation/eventing.html}
+  [4]: {api_base:}/MeshKeeper.html
 
     
