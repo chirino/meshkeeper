@@ -29,16 +29,14 @@ sort_info: 1
   %h1 What is MeshKeeper?
 .right
   :markdown 
-    **MeshKeeper** is a platform that provides Mesh Services that allow to discover,
-    launch, coordinate, and control processes across a grid of computers.
+    **MeshKeeper** is a platform of services that allow Java applications to discover,
+    launch, coordinate, and control remote processes across a grid of computers.
     
-    A MeshKeeper [deployment topology][1] consists of you applications acting as
-    clients, a control server, and launch agents. The control server and agents are
-    used to provide mesh services to your client applications. The topology can scale
-    out to run on a grid of of computers or scale down and run collocated in a single
-    JVM.
+    A [MeshKeeper deployment][1] consists a control server and multiple launch agents. 
+    A deployment can scale up to any number of computers on a cloud or grid or it 
+    can scale down to just running wholly embedded in your Java application.
     
-    See our user guides:
+    To get started, see our user guides:
     
     *  [Getting Started with Embedded Development][2]
     *  [Getting Started with Starting Standalone Servers and Agents][3]
@@ -48,7 +46,7 @@ sort_info: 1
     [3]: {relocatable:/documentation/starting-servers-and-agents.html}
 
 .left
-  %h1 Mesh Services
+  %h1 MeshKeeper Services
   %br
   %img{:src=>"images/diagram-1.png", :style=>"float:right"}      
 .right
