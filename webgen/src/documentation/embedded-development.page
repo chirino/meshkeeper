@@ -95,6 +95,6 @@ in_menu: false
     
   [1]: {relocatable:/documentation/embedded-development.html}
   [2]: {relocatable:/documentation/remoting.html}
-  [2]: {relocatable:/documentation/eventing.html}
+  [3]: {relocatable:/documentation/eventing.html}
 
     
