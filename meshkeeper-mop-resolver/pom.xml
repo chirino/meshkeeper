@@ -25,13 +25,41 @@
 
   <name>MeshKeeper :: Mop Plugin Resolver</name>
 
+  <repositories>
+    <!-- for the mop dependency -->
+    <repository>
+      <id>mop.release.m2</id>
+      <name>mop Release Repository</name>
+      <url>http://mop.fusesource.org/repo/release</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+    <repository>
+      <id>mop.snapshot.m2</id>
+      <name>mop Release Repository</name>
+      <url>http://mop.fusesource.org/repo/snapshot</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+  </repositories>
+  
   <dependencies>
+    
     <dependency>
       <groupId>org.fusesource.mop</groupId>
       <artifactId>mop-core</artifactId>
       <version>${mop-version}</version>
       <scope>compile</scope>
     </dependency>
+    
   </dependencies>
   
   <build>

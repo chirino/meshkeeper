@@ -26,6 +26,7 @@
   <name>MeshKeeper :: ZooKeeper Registry Plugin</name>
 
   <repositories>
+    <!-- For the ZooKeeper Dependency -->
     <repository>
       <id>chirino-zk-repo</id>
       <name>Private ZooKeeper Repo</name>
