@@ -12,11 +12,11 @@ import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.Marshalled;
 import org.fusesource.meshkeeper.distribution.DistributorFactory;
 
-import java.util.LinkedList;
-import java.util.Arrays;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 
 /**
@@ -43,6 +43,10 @@ public class RemoteBootstrap {
     }
     
     public static void main(String args[]) throws Throwable {
+
+        if( System.getProperty("meshkeeper.application")==null ) {
+            System.setProperty("meshkeeper.application", RemoteBootstrap.class.getName());
+        }
 
         RemoteBootstrap main = new RemoteBootstrap();
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));

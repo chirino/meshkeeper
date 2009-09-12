@@ -108,7 +108,7 @@ locateBase() {
             die "MESHKEEPER_BASE is not valid: $MESHKEEPER_BASE"
         fi
     else
-        MESHKEEPER_BASE=$MESHKEEPER_HOME
+        MESHKEEPER_BASE=$MESHKEEPER_HOME/data
     fi
 }
 
@@ -190,7 +190,8 @@ setupDefaults() {
 
     # Setup the classpath..
     CLASSPATH="$MESHKEEPER_HOME/repository/org/fusesource/meshkeeper/meshkeeper-api/${project.version}/meshkeeper-api-${project.version}.jar"
-    CLASSPATH="$CLASSPATH:$MESHKEEPER_HOME/repository/org/fusesource/mop/mop-core/${mop-version}/mop-core-${mop-version}.jar"
+    CLASSPATH="$CLASSPATH:$MESHKEEPER_HOME/repository/commons-logging/commons-logging/${commons-logging-version}/commons-logging-${commons-logging-version}.jar"
+    CLASSPATH="$CLASSPATH:$MESHKEEPER_HOME/repository/log4j/log4j/${log4j-version}/log4j-${log4j-version}.jar"
   	if $cygwin; then
   	    CLASSPATH=`cygpath $CYGPATHOPS "$CLASSPATH"`
   	fi
@@ -203,7 +204,7 @@ setupDefaults() {
     # Uncomment to enable YourKit profiling
     #DEFAULT_JAVA_DEBUG_OPTS="-Xrunyjpagent"
 	
-  	LOG4J="$MESHKEEPER_BASE/etc/log4j.properties"
+  	LOG4J="$MESHKEEPER_HOME/etc/log4j.properties"
   	if $cygwin; then
   	    LOG4J=`cygpath $CYGPATHOPS "$LOG4J"`
   	fi
@@ -214,9 +215,14 @@ setupDefaults() {
         MESHKEEPER_BASE=`cygpath  $CYGPATHOPS "$MESHKEEPER_BASE"`
     fi
     
+    OPTS=""
+    OPTS="$OPTS -Dmeshkeeper.application=$0"
+    OPTS="$OPTS -Dmeshkeeper.home=$MESHKEEPER_HOME"
+    OPTS="$OPTS -Dmeshkeeper.base=$MESHKEEPER_BASE"
     OPTS="$OPTS -Dlog4j.configuration=file:$LOG4J"
     OPTS="$OPTS -Dmop.base=$MESHKEEPER_HOME"
     OPTS="$OPTS -Dmop.online=false"
+    OPTS="$OPTS $MESHKEEPER_OPTS"
 }
 
 setenv() {
@@ -264,4 +270,4 @@ setenv() {
 # Execute the Control Server
 # =====================================================================
 setenv $@
-exec $JAVA $JAVA_OPTS $OPTS -classpath "$CLASSPATH" org.fusesource.meshkeeper.control.Main --directory $MESHKEEPER_BASE/data $*
+exec $JAVA $JAVA_OPTS $OPTS -classpath "$CLASSPATH" org.fusesource.meshkeeper.control.Main $*

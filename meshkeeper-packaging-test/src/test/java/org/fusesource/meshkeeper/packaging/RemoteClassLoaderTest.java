@@ -20,15 +20,12 @@ import junit.framework.TestCase;
 import static org.fusesource.meshkeeper.Expression.file;
 import static org.fusesource.meshkeeper.Expression.path;
 
-import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.Expression;
-import org.fusesource.meshkeeper.LaunchDescription;
-import org.fusesource.meshkeeper.MeshProcess;
-import org.fusesource.meshkeeper.MeshProcessListener;
+import org.fusesource.meshkeeper.*;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServerFactory;
 import org.fusesource.meshkeeper.launcher.RemoteBootstrap;
+import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.io.ByteArrayOutputStream;
@@ -49,12 +46,12 @@ public class RemoteClassLoaderTest extends TestCase {
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        String dataDir = "target" + File.separator + "remote-classloader-test";
-        String commonRepo = new File(dataDir + File.separator + "common-repo").toURI().toString();
-
-        System.setProperty("basedir", dataDir);
-        System.setProperty("common.repo.url", commonRepo);
-
+        final String SLASH = File.separator;
+        String testDir = System.getProperty("basedir", ".")+ SLASH +"target"+ SLASH +"test-data"+SLASH+ getClass().getName();
+        String commonRepo = new File(testDir + SLASH + "common-repo").toURI().toString();
+        System.setProperty("meshkeeper.base", testDir);
+        System.setProperty("meshkeeper.repository.uri", commonRepo);
+        
         context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
         meshKeeper = (MeshKeeper) context.getBean("meshkeeper");
 
@@ -83,6 +80,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add("java");
         ld.add("-cp");
         setClassPath(ld);
+        ld.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
@@ -95,6 +93,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add("java");
         ld.add("-cp");
         setClassPath(ld);
+        ld.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
         ld.add(RemoteBootstrap.class.getName());
         ld.add(DataInputTestApplication.class.getName());
 
@@ -115,6 +114,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add("java");
         ld.add("-cp");
         setClassPath(ld);
+        ld.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
         ld.add(RemoteBootstrap.class.getName());
         ld.add("--cache");
         ld.add(file("./classloader-cache"));

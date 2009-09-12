@@ -13,11 +13,7 @@ import java.util.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.HostProperties;
-import org.fusesource.meshkeeper.LaunchDescription;
-import org.fusesource.meshkeeper.MeshProcess;
-import org.fusesource.meshkeeper.MeshProcessListener;
+import org.fusesource.meshkeeper.*;
 import org.fusesource.meshkeeper.classloader.Marshalled;
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
 import org.fusesource.meshkeeper.distribution.PluginResolver;
@@ -31,11 +27,16 @@ public class LaunchAgent implements LaunchAgentService {
     public static final String LOCAL_REPO_PROP = "org.fusesource.testrunner.localRepoDir";
     public static final Log LOG = LogFactory.getLog(LaunchAgent.class);
 
+    static final public String PROPAGATED_SYSTEM_PROPERTIES[] = new String[] {
+        "meshkeeper.home", "meshkeeper.base",
+        "mop.base", "mop.online", "mop.allways-check-local-repo"
+    };
+
     private String exclusiveOwner;
 
     private String agentId; //The unique identifier for this agent (specified in ini file);
     private boolean started = false;
-    private File directory = new File(".");
+    private File directory = MeshKeeperFactory.getDefaultAgentDirectory();
 
     //ProcessHandlers:
     private final Map<Integer, LocalProcess> processes = new HashMap<Integer, LocalProcess>();
@@ -87,6 +88,10 @@ public class LaunchAgent implements LaunchAgentService {
         ld.add("java");
         ld.add("-cp");
         ld.add(classpath);
+
+        // Pass on some of our system properties to the launched process
+        ld.propageSystemProperties(PROPAGATED_SYSTEM_PROPERTIES);
+
         ld.add(RemoteBootstrap.class.getName());
         ld.add("--cache");
         ld.add(new File(getDirectory(), "bootstrap-cache").getCanonicalPath());
@@ -96,7 +101,6 @@ public class LaunchAgent implements LaunchAgentService {
         ld.add(path);
         return launch(ld, handler);
     }
-
 
     synchronized public MeshProcess launch(LaunchDescription launchDescription, MeshProcessListener handler) throws Exception {
         int pid = pidCounter++;

@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshEvent;
 import org.fusesource.meshkeeper.MeshEventListener;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import junit.framework.AssertionFailedError;
@@ -36,11 +37,11 @@ public class EventTest extends TestCase {
 
     protected void setUp() throws Exception {
 
-        String dataDir = "target" + File.separator + "event-test";
-        String commonRepo = new File(dataDir + File.separator + "common-repo").toURI().toString();
-
-        System.setProperty("basedir", dataDir);
-        System.setProperty("common.repo.url", commonRepo);
+        final String SLASH = File.separator;
+        String testDir = System.getProperty("basedir", ".")+ SLASH +"target"+ SLASH +"test-data"+SLASH+ getClass().getName();
+        String commonRepo = new File(testDir + SLASH + "common-repo").toURI().toString();
+        System.setProperty("meshkeeper.base", testDir);
+        System.setProperty("meshkeeper.repository.uri", commonRepo);
 
         context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
         meshKeeper = (MeshKeeper) context.getBean("meshkeeper");

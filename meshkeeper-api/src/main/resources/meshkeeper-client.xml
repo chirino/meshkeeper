@@ -14,8 +14,8 @@
 
   <!--Set up a meshkeeper client-->
   <bean id="meshkeeper" class="org.fusesource.meshkeeper.spring.MeshKeeperFactory">
-    <property name="registryUri" value="zk:tcp://localhost:2101" />
-    <property name="directory" value="${basedir}" />
+    <property name="registryUri" value="${meshkeeper.registry.uri}" />
+    <property name="directory" value="${meshkeeper.base}/client" />
   </bean>
 
 </beans>

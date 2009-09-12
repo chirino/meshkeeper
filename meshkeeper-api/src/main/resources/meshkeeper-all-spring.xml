@@ -16,23 +16,23 @@
   <!--Create a control server (hosts ZookKeeper and RMI server-->
   <bean id="control-server" class="org.fusesource.meshkeeper.control.ControlServer"
     init-method="start" destroy-method="destroy">
-    <property name="directory" value="${basedir}/meshkeeper-controller" />
-    <property name="jmsUri" value="jms:activemq:tcp://localhost:2100" />
-    <property name="registryUri" value="zk:tcp://localhost:2101" />
-    <property name="repositoryUri" value="${common.repo.url}" />
+    <property name="directory" value="${meshkeeper.base}/server" />
+    <property name="registryUri" value="${meshkeeper.registry.uri}" />
+    <property name="jmsUri" value="${meshkeeper.jms.uri}" />
+    <property name="repositoryUri" value="${meshkeeper.repository.uri}" />
   </bean>
 
   <!--Set up a meshkeeper client-->
   <bean id="meshkeeper" class="org.fusesource.meshkeeper.spring.MeshKeeperFactory">
-    <property name="registryUri" value="zk:tcp://localhost:2101" />
-    <property name="directory" value="${basedir}" />
+    <property name="registryUri" value="${meshkeeper.registry.uri}" />
+    <property name="directory" value="${meshkeeper.base}/client" />
   </bean>
 
   <!--Create a remote process launcher-->
   <bean id="launcher" class="org.fusesource.meshkeeper.launcher.LaunchAgent"
     depends-on="meshkeeper" init-method="start" destroy-method="stop">
     <property name="meshKeeper" ref="meshkeeper" />
-    <property name="directory" value="${basedir}/launcher" />
+    <property name="directory" value="${meshkeeper.base}/agent" />
   </bean>
 
 </beans>

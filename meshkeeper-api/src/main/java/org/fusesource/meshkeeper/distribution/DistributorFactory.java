@@ -20,6 +20,7 @@ import org.fusesource.meshkeeper.distribution.remoting.RemotingFactory;
 import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
 import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
 import org.fusesource.meshkeeper.distribution.repository.RepositoryManagerFactory;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -40,20 +41,11 @@ public class DistributorFactory {
     private Log log = LogFactory.getLog(DistributorFactory.class);
 
     private static String DEFAULT_REPOSITORY_PROVIDER = "wagon";
-    private static String DEFAULT_DIR = ".";
     private static String DEFAULT_REGISTRY_URI = ControlServer.DEFAULT_REGISTRY_URI;
     private static final ScheduledExecutorService EXECUTOR;
     private static final AtomicInteger EXECUTOR_COUNT = new AtomicInteger(0);
     static {
-        String repoDir = null;
-        try {
-            repoDir = System.getProperty("user.home");
-        } catch (SecurityException se) {
-        }
-        DEFAULT_DIR = repoDir;
-
         EXECUTOR = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
-
             public Thread newThread(Runnable r) {
                 return new Thread(r, "MeshKeeperExecutor-" + EXECUTOR_COUNT.incrementAndGet());
             }
@@ -62,7 +54,7 @@ public class DistributorFactory {
 
     private String repositoryProvider = DEFAULT_REPOSITORY_PROVIDER;
     private String registryUri = DEFAULT_REGISTRY_URI;
-    private String directory = DEFAULT_DIR;
+    private String directory = MeshKeeperFactory.getDefaultClientDirectory().getPath();
     private String eventingUri;
     private String remotingUri;
     private String repositoryUri;
@@ -76,10 +68,6 @@ public class DistributorFactory {
     public static DefaultDistributor createDefaultDistributor() throws Exception {
         DistributorFactory df = new DistributorFactory();
         return df.create();
-    }
-
-    public static void setDefaultDirectory(String directory) {
-        DEFAULT_DIR = directory;
     }
 
     public static void setDefaultRegistryUri(String defaultRegistryUri) {

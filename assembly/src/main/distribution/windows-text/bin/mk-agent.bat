@@ -25,7 +25,7 @@ REM =====================================================================
 
 call :SETUP_DEFAULTS
 
-%JAVA_EXE% %JAVA_OPTS% %OPTS% -classpath %CLASSPATH% org.fusesource.meshkeeper.launcher.Main --directory "%MESHKEEPER_HOME%\data" %*
+%JAVA_EXE% %JAVA_OPTS% %OPTS% -classpath %CLASSPATH% org.fusesource.meshkeeper.launcher.Main %*
 
 if ERRORLEVEL 1 goto ERROR
 goto END
@@ -55,7 +55,7 @@ goto :EOF
 
 :LOCATE_MESHKEEPER_BASE
   if "%MESHKEEPER_BASE%" == "" (
-    set MESHKEEPER_BASE=%MESHKEEPER_HOME%
+    set MESHKEEPER_BASE=%MESHKEEPER_HOME%\data
   )
 goto :EOF
 
@@ -84,15 +84,21 @@ goto :EOF
 goto :EOF
     
 :LOCATE_OPTS
-  set OPTS=-Dlog4j.configuration=file:%MESHKEEPER_HOME%\etc\log4j.properties
+  set OPTS=
+  set OPTS=%OPTS% -Dmeshkeeper.application=%~dpn0
+  set OPTS=%OPTS% -Dmeshkeeper.home=%MESHKEEPER_HOME%
+  set OPTS=%OPTS% -Dmeshkeeper.base=%MESHKEEPER_BASE%
+  set OPTS=%OPTS% -Dlog4j.configuration=file:%MESHKEEPER_HOME%\etc\log4j.properties
   set OPTS=%OPTS% -Dmop.base=%MESHKEEPER_HOME%
   set OPTS=%OPTS% -Dmop.online=false
   set OPTS=%OPTS% %MESHKEEPER_OPTS%
 goto :EOF
 
 :LOCATE_CLASSPATH
-  set CLASSPATH=%MESHKEEPER_HOME%\repository\org\fusesource\meshkeeper\meshkeeper-api\${project.version}\meshkeeper-api-${project.version}.jar
-  set CLASSPATH=%CLASSPATH%;%MESHKEEPER_HOME%\repository\org\fusesource\mop\mop-core\${mop-version}\mop-core-${mop-version}.jar
+  set CLASSPATH=
+  set CLASSPATH=%CLASSPATH%;%MESHKEEPER_HOME%\repository\org\fusesource\meshkeeper\meshkeeper-api\${project.version}\meshkeeper-api-${project.version}.jar
+  set CLASSPATH=%CLASSPATH%;commons-logging\commons-logging\${commons-logging-version}\commons-logging-${commons-logging-version}.jar
+  set CLASSPATH=%CLASSPATH%;log4j\log4j\${log4j-version}\log4j-${log4j-version}.jar
 goto :EOF
     
 :ERROR

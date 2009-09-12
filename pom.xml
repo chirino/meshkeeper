@@ -30,6 +30,8 @@
   </organization>
 
   <properties>
+    <commons-logging-version>1.1.1</commons-logging-version>
+    <log4j-version>1.2.15</log4j-version>
     <mop-version>1.0-SNAPSHOT</mop-version>
     <spring-version>2.5.5</spring-version>
   </properties>
@@ -180,7 +182,7 @@
           
     </dependencies>
   </dependencyManagement>
-    
+
   <build>
     <defaultGoal>install</defaultGoal>
     <plugins>
@@ -213,7 +215,20 @@
           <childDelegation>false</childDelegation>
           <useFile>true</useFile>
           <argLine>-Xms256m -Xmx768m</argLine>
-          <excludes />
+          <systemProperties>
+            <property>
+              <name>basedir</name>
+              <value>${basedir}</value>
+            </property>
+            <property>
+              <name>meshkeeper.plugin.version.default</name>
+              <value>${project.version}</value>
+            </property>
+            <property>
+              <name>mop.base</name>
+              <value>${project.build.directroy}/mop-base</value>
+            </property>
+          </systemProperties>
         </configuration>
       </plugin>
     </plugins>

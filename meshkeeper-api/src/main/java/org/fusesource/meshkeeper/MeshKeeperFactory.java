@@ -21,6 +21,28 @@ import java.io.File;
  */
 public class MeshKeeperFactory {
 
+    public static final String MESHKEEPER_BASE_PROPERTY = "meshkeeper.base";
+
+    public static File getDefaultBaseDirectory() {
+        return new File(System.getProperty(MESHKEEPER_BASE_PROPERTY,"./data"));
+    }
+
+    public static File getDefaultClientDirectory() {
+
+
+        return new File(getDefaultBaseDirectory(), "client");
+    }
+    public static File getDefaultAgentDirectory() {
+        return new File(getDefaultBaseDirectory(), "agent");
+    }
+    public static File getDefaultServerDirectory() {
+        return new File(getDefaultBaseDirectory(), "server");
+    }
+
+    static public MeshKeeper createMeshKeeper(String registry) throws Exception {
+        return createMeshKeeper(registry, getDefaultClientDirectory());
+    }
+
     static public MeshKeeper createMeshKeeper(String registry, File dataDir) throws Exception {
         DistributorFactory df = new DistributorFactory();
         df.setRegistryUri(registry);
@@ -30,12 +52,20 @@ public class MeshKeeperFactory {
         return mk;
     }
 
+    static public LaunchAgent createAgent(MeshKeeper keeper) throws Exception {
+        return createAgent(keeper, getDefaultAgentDirectory());
+    }
+
     static public LaunchAgent createAgent(MeshKeeper keeper, File dataDir) throws Exception {
         LaunchAgent agent = new LaunchAgent();
         agent.setMeshKeeper(keeper);
         agent.setDirectory(dataDir);
         agent.start();
         return agent;
+    }
+
+    static public ControlServer createControlServer(String registry) throws Exception {
+        return createControlServer(registry, getDefaultServerDirectory());
     }
 
     static public ControlServer createControlServer(String registry, File dataDir) throws Exception {

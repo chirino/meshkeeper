@@ -53,9 +53,13 @@ public class Main {
             return;
         }
 
+        if( System.getProperty("meshkeeper.application")==null ) {
+            System.setProperty("meshkeeper.application", Main.class.getName());
+        }
+        
         MeshKeeper meshKeeper = null;
         String regisitry = null;
-        String directory = ".";
+        String directory = MeshKeeperFactory.getDefaultAgentDirectory().getPath();
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
         try {

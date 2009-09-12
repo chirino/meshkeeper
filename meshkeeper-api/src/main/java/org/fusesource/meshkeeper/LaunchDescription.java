@@ -23,6 +23,7 @@ public class LaunchDescription implements Serializable {
     Expression.FileExpression workingDirectory;
     ArrayList<LaunchTask> preLaunchTasks = new ArrayList<LaunchTask>();
     
+
     public LaunchDescription add(String value) {
         return add(Expression.string(value));
     }
@@ -42,6 +43,14 @@ public class LaunchDescription implements Serializable {
         }
         environment.put(key, value);
         return this;
+    }
+
+    public void propageSystemProperties(String... names) {
+        for (String name : names) {
+            if( System.getProperty(name)!=null ) {
+                add("-D" + name + "=" +System.getProperty(name));
+            }
+        }
     }
 
     private static class InstallLaunchResourceTask implements Serializable, LaunchTask {

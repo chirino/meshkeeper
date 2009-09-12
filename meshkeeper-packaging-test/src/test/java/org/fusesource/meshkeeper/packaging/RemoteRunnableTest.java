@@ -5,6 +5,7 @@ import static org.fusesource.meshkeeper.Expression.file;
 
 import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.distribution.PluginResolver;
 import org.fusesource.meshkeeper.util.DefaultProcessListener;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -23,24 +24,12 @@ public class RemoteRunnableTest extends TestCase {
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        if( System.getProperty(PluginResolver.KEY_DEFAULT_PLUGINS_VERSION) == null ) {
-            System.setProperty(PluginResolver.KEY_DEFAULT_PLUGINS_VERSION, "LATEST");
-        }
-
-        File basedir = new File(file("target/test-data").evaluate());
-        // recursiveDelete(basedir);
-
-
-        // This should be getting set by the junit test runner to actuall plugins being tested.
-        if( System.getProperty(PluginResolver.KEY_DEFAULT_PLUGINS_VERSION) == null ) {
-            System.setProperty(PluginResolver.KEY_DEFAULT_PLUGINS_VERSION, "LATEST");
-        }
-
-        System.setProperty("mop.base", new File(basedir, "mop").getCanonicalPath());
-        System.setProperty("basedir", basedir.getCanonicalPath());
-        String commonRepo = new File(basedir, "common-repo").toURI().toString();
-        System.setProperty("common.repo.url", commonRepo);
-        System.setProperty("local.repo.url", new File(basedir, "local-repo").getCanonicalPath() );
+        final String SLASH = File.separator;
+        String testDir = System.getProperty("basedir", ".")+ SLASH +"target"+ SLASH +"test-data"+SLASH+ getClass().getName();
+        String commonRepo = new File(testDir + SLASH + "common-repo").toURI().toString();
+        System.setProperty("meshkeeper.base", testDir);
+        System.setProperty("meshkeeper.repository.uri", commonRepo);
+        System.setProperty("mop.base", testDir+SLASH+"mop");
 
         context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
         meshKeeper = (MeshKeeper) context.getBean("meshkeeper");

@@ -7,8 +7,12 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.control;
 
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
+
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.io.File;
 
 /**
  * Main
@@ -50,10 +54,14 @@ public class Main {
             return;
         }
 
+        if( System.getProperty("meshkeeper.application")==null ) {
+            System.setProperty("meshkeeper.application", Main.class.getName());
+        }
+        
         String jms = ControlServer.DEFAULT_JMS_URI;
         String registry = "zk:tcp://localhost:4040";
         String repository = null;
-        String directory = ".";
+        String directory = MeshKeeperFactory.getDefaultServerDirectory().getPath();
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
         try {

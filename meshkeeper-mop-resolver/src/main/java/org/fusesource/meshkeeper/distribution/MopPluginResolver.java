@@ -30,7 +30,7 @@ import org.fusesource.mop.support.ArtifactId;
  * @author cmacnaug
  * @version 1.0
  */
-class MopPluginResolver implements PluginResolver {
+public class MopPluginResolver implements PluginResolver {
     private static Predicate<Artifact> ARTIFACT_FILTER = null;
     private static final Log LOG = LogFactory.getLog(MopPluginResolver.class);
     private static MOPRepository MOP_REPO;
@@ -89,6 +89,17 @@ class MopPluginResolver implements PluginResolver {
     private synchronized MOPRepository getMopRepository() {
         if (MOP_REPO == null) {
             MOP_REPO = new MOPRepository();
+
+            // The plexus container is created on demand /w the context classloader.
+            // Lets load it now, so we can properly set it's classloader.
+            ClassLoader original = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(MOPRepository.class.getClassLoader());
+                MOP_REPO.getContainer();
+            } finally {
+                Thread.currentThread().setContextClassLoader(original);
+            }
+
         }
         return MOP_REPO;
     }

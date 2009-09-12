@@ -33,37 +33,6 @@
       <version>${mop-version}</version>
       <scope>compile</scope>
     </dependency>
-      
-    <!-- <dependency>
-      <groupId>org.fusesource.meshkeeper</groupId>
-      <artifactId>meshkeeper-api</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.fusesource.meshkeeper</groupId>
-      <artifactId>meshkeeper-rmiviajms-plugin</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.fusesource.meshkeeper</groupId>
-      <artifactId>meshkeeper-wagon-plugin</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.fusesource.meshkeeper</groupId>
-      <artifactId>meshkeeper-eventviajms-plugin</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.fusesource.meshkeeper</groupId>
-      <artifactId>meshkeeper-zk-plugin</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.fusesource.meshkeeper</groupId>
-      <artifactId>meshkeeper-activemq-plugin</artifactId>
-      <scope>compile</scope>
-    </dependency> -->
   </dependencies>
 
   <build>

@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
 
 
 /**
@@ -48,12 +49,11 @@ public class ControlServer {
     private String registryUri = DEFAULT_REGISTRY_URI;
     private String repositoryUri;
     
-    private String directory = ".";
+    private String directory = MeshKeeperFactory.getDefaultServerDirectory().getPath();
     private Thread shutdownHook;
 
     public void start() throws Exception {
         
-        directory = directory + File.separator + "control-server";
         shutdownHook = new Thread("MeshKeeper Control Server Shutdown Hook") {
             public void run() {
                 log.debug("Executing Shutdown Hook for " + ControlServer.this);
