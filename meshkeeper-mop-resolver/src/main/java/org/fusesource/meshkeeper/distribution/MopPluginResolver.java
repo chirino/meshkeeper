@@ -13,12 +13,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.maven.artifact.Artifact;
 import org.fusesource.mop.MOP;
 import org.fusesource.mop.MOPRepository;
-import org.fusesource.mop.common.base.Predicate;
+import org.fusesource.mop.com.google.common.base.Predicate;
+import org.fusesource.mop.org.apache.maven.artifact.Artifact;
+import org.fusesource.mop.org.apache.commons.logging.Log;
+import org.fusesource.mop.org.apache.commons.logging.LogFactory;
 import org.fusesource.mop.support.ArtifactId;
 
 /**
