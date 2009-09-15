@@ -9,16 +9,17 @@ package org.fusesource.meshkeeper.distribution;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.fusesource.mop.MOP;
 import org.fusesource.mop.MOPRepository;
-import org.fusesource.mop.com.google.common.base.Predicate;
-import org.fusesource.mop.org.apache.maven.artifact.Artifact;
 import org.fusesource.mop.org.apache.commons.logging.Log;
 import org.fusesource.mop.org.apache.commons.logging.LogFactory;
+import org.fusesource.mop.org.apache.maven.artifact.Artifact;
+import org.fusesource.mop.org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.fusesource.mop.support.ArtifactId;
 
 /**
@@ -31,7 +32,7 @@ import org.fusesource.mop.support.ArtifactId;
  * @version 1.0
  */
 public class MopPluginResolver implements PluginResolver {
-    private static Predicate<Artifact> ARTIFACT_FILTER = null;
+    private static ArtifactFilter ARTIFACT_FILTER = null;
     private static final Log LOG = LogFactory.getLog(MopPluginResolver.class);
     private static MOPRepository MOP_REPO;
     private String defaultPluginVersion = "LATEST";
@@ -44,7 +45,7 @@ public class MopPluginResolver implements PluginResolver {
             artifactIds.add(ArtifactId.parse(artifact));
         }
 
-        return getMopRepository().resolveFiles(artifactIds, getArtifactFilter());
+        return getMopRepository().resolveFiles(getArtifactFilter(), artifactIds);
 
     }
 
@@ -55,19 +56,16 @@ public class MopPluginResolver implements PluginResolver {
         return getMopRepository().classpath(artifactIds);
     }
     
-    private Predicate<Artifact> getArtifactFilter() {
+    private ArtifactFilter getArtifactFilter() {
         if (ARTIFACT_FILTER == null) {
 
             Set<Artifact> deps;
             try {
                 deps = getMopRepository().resolveArtifacts(new ArtifactId[] { ArtifactId.parse(PROJECT_GROUP_ID + ":" + PROJECT_ARTIFACT_ID, defaultPluginVersion, MOP.DEFAULT_TYPE) });
             } catch (Exception e) {
-                return new Predicate<Artifact>() {
-                    public boolean apply(Artifact artifact) {
-                        return true;
-                    }
-                };
+                deps = Collections.EMPTY_SET;
             }
+            
             final HashSet<String> filters = new HashSet<String>(deps.size());
             for (Artifact a : deps) {
                 filters.add(a.getArtifactId());
@@ -77,8 +75,8 @@ public class MopPluginResolver implements PluginResolver {
                 LOG.debug("Filters: " + filters);
             }
 
-            ARTIFACT_FILTER = new Predicate<Artifact>() {
-                public boolean apply(Artifact artifact) {
+            ARTIFACT_FILTER = new ArtifactFilter() {
+                public boolean include(Artifact artifact) {
                     return !filters.contains(artifact.getArtifactId());
                 }
             };
