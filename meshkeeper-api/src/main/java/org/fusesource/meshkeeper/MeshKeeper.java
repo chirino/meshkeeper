@@ -420,7 +420,7 @@ public interface MeshKeeper {
      * <br>{@link #export(Distributable)};
      * <br>{@link #addRegistryObject(String, boolean, Serializable)};
      * </code>
-     *
+     * <p>
      * It is best practice to call {@link #undistribute(Distributable)} once the object is no longer needed.
      *
      *

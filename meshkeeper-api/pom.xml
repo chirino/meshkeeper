@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  =====================================================================
-  Copyright (C) 2009 Progress Software, Inc. All rights reserved.                    
-  http://fusesource.com
-  =====================================================================
-  The software in this package is published under the terms of
-  the AGPL license a copy of which has been included with this 
-  distribution in the license.txt file.  
-  =====================================================================
--->
+  <!--
+    =====================================================================
+    Copyright (C) 2009 Progress Software, Inc. All rights reserved.
+    http://fusesource.com
+    =====================================================================
+    The software in this package is published under the terms of the
+    AGPL license a copy of which has been included with this
+    distribution in the license.txt file.
+    =====================================================================
+  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
@@ -26,12 +26,12 @@
   <name>MeshKeeper :: API</name>
 
   <dependencies>
-    
+
     <dependency>
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-beans</artifactId>
@@ -43,17 +43,34 @@
       <artifactId>meshkeeper-mop-resolver</artifactId>
       <optional>true</optional>
     </dependency>
-    
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
   </dependencies>
-  
+
   <build>
     <defaultGoal>install</defaultGoal>
     <plugins>
-      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <id>javadoc</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <excludePackageNames>org.fusesource.meshkeeper.distribution</excludePackageNames>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- Copy the meshkeeper-mop-resolver jar as a resource -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -84,5 +101,5 @@
         </executions>
       </plugin>
     </plugins>
-  </build>  
+  </build>
 </project>
