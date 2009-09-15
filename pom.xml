@@ -52,7 +52,7 @@
     <module>meshkeeper-wagon-plugin</module>
     <module>meshkeeper-eventviajms-plugin</module>
     <module>meshkeeper-activemq-plugin</module>
-    <module>assembly</module>
+    <module>meshkeeper-distro</module>
     <module>meshkeeper-packaging-test</module>
   </modules>
 
