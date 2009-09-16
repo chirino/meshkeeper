@@ -86,4 +86,22 @@
     </fileSet>
     
   </fileSets>
+  
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>docs/website</outputDirectory>
+      <unpack>true</unpack>
+      <includes>
+        <include>org.fusesource.meshkeeper:meshkeeper-website</include>
+      </includes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>docs/examples</outputDirectory>
+      <unpack>true</unpack>
+      <includes>
+        <include>org.fusesource.meshkeeper.examples:*:zip:project</include>
+      </includes>
+    </dependencySet>
+  </dependencySets>
+  
 </assembly>

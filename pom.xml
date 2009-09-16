@@ -43,6 +43,7 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  
   <modules>
     <module>meshkeeper-api</module>
     <module>meshkeeper-mop-resolver</module>
@@ -215,6 +216,15 @@
   </build>
   
   <profiles>
+    
+    <profile>
+      <id>docs</id>
+      <modules>
+        <module>meshkeeper-examples</module>
+        <module>website</module>
+      </modules>
+    </profile>
+
     <!-- 
       To generate a graph of the project dependencies, run: 
       mvn -P graph graph:project 
@@ -241,5 +251,5 @@
       </build>
     </profile>
   </profiles>
-  
+   
 </project>
