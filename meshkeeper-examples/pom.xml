@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  =====================================================================
+  Copyright (C) 2009 Progress Software, Inc. All rights reserved.                    
+  http://fusesource.com
+  =====================================================================
+  The software in this package is published under the terms of
+  the AGPL license a copy of which has been included with this 
+  distribution in the license.txt file.  
+  =====================================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.fusesource.meshkeeper</groupId>
+    <artifactId>meshkeeper</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.fusesource.meshkeeper</groupId>
+  <artifactId>meshkeeper-examples</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Builds and packages the MeshKeeper Examples</name>
+
+  <build>
+    <plugins>
+      
+      <!-- Filter the examples to substitute the current version of MeshKeeper -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.4</version>
+        <executions>
+          <execution>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/filtered-examples</outputDirectory>
+              <resources>          
+                <resource>
+                  <directory>${basedir}/src/examples</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>              
+            </configuration>            
+          </execution>
+        </executions>
+      </plugin>
+      
+      <!-- Build each project example to make sure they are not broken -->
+      <plugin>
+        <artifactId>maven-invoker-plugin</artifactId>
+        <version>1.3</version>
+        <executions>
+          <execution>
+            <id>test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>install</goal>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <debug>true</debug>
+              <projectsDirectory>${project.build.directory}/filtered-examples</projectsDirectory>
+              <cloneProjectsTo>${project.build.directory}/tested-examples</cloneProjectsTo>
+              <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+              <settingsFile>${basedir}/src/examples/settings.xml</settingsFile>              
+              <pomIncludes>
+                <pomInclude>*/pom.xml</pomInclude>
+              </pomIncludes>
+              <goals>
+                <goal>clean</goal>
+                <goal>install</goal>
+              </goals>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Package each example up -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.2-beta-4</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptorSourceDirectory>${basedir}/src/assembly</descriptorSourceDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>
