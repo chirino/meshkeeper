@@ -216,7 +216,8 @@ setupDefaults() {
     fi
     
     OPTS=""
-    OPTS="$OPTS -Dmeshkeeper.application=$0"
+    APP_NAME=`basename $0`
+    OPTS="$OPTS -Dmeshkeeper.application=$APP_NAME"
     OPTS="$OPTS -Dmeshkeeper.home=$MESHKEEPER_HOME"
     OPTS="$OPTS -Dmeshkeeper.base=$MESHKEEPER_BASE"
     OPTS="$OPTS -Dlog4j.configuration=file:$LOG4J"

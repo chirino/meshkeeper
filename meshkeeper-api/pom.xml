@@ -50,6 +50,17 @@
     </dependency>
   </dependencies>
 
+  <pluginRepositories>
+    <!-- for the maven-uberize-plugin -->
+    <pluginRepository>
+      <id>mvnplugins.fusesource.org</id>
+      <url>http://mvnplugins.fusesource.org/repo/release</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </pluginRepository>
+  </pluginRepositories>
+  
   <build>
     <defaultGoal>install</defaultGoal>
     <plugins>
@@ -83,9 +94,45 @@
           </execution>
         </executions>
       </plugin>
+      
+      <!-- this is to relocate the commons logging into MeshKeeper package ... 
+      <plugin>
+        <groupId>org.fusesource.mvnplugins</groupId>
+        <artifactId>maven-uberize-plugin</artifactId>
+        <version>1.2</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals><goal>uberize</goal></goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.fusesource.mvnplugins.uberize.transformer.ManifestEditor"/>
+                <transformer implementation="org.fusesource.mvnplugins.uberize.transformer.TextAggregator">
+                  <includes>
+                    <include>META-INF/LICENSE</include>
+                    <include>META-INF/LICENSE.txt</include>
+                    <include>META-INF/NOTICE</include>
+                    <include>META-INF/NOTICE.txt</include>
+                  </includes>
+                </transformer>
+                <transformer implementation="org.fusesource.mvnplugins.uberize.transformer.ClassShader">
+                  <relocations>
+                    <relocation>
+                      <pattern>org.apache.commons.logging</pattern>
+                      <shadedPattern>org.fusesource.meshkeeper.logging</shadedPattern>
+                    </relocation>
+                  </relocations>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+     -->
+
     </plugins>
   </build>
-  
+
   <profiles>
     <profile>
       <id>docs</id>

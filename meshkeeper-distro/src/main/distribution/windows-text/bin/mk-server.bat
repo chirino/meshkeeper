@@ -85,7 +85,7 @@ goto :EOF
     
 :LOCATE_OPTS
   set OPTS=
-  set OPTS=%OPTS% -Dmeshkeeper.application=%~dpn0
+  set OPTS=%OPTS% -Dmeshkeeper.application=%~n0
   set OPTS=%OPTS% -Dmeshkeeper.home=%MESHKEEPER_HOME%
   set OPTS=%OPTS% -Dmeshkeeper.base=%MESHKEEPER_BASE%
   set OPTS=%OPTS% -Dlog4j.configuration=file:%MESHKEEPER_HOME%\etc\log4j.properties
