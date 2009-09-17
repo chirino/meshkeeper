@@ -23,6 +23,7 @@ import javax.jms.Session;
 
 import org.fusesource.meshkeeper.MeshEvent;
 import org.fusesource.meshkeeper.MeshEventListener;
+import org.fusesource.meshkeeper.distribution.event.AbstractEventClient;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.jms.JMSProvider;
 
@@ -35,7 +36,7 @@ import org.fusesource.meshkeeper.distribution.jms.JMSProvider;
  * @author cmacnaug
  * @version 1.0
  */
-public class JMSEventClient implements EventClient {
+public class JMSEventClient extends AbstractEventClient {
 
     private static final String topicPrefix = "clevent.";
 
@@ -81,7 +82,11 @@ public class JMSEventClient implements EventClient {
         sender.send(sendSession.createTopic(topicPrefix + topic), sendSession.createObjectMessage(event));
     }
 
-    public synchronized void close() throws Exception {
+    public void start() {
+        //No-Op
+    }
+
+    public synchronized void destroy() throws Exception {
         sendSession.close();
         listenerSession.close();
         listeners.clear();
@@ -112,11 +117,10 @@ public class JMSEventClient implements EventClient {
          * @see javax.jms.MessageListener#onMessage(javax.jms.Message)
          */
         public synchronized void onMessage(Message msg) {
-            for(MeshEventListener l : listeners)
-            {
+            for (MeshEventListener l : listeners) {
                 MeshEvent event;
                 try {
-                    event = (MeshEvent) ((ObjectMessage)msg).getObject();
+                    event = (MeshEvent) ((ObjectMessage) msg).getObject();
                     l.onEvent(event);
                 } catch (JMSException e) {
                     // TODO Auto-generated catch block

@@ -66,7 +66,7 @@ public class ResourceTest extends TestCase {
 
         assertEquals(new File("test-file-repo", resource.getRepositoryPath()), new File(resource.getLocalPath()));
 
-        rm.close();
+        rm.destroy();
 
     }
 
@@ -91,7 +91,7 @@ public class ResourceTest extends TestCase {
 
         assertEquals(new File("test-file-repo", resource.getRepositoryPath()), new File(resource.getLocalPath()));
 
-        rm.close();
+        rm.destroy();
     }
 
     /**

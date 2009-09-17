@@ -7,8 +7,8 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.remoting;
 
-import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.distribution.PluginClient;
 
 /** 
  * IExporter
@@ -18,8 +18,6 @@ import org.fusesource.meshkeeper.MeshKeeper;
  * @author cmacnaug
  * @version 1.0
  */
-public interface RemotingClient extends MeshKeeper.Remoting{
-    
-    public void destroy() throws Exception;
+public interface RemotingClient extends MeshKeeper.Remoting, PluginClient{
     
 }

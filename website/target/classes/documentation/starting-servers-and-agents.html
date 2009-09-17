@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="description" content="description goes here" />
+    <meta name="keywords" content="keywords,goes,here" />
+    <meta name="author" content="Your Name" />
+
+    <link href="../styles/impact/css/site.css" rel="stylesheet" type="text/css" />
+    
+    <title>Starting Standalone Servers and Agents</title>
+
+
+
+</script>
+</head>
+<body>
+  
+  <div id="navigation">
+  	<div class="wrapper">
+      <ul><li class="webgen-menu-level1"><a href="../index.html">MeshKeeper</a></li><li class="webgen-menu-level1"><a href="../source.html">Source</a></li><li class="webgen-menu-level1"><a href="../community.html">Community</a></li><li class="webgen-menu-level1"><a href="../support.html">Support</a></li><li class="webgen-menu-level1"><a href="../maven/1.0-SNAPSHOT/meshkeeper-api/apidocs/index.html">Javadoc</a></li><li class="webgen-menu-level1 webgen-menu-submenu"><a href="../blog/index.html">Blog</a></li><li class="webgen-menu-level1 webgen-menu-submenu webgen-menu-submenu-inhierarchy"><a href="index.html">Documentation</a></li><li class="webgen-menu-level1 webgen-menu-submenu"><a href="../downloads/index.html">Downloads</a></li></ul>
+  	</div>
+  </div>
+  
+
+  <div id="overview">
+    <div class="wrapper">
+      
+      <div class="logo">
+        <img src="../images/meshkeeper-logo.png"/>
+      </div>
+      
+      <div class="message">
+        <h1>Starting Standalone Servers and Agents</h1>
+<p>How to Install and Launch the MeshKeeper Services.</p>
+
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+  <div id='content'>
+  	<div class='wrapper'>
+      <h1 id='unix_platforms'>Unix Platforms</h1>
+<ol>
+  <li>
+    Download the latest Unix distribution:
+    <a href='http://meshkeeper.fusesource.org/repo/snapshot/org/fusesource/meshkeeper/meshkeeper-distro/1.0-SNAPSHOT/meshkeeper-distro-1.0-SNAPSHOT.zip'>
+      meshkeeper-distro-1.0-SNAPSHOT.tar.gz
+    </a>
+  </li>
+  <li>
+    Unpack the archive with the tar command: `tar -zxvf meshkeeper-distro-1.0-SNAPSHOT.tar.gz`
+  </li>
+  <li>
+    Start the control server:
+<div class="CodeRay">
+  <div class="code"><pre>
+$ ./meshkeeper-distro-1.0-SNAPSHOT/bin/mk-server 
+22:44:22 INFO  ControlServer        Creating JMS Server at activemq:tcp://localhost:4041 [main] 
+22:44:24 INFO  ControlServer        JMS Server started: ActiveMQ Control Service at: activemq:tcp://meshkeeper.fusesource.org:4041 [main] 
+22:44:24 INFO  ControlServer        Creating Registry Server at zk:tcp://localhost:4040 [main] 
+22:44:25 INFO  ControlServer        Registry Server started: Zoo Keeper Registry Server [main] 
+22:44:27 INFO  ControlServer        Registered RMI control server at /control/remoting-uri=rmiviajms:activemq:tcp://meshkeeper.fusesource.org:4041 [main] 
+22:44:27 INFO  ControlServer        Registered event server at /control/eventing-uri=eventviajms:activemq:tcp://meshkeeper.fusesource.org:4041 [main] 
+22:44:27 INFO  ControlServer        Registered common repo url at /control/repository-uri=null [main] 
+</pre></div>
+</div>
+
+Take note of URI of the Registry Server.  It will be needed when you start up the Agents.
+</li>
+<li>
+Start the launch agent. Make sure you use the --registry option to connect the agent to the previously started control server.
+<div class="CodeRay">
+  <div class="code"><pre>
+$ ./meshkeeper-distro-1.0-SNAPSHOT/bin/mk-agent --registry zk:tcp://localhost:4040
+Starting Launch Agent against registry: zk:tcp://localhost:4040
+22:56:22 INFO  LaunchAgent          PROCESS LAUNCHER INTEL-MBP.HOME STARTED
+</pre></div>
+</div>
+
+</li>
+</ol>
+<h1 id='windows_platforms'>Windows Platforms</h1>
+<ol>
+<li>
+Download the latest Windows distribution:
+<a href='http://meshkeeper.fusesource.org/repo/snapshot/org/fusesource/meshkeeper/meshkeeper-distro/1.0-SNAPSHOT/meshkeeper-distro-1.0-SNAPSHOT.zip'>
+meshkeeper-distro-1.0-SNAPSHOT.zip
+</a>
+</li>
+<li>
+Unpack the archive with the jar command: `jar -xvf meshkeeper-distro-1.0-SNAPSHOT.zip`
+</li>
+<li>
+Start the control server:
+<div class="CodeRay">
+  <div class="code"><pre>
+C:\opt&gt;meshkeeper-1.0-SNAPSHOT\bin\mk-server.bat
+23:05:53 INFO  ControlServer        Creating JMS Server at activemq:tcp://localhost:4041 [main]
+23:05:54 INFO  ControlServer        JMS Server started: ActiveMQ Control Service at: activemq:tcp://vmware-fusion:4041 [main]
+23:05:54 INFO  ControlServer        Creating Registry Server at zk:tcp://localhost:4040 [main]
+23:05:55 INFO  ControlServer        Registry Server started: Zoo Keeper Registry Server [main]
+23:05:55 INFO  ControlServer        Registered RMI control server at /control/remoting-uri=rmiviajms:activemq:tcp://vmware-fusion:4041 [main]
+23:05:55 INFO  ControlServer        Registered event server at /control/eventing-uri=eventviajms:activemq:tcp://vmware-fusion:4041 [main]
+23:05:55 INFO  ControlServer        Registered common repo url at /control/repository-uri=null [main] 
+</pre></div>
+</div>
+
+Take note of URI of the Registry Server.  It will be needed when you start up the Agents.
+</li>
+<li>
+Start the launch agent. Make sure you use the --registry option to connect the agent to the previously started control server.
+<div class="CodeRay">
+  <div class="code"><pre>
+C:\opt&gt;meshkeeper-1.0-SNAPSHOT\bin\mk-agent.bat --registry zk:tcp://localhost:4040
+Starting Launch Agent against registry: zk:tcp://localhost:4040
+23:15:55 INFO  LaunchAgent          PROCESS LAUNCHER INTEL-MBP.HOME STARTED
+</pre></div>
+</div>
+
+</li>
+</ol>
+
+  	</div>
+  </div>
+
+
+
+
+</body>
+</html>

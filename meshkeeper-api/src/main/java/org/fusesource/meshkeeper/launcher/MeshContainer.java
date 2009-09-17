@@ -89,7 +89,7 @@ public class MeshContainer implements MeshContainerService {
         MeshContainer container = new MeshContainer();
         try {
             DistributionRef ref = container.mesh.distribute(path, false, container);
-            System.out.println("Started MeshContainer: " + ref.getRegistryPath());
+            System.out.println("Started MeshContainer: " + ref.getRegistryPath() + " cl: " + container.getClass().getClassLoader());
             container.closeLatch.await();
         } catch (Exception e) {
             LOG.error("MeshContainer error: ", e);

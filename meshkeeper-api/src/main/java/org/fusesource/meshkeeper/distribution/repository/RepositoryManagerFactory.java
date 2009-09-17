@@ -19,7 +19,7 @@ import org.fusesource.meshkeeper.distribution.FactoryFinder;
  * @author cmacnaug
  * @version 1.0
  */
-public class RepositoryManagerFactory extends AbstractPluginFactory<RepositoryManager> {
+public class RepositoryManagerFactory extends AbstractPluginFactory<RepositoryClient> {
 
     private static final FactoryFinder RESOURCE_FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/meshkeeper/distribution/repository/");
 

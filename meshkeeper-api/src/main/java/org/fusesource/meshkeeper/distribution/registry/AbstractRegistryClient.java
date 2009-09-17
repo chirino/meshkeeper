@@ -10,6 +10,8 @@ package org.fusesource.meshkeeper.distribution.registry;
 import java.util.Collection;
 import java.util.concurrent.TimeoutException;
 
+import org.fusesource.meshkeeper.distribution.AbstractPluginClient;
+
 /** 
  * AbstractRegistryClient
  * <p>
@@ -18,7 +20,7 @@ import java.util.concurrent.TimeoutException;
  * @author cmacnaug
  * @version 1.0
  */
-public abstract class AbstractRegistryClient implements RegistryClient{
+public abstract class AbstractRegistryClient extends AbstractPluginClient implements RegistryClient{
 
     
     /**

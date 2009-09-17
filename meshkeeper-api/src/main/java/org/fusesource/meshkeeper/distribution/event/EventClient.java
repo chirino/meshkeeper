@@ -8,6 +8,7 @@
 package org.fusesource.meshkeeper.distribution.event;
 
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.distribution.PluginClient;
 
 /** 
  * EventClient
@@ -17,7 +18,6 @@ import org.fusesource.meshkeeper.MeshKeeper;
  * @author cmacnaug
  * @version 1.0
  */
-public interface EventClient extends MeshKeeper.Eventing{
+public interface EventClient extends MeshKeeper.Eventing, PluginClient{
     
-    public void close() throws Exception;
 }

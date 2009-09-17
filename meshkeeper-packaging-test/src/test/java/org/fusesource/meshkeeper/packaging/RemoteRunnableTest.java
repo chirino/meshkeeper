@@ -25,7 +25,7 @@ public class RemoteRunnableTest extends TestCase {
 
     protected void setUp() throws Exception {
         final String SLASH = File.separator;
-        String testDir = System.getProperty("basedir", ".")+ SLASH +"target"+ SLASH +"test-data"+SLASH+ getClass().getName();
+        String testDir = System.getProperty("basedir", ".")+ SLASH +"target"+ SLASH +"test-data"+SLASH+ "RemoteRunnableTest";
         String commonRepo = new File(testDir + SLASH + "common-repo").toURI().toString();
         System.setProperty("meshkeeper.base", testDir);
         System.setProperty("meshkeeper.repository.uri", commonRepo);

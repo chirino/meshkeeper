@@ -13,8 +13,9 @@ import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
 
 /**
- * Creates a MeshKeeper object which delegates all it's method calls to another MeshKeeper object.
- *
+ * Creates a MeshKeeper object which delegates all it's method calls to another
+ * MeshKeeper object.
+ * 
  * @author chirino
  */
 public class MeshKeeperWrapper implements MeshKeeper {
@@ -67,6 +68,14 @@ public class MeshKeeperWrapper implements MeshKeeper {
 
     public ScheduledExecutorService getExecutorService() {
         return next.getExecutorService();
+    }
+
+    public void setUserClassLoader(ClassLoader classLoader) {
+        next.setUserClassLoader(classLoader);
+    }
+
+    public ClassLoader getUserClassLoader() {
+        return next.getUserClassLoader();
     }
 
 }

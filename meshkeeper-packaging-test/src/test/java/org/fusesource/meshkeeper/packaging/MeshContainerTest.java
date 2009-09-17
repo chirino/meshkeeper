@@ -37,7 +37,7 @@ public class MeshContainerTest extends TestCase {
 
     protected void setUp() throws Exception {
         final String SLASH = File.separator;
-        String testDir = System.getProperty("basedir", ".") + SLASH + "target" + SLASH + "test-data" + SLASH + getClass().getName();
+        String testDir = System.getProperty("basedir", ".") + SLASH + "target" + SLASH + "test-data" + SLASH + "MeshContainerTest";
         String commonRepo = new File(testDir + SLASH + "common-repo").toURI().toString();
         System.setProperty("meshkeeper.base", testDir);
         System.setProperty("meshkeeper.repository.uri", commonRepo);
@@ -71,7 +71,7 @@ public class MeshContainerTest extends TestCase {
 //        JavaLaunch jl = new JavaLaunch();
 //        meshKeeper.launcher().waitForAvailableAgents(5000);
 //        String agentId = meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
-//        MeshContainer container = meshKeeper.launcher().launchMeshContainer(agentId, jl, new DefaultProcessListener("MESH-CONTAINER"));
+//        MeshContainer container = meshKeeper.launcher().launchMeshContainer(agentId, jl, this.getClass().getClassLoader(), new DefaultProcessListener("MESH-CONTAINER"));
 //
 //        CallBack callback = new CallBack();
 //        MeshContainerTestObject proxy = (MeshContainerTestObject) container.host("testObject", new MeshContainerTestObject(meshKeeper.remoting().export(callback)));

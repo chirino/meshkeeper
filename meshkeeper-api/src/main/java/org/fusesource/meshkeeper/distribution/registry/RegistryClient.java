@@ -8,6 +8,7 @@
 package org.fusesource.meshkeeper.distribution.registry;
 
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.distribution.PluginClient;
 
 /** 
  * Registry
@@ -17,7 +18,7 @@ import org.fusesource.meshkeeper.MeshKeeper;
  * @author cmacnaug
  * @version 1.0
  */
-public interface RegistryClient extends MeshKeeper.Registry{
+public interface RegistryClient extends MeshKeeper.Registry, PluginClient{
 
     /**
      * Connects to the registry.

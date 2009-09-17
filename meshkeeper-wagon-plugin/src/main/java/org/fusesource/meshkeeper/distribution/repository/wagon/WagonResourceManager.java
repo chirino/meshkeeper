@@ -22,8 +22,9 @@ import org.apache.maven.wagon.shared.http.AbstractHttpClientWagon;
 import org.apache.maven.wagon.shared.http.HttpConfiguration;
 import org.apache.maven.wagon.shared.http.HttpMethodConfiguration;
 import org.fusesource.meshkeeper.MeshArtifact;
+import org.fusesource.meshkeeper.distribution.repository.AbstractRepositoryClient;
 import org.fusesource.meshkeeper.distribution.repository.AuthenticationInfo;
-import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryClient;
 import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 /**
@@ -35,7 +36,7 @@ import org.fusesource.meshkeeper.util.internal.FileSupport;
  * @author cmacnaug
  * @version 1.0
  */
-public class WagonResourceManager implements RepositoryManager {
+public class WagonResourceManager extends AbstractRepositoryClient {
 
     //Access to our local repo:
     private Wagon localWagon;
@@ -218,7 +219,17 @@ public class WagonResourceManager implements RepositoryManager {
      * 
      * @throws Exception
      */
-    public void close() {
+    public void start()
+    {
+        //No-op:
+    }
+    
+    /**
+     * Closes all repository connections.
+     * 
+     * @throws Exception
+     */
+    public void destroy() {
         for (Wagon w : connectedRepos.values()) {
             try {
                 w.disconnect();

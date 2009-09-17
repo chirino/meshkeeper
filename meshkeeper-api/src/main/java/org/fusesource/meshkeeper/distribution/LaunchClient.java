@@ -68,7 +68,6 @@ class LaunchClient implements MeshKeeper.Launcher {
     private final HashMap<String, LaunchAgentService> boundAgents = new HashMap<String, LaunchAgentService>();
     private final HashMap<String, HashSet<Integer>> reservedPorts = new HashMap<String, HashSet<Integer>>();
     private String name;
-    private String classLoaderFactoryPath;
     private ClassLoaderServer classLoaderServer;
     private int meshContainerCounter;
 
@@ -178,10 +177,6 @@ class LaunchClient implements MeshKeeper.Launcher {
 
         meshKeeper.registry().removeRegistryData(LAUNCHER_REGISTRY_PATH + name, true);
         meshKeeper.registry().removeRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
-        if (classLoaderFactoryPath != null) {
-            meshKeeper.registry().removeRegistryData(classLoaderFactoryPath, false);
-        }
-
         //Clear out any container registrations: 
         meshKeeper.registry().removeRegistryData(MESHCONTAINER_REGISTRY_PATH + name, true);
 
@@ -300,12 +295,13 @@ class LaunchClient implements MeshKeeper.Launcher {
      * org.fusesource.meshkeeper.MeshKeeper.Launcher#launchMeshContainer(java
      * .lang.String, org.fusesource.meshkeeper.MeshProcessListener)
      */
-    public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception {
+    public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, ClassLoader loader, MeshProcessListener listener) throws Exception {
 
         LaunchDescription ld = new LaunchDescription();
         ld.add(launch.getJvm());
         ld.add(launch.getJvmArgs());
         ld.setWorkingDirectory(ld.getWorkingDirectory());
+        //This is likely not right when the launch agent is running remotely:
         ld.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
         ld.add("-cp");
         ld.add(path(file(mop(PluginResolver.PROJECT_GROUP_ID + ":meshkeeper-api:" + PluginClassLoader.getModuleVersion())), file(launch.getClasspath())));
@@ -315,8 +311,12 @@ class LaunchClient implements MeshKeeper.Launcher {
         ld.add(file("./classloader-cache"));
         ld.add("--distributor");
         ld.add(meshKeeper.getDistributorUri());
+        ClassLoaderServer cls = getClassLoaderServer();
+        ClassLoaderFactory stub = cls.export(loader, 1);
+        String clf = meshKeeper.registry().addRegistryObject("/launchclient-clf/" + System.getProperty("user.name"), true, stub);
         ld.add("--classloader");
-        ld.add(getClassLoaderFactoryPath());
+        ld.add(clf);
+        
         // Add the MeshContainer class to be launched:
         ld.add(org.fusesource.meshkeeper.launcher.MeshContainer.class.getName());
 
@@ -379,16 +379,6 @@ class LaunchClient implements MeshKeeper.Launcher {
 
     public void setClassLoaderServer(ClassLoaderServer classLoaderServer) {
         this.classLoaderServer = classLoaderServer;
-    }
-
-    public synchronized String getClassLoaderFactoryPath() throws Exception {
-        if (classLoaderFactoryPath == null) {
-            ClassLoaderServer cls = getClassLoaderServer();
-            ClassLoaderFactory stub = cls.export(LaunchClient.class.getClassLoader(), 1);
-            classLoaderFactoryPath = meshKeeper.registry().addRegistryObject("/launchclient-clf/" + System.getProperty("user.name"), true, stub);
-        }
-
-        return classLoaderFactoryPath;
     }
 
     public long getBindTimeout() {

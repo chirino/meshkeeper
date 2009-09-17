@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.fusesource.meshkeeper.Distributable;
+import org.fusesource.meshkeeper.distribution.AbstractPluginClient;
 
 /**
  * AbstractExporter
@@ -21,7 +22,7 @@ import org.fusesource.meshkeeper.Distributable;
  * @author cmacnaug
  * @version 1.0
  */
-public abstract class AbstractRemotingClient implements RemotingClient {
+public abstract class AbstractRemotingClient extends AbstractPluginClient implements RemotingClient {
 
     protected abstract <T> T export(Object obj, Class<?>[] interfaces) throws Exception;
 

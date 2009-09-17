@@ -30,7 +30,7 @@ import org.fusesource.meshkeeper.MeshArtifact;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
-import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryClient;
 
 /**
  * Distributor
@@ -48,8 +48,9 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
     private RemotingClient remoting;
     private RegistryClient registry;
     private EventClient eventClient;
-    private RepositoryManager resourceManager;
+    private RepositoryClient resourceManager;
     private LaunchClient launchClient;
+    private ClassLoader userClassLoader;
 
     private String registryUri;
     private final HashMap<Distributable, DistributionRef<?>> distributed = new HashMap<Distributable, DistributionRef<?>>();
@@ -63,6 +64,14 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      */
     public ScheduledExecutorService getExecutorService() {
         return DistributorFactory.getExecutorService();
+    }
+    
+    public void setUserClassLoader(ClassLoader classLoader) {
+        userClassLoader = classLoader;
+    }
+
+    public ClassLoader getUserClassLoader() {
+        return userClassLoader;
     }
     
     /*
@@ -124,7 +133,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
     }
 
     public void start() {
-
+       
     }
 
     public synchronized void destroy() throws Exception {
@@ -133,7 +142,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
             launchClient.destroy();
         }
 
-        eventClient.close();
+        eventClient.destroy();
         for (DistributionRef<?> ref : distributed.values()) {
             ref.unregister();
         }
@@ -158,7 +167,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @param resourceManager
      *            the resourceManager to set
      */
-    void setResourceManager(RepositoryManager resourceManager) {
+    void setResourceManager(RepositoryClient resourceManager) {
         this.resourceManager = resourceManager;
     }
 

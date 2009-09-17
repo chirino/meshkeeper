@@ -13,6 +13,7 @@ import java.util.Map;
 
 import org.fusesource.meshkeeper.MeshEvent;
 import org.fusesource.meshkeeper.MeshEventListener;
+import org.fusesource.meshkeeper.distribution.event.AbstractEventClient;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
 
 /**
@@ -24,19 +25,23 @@ import org.fusesource.meshkeeper.distribution.event.EventClient;
  * @author cmacnaug
  * @version 1.0
  */
-public class VMEventClient implements EventClient {
+public class VMEventClient extends AbstractEventClient implements EventClient {
 
     private static final VMEventServer server = new VMEventServer();
     private final HashMap<String, HashSet<MeshEventListener>> eventListeners = new HashMap<String, HashSet<MeshEventListener>>();
 
     private boolean closed = false;
 
+    public void start() {
+        //No-Op
+    }
+
     /*
      * (non-Javadoc)
      * 
      * @see org.fusesource.meshkeeper.distribution.event.EventClient#close()
      */
-    public void close() throws Exception {
+    public void destroy() throws Exception {
         synchronized (this) {
             closed = true;
         }

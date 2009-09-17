@@ -7,34 +7,16 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.repository;
 
-import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.distribution.AbstractPluginClient;
 
-/**
- * RepositoryManager
+/** 
+ * AbstractRepositoryClient
  * <p>
  * Description:
  * </p>
- * 
  * @author cmacnaug
  * @version 1.0
  */
-public interface RepositoryManager extends MeshKeeper.Repository{
+public abstract class AbstractRepositoryClient extends AbstractPluginClient implements RepositoryClient {
 
-    /**
-     * Set the location of the common repo
-     * @param url The url to common repo. 
-     */
-    public void setCommonRepoUrl(String url, AuthenticationInfo authInfo) throws Exception ;
-
-    /**
-     * Set the location of the local repository
-     */
-    public void setLocalRepoDir(String directory) throws Exception ;
-    
-    /**
-     * Closes all repository connections.
-     * 
-     * @throws Exception
-     */
-    public void close();
 }

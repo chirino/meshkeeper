@@ -196,7 +196,7 @@ public interface MeshKeeper {
         public MeshProcess launch(String agentId, Runnable runnable, MeshProcessListener listener) throws Exception;
         
         
-        public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception;
+        public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, ClassLoader loader, MeshProcessListener listener) throws Exception;
         
         
         /**
@@ -475,6 +475,22 @@ public interface MeshKeeper {
      * @return The executor service.
      */
     public ScheduledExecutorService getExecutorService();
+    
+    /**
+     * Sets the user class loader. Setting the user class loader assists meshkeeper
+     * in resolving user's serialized objects. 
+     * 
+     * @param classLoader The user classloader.
+     */
+    public void setUserClassLoader(ClassLoader classLoader);
+    
+    /**
+     * Gets the user class loader. Setting the user class loader assists meshkeeper
+     * in resolving user's serialized objects. 
+     * 
+     * @return The user classloader.
+     */
+    public ClassLoader getUserClassLoader();
     
     /**
      * Gets the Mesh Registy support interface. Registry support provides a location accessible

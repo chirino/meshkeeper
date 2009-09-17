@@ -7,7 +7,6 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.remoting.vm;
 
-
 import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.distribution.remoting.AbstractRemotingClient;
 
@@ -21,6 +20,10 @@ import org.fusesource.meshkeeper.distribution.remoting.AbstractRemotingClient;
  * @version 1.0
  */
 public class VMExporter extends AbstractRemotingClient {
+
+    public void start() {
+        //No-Op
+    }
 
     /*
      * (non-Javadoc)

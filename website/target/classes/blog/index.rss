@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<rss version="2.0">
+  <channel>
+    <title>The MyProject Blog</title>
+    <link>http://exmaple.org/blog/blog/"</link>
+    <description></description>
+    <pubDate>Wed, 16 Sep 2009 18:02:06 -0700</pubDate>
+    <lastBuildDate>Wed, 16 Sep 2009 18:02:06 -0700</lastBuildDate>
+    <generator>webgen - Webgen::SourceHandler::Feed</generator>
+
+    
+
+  </channel>
+</rss>
+
+
+

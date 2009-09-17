@@ -8,7 +8,7 @@
 package org.fusesource.meshkeeper.distribution.repository.wagon;
 
 import org.fusesource.meshkeeper.distribution.repository.AuthenticationInfo;
-import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryClient;
 import org.fusesource.meshkeeper.distribution.repository.RepositoryManagerFactory;
 
 /**
@@ -34,7 +34,7 @@ public class WagonResourceManagerFactory extends RepositoryManagerFactory {
      * #createResourceManager()
      */
     @Override
-    public RepositoryManager createPlugin(String uri) throws Exception {
+    public RepositoryClient createPlugin(String uri) throws Exception {
         WagonResourceManager wrm = new WagonResourceManager();
         if (localRepoDir != null) {
             wrm.setLocalRepoDir(localRepoDir);
