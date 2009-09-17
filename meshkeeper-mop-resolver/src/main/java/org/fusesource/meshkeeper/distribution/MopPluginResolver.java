@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.LinkedHashMap;
 
 import org.fusesource.mop.MOP;
 import org.fusesource.mop.MOPRepository;
@@ -20,6 +21,7 @@ import org.fusesource.mop.org.apache.commons.logging.Log;
 import org.fusesource.mop.org.apache.commons.logging.LogFactory;
 import org.fusesource.mop.org.apache.maven.artifact.Artifact;
 import org.fusesource.mop.org.apache.maven.artifact.resolver.filter.ArtifactFilter;
+import org.fusesource.mop.org.apache.maven.repository.RepositorySystem;
 import org.fusesource.mop.support.ArtifactId;
 
 /**
@@ -97,6 +99,16 @@ public class MopPluginResolver implements PluginResolver {
             } finally {
                 Thread.currentThread().setContextClassLoader(original);
             }
+
+            // Setup the repos so that folks can download our plugins dynamically.
+            LinkedHashMap<String,String> repositories = MOP_REPO.getRemoteRepositories();
+            repositories.clear();
+            repositories.put(RepositorySystem.DEFAULT_REMOTE_REPO_ID, RepositorySystem.DEFAULT_REMOTE_REPO_URL);
+            repositories.put("fusesource.m2", "http://repo.fusesource.com/maven2");
+            
+//  We could add our meshkeeper repos.. but they require authorization.. so there is no point.
+//            repositories.put("meshkeeper.release", "http://meshkeeper.fusesource.org/repo/release");
+//            repositories.put("meshkeeper.snapshot", "http://meshkeeper.fusesource.org/repo/snapshot");
 
         }
         return MOP_REPO;

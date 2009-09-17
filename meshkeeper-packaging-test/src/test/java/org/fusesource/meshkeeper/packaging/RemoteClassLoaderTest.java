@@ -16,18 +16,6 @@
  */
 package org.fusesource.meshkeeper.packaging;
 
-import junit.framework.TestCase;
-import static org.fusesource.meshkeeper.Expression.file;
-import static org.fusesource.meshkeeper.Expression.path;
-
-import org.fusesource.meshkeeper.*;
-import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
-import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
-import org.fusesource.meshkeeper.classloader.ClassLoaderServerFactory;
-import org.fusesource.meshkeeper.launcher.RemoteBootstrap;
-import org.fusesource.meshkeeper.launcher.LaunchAgent;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -37,30 +25,37 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.fusesource.meshkeeper.Expression;
+import static org.fusesource.meshkeeper.Expression.*;
+import org.fusesource.meshkeeper.LaunchDescription;
+import org.fusesource.meshkeeper.MavenTestSupport;
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshProcess;
+import org.fusesource.meshkeeper.MeshProcessListener;
+import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
+import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
+import org.fusesource.meshkeeper.classloader.ClassLoaderServerFactory;
+import org.fusesource.meshkeeper.launcher.LaunchAgent;
+import org.fusesource.meshkeeper.launcher.RemoteBootstrap;
+
+import junit.framework.TestCase;
+
 /**
  * @author chirino
  */
 public class RemoteClassLoaderTest extends TestCase {
 
-    ClassPathXmlApplicationContext context;
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        final String SLASH = File.separator;
-        String testDir = System.getProperty("basedir", ".")+ SLASH +"target"+ SLASH +"test-data"+SLASH+ getClass().getName();
-        String commonRepo = new File(testDir + SLASH + "common-repo").toURI().toString();
-        System.setProperty("meshkeeper.base", testDir);
-        System.setProperty("meshkeeper.repository.uri", commonRepo);
-        
-        context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
-        meshKeeper = (MeshKeeper) context.getBean("meshkeeper");
-
+        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getName());
     }
 
     protected void tearDown() throws Exception {
-
-        context.destroy();
-        meshKeeper = null;
+        if( meshKeeper!=null ) {
+            meshKeeper.destroy();
+            meshKeeper=null;
+        }
     }
 
     private String getAgent() throws InterruptedException, TimeoutException

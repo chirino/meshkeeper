@@ -47,7 +47,7 @@ public class ControlServer {
 
     private String jmsUri = DEFAULT_JMS_URI;
     private String registryUri = DEFAULT_REGISTRY_URI;
-    private String repositoryUri = "";
+    private String repositoryUri = System.getProperty("meshkeeper.repository.uri");
     
     private String directory = MeshKeeperFactory.getDefaultServerDirectory().getPath();
     private Thread shutdownHook;
@@ -68,9 +68,10 @@ public class ControlServer {
         
         //Start the jms server:
         log.info("Creating JMS Server at " + jmsUri);
+        final String SLASH = File.separator;
         try {
             rmiServer = SERVICE_FACTORY.create(jmsUri);
-            rmiServer.setDirectory(directory + File.separator + "jms");
+            rmiServer.setDirectory(directory + SLASH + "jms");
             rmiServer.start();
             log.info("JMS Server started: " + rmiServer.getName());
             
@@ -84,7 +85,7 @@ public class ControlServer {
         log.info("Creating Registry Server at " + registryUri);
         try {
             registryServer = SERVICE_FACTORY.create(registryUri);
-            registryServer.setDirectory(directory + File.separator + "registry");
+            registryServer.setDirectory(directory + SLASH + "registry");
             registryServer.start();
             log.info("Registry Server started: " + registryServer.getName());
             
@@ -92,6 +93,11 @@ public class ControlServer {
             log.error(e);
             destroy();
             throw new Exception("Error starting Registry Server", e);
+        }
+
+        if( repositoryUri == null ) {
+            // Just default it to a local directory..  Only really useful in the local test case.
+            repositoryUri = new File(directory + SLASH + "repository").toURI().toString();
         }
 
         //Connect to the registry and publish service connection info:
@@ -114,7 +120,7 @@ public class ControlServer {
             
             registry.removeRegistryData(REPOSITORY_URI_PATH, true);
             registry.addRegistryObject(REPOSITORY_URI_PATH, false, repositoryUri);
-            log.info("Registered common repo url at " + REPOSITORY_URI_PATH + "=" + repositoryUri);
+            log.info("Registered repository uri at " + REPOSITORY_URI_PATH + "=" + repositoryUri);
             
         } catch (Exception e) {
             log.error(e.getMessage(), e);

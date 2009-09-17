@@ -16,19 +16,20 @@
  */
 package org.fusesource.meshkeeper.packaging;
 
-import junit.framework.TestCase;
-import static org.fusesource.meshkeeper.Expression.file;
-import static org.fusesource.meshkeeper.Expression.path;
-
-import org.fusesource.meshkeeper.*;
-import org.fusesource.meshkeeper.Expression.FileExpression;
-import org.fusesource.meshkeeper.distribution.PluginResolver;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import java.io.File;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeoutException;
+
+import org.fusesource.meshkeeper.Expression;
+import org.fusesource.meshkeeper.Expression.FileExpression;
+import org.fusesource.meshkeeper.LaunchDescription;
+import org.fusesource.meshkeeper.MavenTestSupport;
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshProcess;
+import org.fusesource.meshkeeper.MeshProcessListener;
+
+import junit.framework.TestCase;
 
 /**
  * RemoteLaunchTest
@@ -41,40 +42,17 @@ import java.util.concurrent.TimeoutException;
  */
 public class RemoteLaunchTest extends TestCase {
 
-    ClassPathXmlApplicationContext context;
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-
-        final String SLASH = File.separator;
-        String testDir = System.getProperty("basedir", ".")+ SLASH +"target"+ SLASH +"test-data"+SLASH+ getClass().getName();
-        String commonRepo = new File(testDir + SLASH + "common-repo").toURI().toString();
-        System.setProperty("meshkeeper.base", testDir);
-        System.setProperty("meshkeeper.repository.uri", commonRepo);
-        System.setProperty("mop.base", testDir+SLASH+"mop");
-
-        context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
-        meshKeeper = (MeshKeeper) context.getBean("meshkeeper");
-
+        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getName());
     }
-
-    public static void recursiveDelete(File f) {
-        if (f.isDirectory()) {
-            File[] files = f.listFiles();
-            for (int i = 0; i < files.length; i++) {
-                recursiveDelete(files[i]);
-            }
-        }
-        f.delete();
-    }
-
 
     protected void tearDown() throws Exception {
-        if (context != null) {
-            context.destroy();
+        if( meshKeeper!=null ) {
+            meshKeeper.destroy();
+            meshKeeper=null;
         }
-
-        meshKeeper = null;
     }
 
     private String getAgent() throws InterruptedException, TimeoutException
@@ -89,11 +67,11 @@ public class RemoteLaunchTest extends TestCase {
         ld.add("-cp");
 
         ArrayList<FileExpression> files = new ArrayList<FileExpression>();
-        for (String file : System.getProperty("java.class.path").split(File.pathSeparator)) {
-            files.add(file(file));
+        for (String f : System.getProperty("java.class.path").split(File.pathSeparator)) {
+            files.add(Expression.file(f));
         }
 
-        ld.add(path(files));
+        ld.add(Expression.path(files));
         ld.add(DataInputTestApplication.class.getName());
 
         DataOutputTester tester = new DataOutputTester();

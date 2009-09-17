@@ -18,6 +18,7 @@ import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.JavaLaunch;
 import org.fusesource.meshkeeper.MeshContainer;
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MavenTestSupport;
 import org.fusesource.meshkeeper.util.DefaultProcessListener;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -32,25 +33,17 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  */
 public class MeshContainerTest extends TestCase {
 
-    ClassPathXmlApplicationContext context;
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        final String SLASH = File.separator;
-        String testDir = System.getProperty("basedir", ".") + SLASH + "target" + SLASH + "test-data" + SLASH + "MeshContainerTest";
-        String commonRepo = new File(testDir + SLASH + "common-repo").toURI().toString();
-        System.setProperty("meshkeeper.base", testDir);
-        System.setProperty("meshkeeper.repository.uri", commonRepo);
-        System.setProperty("mop.base", testDir + SLASH + "mop");
-
-        context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
-        meshKeeper = (MeshKeeper) context.getBean("meshkeeper");
-
+        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getName());
     }
     
     protected void tearDown() throws Exception {
-        context.destroy();
-        meshKeeper = null;
+        if( meshKeeper!=null ) {
+            meshKeeper.destroy();
+            meshKeeper=null;
+        }
     }
 
     public static interface ICallBack extends Distributable, Serializable {
@@ -64,7 +57,9 @@ public class MeshContainerTest extends TestCase {
             latch.countDown();
         }
     }
-    
+
+    public void testNoop() {
+    }
     
 //    public void testMeshContainer() throws Exception {
 //        //Create default JavaLaunch:

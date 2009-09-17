@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class MeshKeeperFactory {
 
-    public static final String MESHKEEPER_REGISTRY_PROPERTY = "meshkeeper.registry";
+    public static final String MESHKEEPER_REGISTRY_PROPERTY = "meshkeeper.registry.uri";
     public static final String MESHKEEPER_BASE_PROPERTY = "meshkeeper.base";
     public static final EmbeddedServer EMBEDDED_SERVER = new EmbeddedServer();
 
@@ -45,7 +45,7 @@ public class MeshKeeperFactory {
     }
 
     /**
-     * Creates a MeshKeeper object.  If the "meshkeeper.registry" system property
+     * Creates a MeshKeeper object.  If the "meshkeeper.registry.uri" system property
      * is not set or if it is set to "embedded", then this method will connect the
      * returned MeshKeeper object to embedded control server and agent which it will
      * start up and shutdown automatically on demand.
@@ -107,7 +107,6 @@ public class MeshKeeperFactory {
         rc.setRegistryUri(registry);
         rc.setJmsUri("jms:activemq:tcp://localhost:2100");
         rc.setDirectory(dataDir.getCanonicalPath());
-        rc.setRepositoryUri(System.getProperty("common.repo.url"));
         rc.start();
         return rc;
     }

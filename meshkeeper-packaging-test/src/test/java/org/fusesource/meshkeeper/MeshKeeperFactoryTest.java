@@ -1,3 +1,10 @@
+/**************************************************************************************
+ * Copyright (C) 2009 Progress Software, Inc. All rights reserved.                    *
+ * http://fusesource.com                                                              *
+ * ---------------------------------------------------------------------------------- *
+ * The software in this package is published under the terms of the AGPL license      *
+ * a copy of which has been included with this distribution in the license.txt file.  *
+ **************************************************************************************/
 package org.fusesource.meshkeeper;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -8,7 +15,7 @@ import junit.framework.TestCase;
 import java.io.File;
 
 /**
- * @author chirino
+ * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
 public class MeshKeeperFactoryTest extends TestCase {
 
@@ -16,10 +23,7 @@ public class MeshKeeperFactoryTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        final String SLASH = File.separator;
-        String testDir = System.getProperty("basedir", ".")+ SLASH +"target"+ SLASH +"test-data"+SLASH+ getClass().getName();
-        System.setProperty("meshkeeper.base", testDir);
-
+        System.setProperty("meshkeeper.base", MavenTestSupport.getDataDirectory().getPath());
         // This shows how to start an embedded server /w java
         controller = MeshKeeperFactory.createControlServer("zk:tcp://localhost:2101");
     }

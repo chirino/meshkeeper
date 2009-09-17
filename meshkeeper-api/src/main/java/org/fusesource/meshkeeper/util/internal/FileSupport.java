@@ -88,6 +88,22 @@ public class FileSupport {
             throw new IOException(message);
     }
 
+
+    /**
+     * @param file the file or directory to recusively delete
+     * @return true if the directory was deleted.
+     */
+    public static boolean recursiveDelete(File file) {
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            for (int i = 0; i < files.length; i++) {
+                recursiveDelete(files[i]);
+            }
+        }
+        return file.delete();
+    }
+
+
     public static void write(InputStream source, File target) throws IOException {
         FileOutputStream os = new FileOutputStream(target);
         try {

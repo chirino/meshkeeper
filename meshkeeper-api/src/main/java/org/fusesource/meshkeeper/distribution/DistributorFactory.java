@@ -106,7 +106,7 @@ public class DistributorFactory {
         RepositoryClient resourceManager = new RepositoryManagerFactory().create(repositoryProvider);
         String commonRepoUrl = registry.getRegistryObject(ControlServer.REPOSITORY_URI_PATH);
         if (commonRepoUrl != null) {
-            resourceManager.setCommonRepoUrl(commonRepoUrl, null);
+            resourceManager.setCentralRepoUri(commonRepoUrl, null);
         }
         resourceManager.setLocalRepoDir(directory + File.separator + "local-repo");
 

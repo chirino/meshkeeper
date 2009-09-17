@@ -85,7 +85,7 @@ public class WagonResourceManager extends AbstractRepositoryClient {
         return new File(localWagon.getRepository().getBasedir());
     }
 
-    public void setCommonRepoUrl(String url, AuthenticationInfo authInfo) throws Exception {
+    public void setCentralRepoUri(String url, AuthenticationInfo authInfo) throws Exception {
         Repository remoteRepo = new Repository("common", url);
         connectWagon(remoteRepo, authInfo);
     }
@@ -252,8 +252,6 @@ public class WagonResourceManager extends AbstractRepositoryClient {
             return rc;
         }
     }
-
-    
 
 
 }

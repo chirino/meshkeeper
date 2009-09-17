@@ -32,7 +32,7 @@ public class Main {
         System.out.println("  [--jms <uri>]               -- specifies listening address for jms.");
         System.out.println("  [--registry <uri>]          -- specifies listening address for the regsitry.");
         System.out.println("  [--directory <directory>]   -- specifies data directory used by control server.");
-        System.out.println("  [--repository <uri>]        -- specifies a uri to a centralized common repository.");
+        System.out.println("  [--repository <uri>]        -- specifies a uri to a centralized repository.");
     }
 
     static class UsageException extends Exception {

@@ -40,7 +40,7 @@ public class WagonResourceManagerFactory extends RepositoryManagerFactory {
             wrm.setLocalRepoDir(localRepoDir);
         }
         if (commonRepoUrl != null) {
-            wrm.setCommonRepoUrl(commonRepoUrl, authInfo);
+            wrm.setCentralRepoUri(commonRepoUrl, authInfo);
         }
         return wrm;
     }

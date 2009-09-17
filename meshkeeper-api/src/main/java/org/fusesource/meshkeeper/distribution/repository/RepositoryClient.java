@@ -22,10 +22,10 @@ import org.fusesource.meshkeeper.distribution.PluginClient;
 public interface RepositoryClient extends MeshKeeper.Repository, PluginClient{
 
     /**
-     * Set the location of the common repo
-     * @param url The url to common repo. 
+     * Set the location of the central repository
+     * @param url The url to central repository. 
      */
-    public void setCommonRepoUrl(String url, AuthenticationInfo authInfo) throws Exception ;
+    public void setCentralRepoUri(String url, AuthenticationInfo authInfo) throws Exception ;
 
     /**
      * Set the location of the local repository

@@ -55,7 +55,7 @@ public class ResourceTest extends TestCase {
         AuthenticationInfo authInfo = new AuthenticationInfo();
         authInfo.setUserName("fusemqtest");
         authInfo.setPassword("fusemqtestpw");
-        rm.setCommonRepoUrl(remoteRepo, authInfo);
+        rm.setCentralRepoUri(remoteRepo, authInfo);
 
         MeshArtifact resource = rm.createResource();
         resource.setRepositoryId("common");
@@ -79,7 +79,7 @@ public class ResourceTest extends TestCase {
         log.info("Deleted local resource directory: " + localDir);
 
         File remoteDir = new File("test-file-repo");
-        rm.setCommonRepoUrl(remoteDir.toURI().toString(), null);
+        rm.setCentralRepoUri(remoteDir.toURI().toString(), null);
 
         String resourcePath = "testfolder";
         MeshArtifact resource = rm.createResource();

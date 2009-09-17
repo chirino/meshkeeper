@@ -1,49 +1,39 @@
+/**************************************************************************************
+ * Copyright (C) 2009 Progress Software, Inc. All rights reserved.                    *
+ * http://fusesource.com                                                              *
+ * ---------------------------------------------------------------------------------- *
+ * The software in this package is published under the terms of the AGPL license      *
+ * a copy of which has been included with this distribution in the license.txt file.  *
+ **************************************************************************************/
 package org.fusesource.meshkeeper.packaging;
 
-import junit.framework.TestCase;
-import static org.fusesource.meshkeeper.Expression.file;
-
-import org.fusesource.meshkeeper.Distributable;
-import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.MeshKeeperFactory;
-import org.fusesource.meshkeeper.distribution.PluginResolver;
-import org.fusesource.meshkeeper.util.DefaultProcessListener;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import java.io.File;
 import java.io.Serializable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import org.fusesource.meshkeeper.Distributable;
+import org.fusesource.meshkeeper.MavenTestSupport;
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.util.DefaultProcessListener;
+
+import junit.framework.TestCase;
 
 /**
  * @author chirino
  */
 public class RemoteRunnableTest extends TestCase {
 
-    ClassPathXmlApplicationContext context;
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        final String SLASH = File.separator;
-        String testDir = System.getProperty("basedir", ".")+ SLASH +"target"+ SLASH +"test-data"+SLASH+ "RemoteRunnableTest";
-        String commonRepo = new File(testDir + SLASH + "common-repo").toURI().toString();
-        System.setProperty("meshkeeper.base", testDir);
-        System.setProperty("meshkeeper.repository.uri", commonRepo);
-        System.setProperty("mop.base", testDir+SLASH+"mop");
-
-        context = new ClassPathXmlApplicationContext("meshkeeper-all-spring.xml");
-        meshKeeper = (MeshKeeper) context.getBean("meshkeeper");
-
+        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getName());
     }
 
-    public static void recursiveDelete(File f) {
-        if (f.isDirectory()) {
-            File[] files = f.listFiles();
-            for (int i = 0; i < files.length; i++) {
-                recursiveDelete(files[i]);
-            }
+    protected void tearDown() throws Exception {
+        if( meshKeeper!=null ) {
+            meshKeeper.destroy();
+            meshKeeper=null;
         }
-        f.delete();
     }
 
     public static interface ICallBack extends Distributable {
