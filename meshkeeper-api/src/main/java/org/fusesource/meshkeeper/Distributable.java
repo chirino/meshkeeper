@@ -7,6 +7,8 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper;
 
+import java.io.Serializable;
+
 
 /** 
  * Distributable
@@ -23,6 +25,6 @@ package org.fusesource.meshkeeper;
  * @author cmacnaug
  * @version 1.0
  */
-public interface Distributable {
+public interface Distributable{
 
 }

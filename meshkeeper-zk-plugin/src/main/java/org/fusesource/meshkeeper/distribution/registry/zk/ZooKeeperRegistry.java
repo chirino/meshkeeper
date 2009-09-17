@@ -14,9 +14,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,7 +32,9 @@ import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.data.Stat;
 import org.fusesource.meshkeeper.RegistryWatcher;
+import org.fusesource.meshkeeper.distribution.registry.AbstractRegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
+import org.fusesource.meshkeeper.distribution.registry.RegistryHelper;
 
 /**
  * ZooKeeperRegistry
@@ -41,7 +45,7 @@ import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
  * @author cmacnaug
  * @version 1.0
  */
-class ZooKeeperRegistry implements RegistryClient {
+class ZooKeeperRegistry extends AbstractRegistryClient {
 
     Log log = LogFactory.getLog(this.getClass());
     HashMap<String, ZooKeeperChildWatcher> watcherMap = new HashMap<String, ZooKeeperChildWatcher>();
@@ -82,7 +86,7 @@ class ZooKeeperRegistry implements RegistryClient {
         // Wait for the client to establish a connection.
         if (connectTimeout > 0) {
             if (!connected.await(connectTimeout, TimeUnit.MILLISECONDS)) {
-                throw new IOException("Failed to connect to ZooKeeper at "+connectUrl+" within " + connectTimeout + " milliseconds.");
+                throw new IOException("Failed to connect to ZooKeeper at " + connectUrl + " within " + connectTimeout + " milliseconds.");
             }
         } else {
             connected.await();
@@ -100,17 +104,17 @@ class ZooKeeperRegistry implements RegistryClient {
         }
     }
 
-    public String addObject(String path, boolean sequential, Serializable o) throws Exception {
+    public String addRegistryObject(String path, boolean sequential, Serializable o) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream os = new ObjectOutputStream(baos);
         os.writeObject(o);
         os.close();
-        return addData(path, sequential, baos.toByteArray());
+        return addRegistryData(path, sequential, baos.toByteArray());
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T getObject(String path) throws Exception {
-        byte[] data = getData(path);
+    public <T> T getRegistryObject(String path) throws Exception {
+        byte[] data = getRegistryData(path);
         if (data == null) {
             return null;
         }
@@ -118,7 +122,7 @@ class ZooKeeperRegistry implements RegistryClient {
         return (T) in.readObject();
     }
 
-    public byte [] getData(String path) throws Exception {
+    public byte[] getRegistryData(String path) throws Exception {
         checkConnected();
         Stat stat = new Stat();
         try {
@@ -128,7 +132,7 @@ class ZooKeeperRegistry implements RegistryClient {
         }
     }
 
-    public String addData(String path, boolean sequential, byte[] data) throws Exception {
+    public String addRegistryData(String path, boolean sequential, byte[] data) throws Exception {
         checkConnected();
         if (log.isWarnEnabled() && data.length > 20000) {
             log.warn("Warning -- long data length for " + path + ": " + data.length);
@@ -145,11 +149,11 @@ class ZooKeeperRegistry implements RegistryClient {
             }
         } catch (NoNodeException nne) {
             createParentPath(path);
-            return addData(path, sequential, data);
+            return addRegistryData(path, sequential, data);
         }
     }
 
-    public void remove(String path, boolean recursive) throws Exception {
+    public void removeRegistryData(String path, boolean recursive) throws Exception {
         checkConnected();
         try {
             zk.delete(path, -1);
@@ -162,6 +166,10 @@ class ZooKeeperRegistry implements RegistryClient {
 
     public synchronized void addRegistryWatcher(String path, RegistryWatcher watcher) throws Exception {
         checkConnected();
+        if (path.endsWith("/")) {
+            path.substring(0, path.length() - 1);
+        }
+        
         createParentPath(path + "/");
         ZooKeeperChildWatcher w = watcherMap.get(path);
         if (w == null) {
@@ -209,12 +217,15 @@ class ZooKeeperRegistry implements RegistryClient {
         if (ls > 1) {
             String parent = path.substring(0, ls);
             try {
+                
                 zk.create(parent, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             } catch (NodeExistsException e) {
                 return;
             } catch (NoNodeException nne) {
-                createParentPath(path);
+                createParentPath(parent);
+                zk.create(parent, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
+            System.out.println("Created: " + parent);
         }
     }
 

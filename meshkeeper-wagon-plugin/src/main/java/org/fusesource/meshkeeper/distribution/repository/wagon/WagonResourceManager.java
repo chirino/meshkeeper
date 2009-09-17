@@ -89,7 +89,7 @@ public class WagonResourceManager implements RepositoryManager {
         connectWagon(remoteRepo, authInfo);
     }
     
-    public void locateResource(MeshArtifact resource) throws Exception {
+    public void resolveResource(MeshArtifact resource) throws Exception {
         Wagon w = null;
         long timestamp = 0;
         if (localWagon.resourceExists(resource.getRepositoryPath())) {

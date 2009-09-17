@@ -8,6 +8,7 @@
 package org.fusesource.meshkeeper.distribution.remoting;
 
 import org.fusesource.meshkeeper.Distributable;
+import org.fusesource.meshkeeper.MeshKeeper;
 
 /** 
  * IExporter
@@ -17,11 +18,7 @@ import org.fusesource.meshkeeper.Distributable;
  * @author cmacnaug
  * @version 1.0
  */
-public interface RemotingClient {
-
-    public <T extends Distributable> T export(Distributable obj) throws Exception;
-    
-    public void unexport(Distributable obj) throws Exception;
+public interface RemotingClient extends MeshKeeper.Remoting{
     
     public void destroy() throws Exception;
     

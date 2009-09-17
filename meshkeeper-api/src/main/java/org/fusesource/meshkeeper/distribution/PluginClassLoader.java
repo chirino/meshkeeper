@@ -8,14 +8,9 @@
 package org.fusesource.meshkeeper.distribution;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.PhantomReference;
-import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
@@ -24,12 +19,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.UUID;
-import java.util.Vector;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,8 +28,8 @@ import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
 import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
-import org.fusesource.meshkeeper.util.internal.IOSupport;
 import org.fusesource.meshkeeper.util.internal.FileSupport;
+import org.fusesource.meshkeeper.util.internal.IOSupport;
 
 /**
  * PluginClassLoader

@@ -47,7 +47,7 @@ public class ControlServer {
 
     private String jmsUri = DEFAULT_JMS_URI;
     private String registryUri = DEFAULT_REGISTRY_URI;
-    private String repositoryUri;
+    private String repositoryUri = "";
     
     private String directory = MeshKeeperFactory.getDefaultServerDirectory().getPath();
     private Thread shutdownHook;
@@ -104,16 +104,16 @@ public class ControlServer {
             //(note that we delete these first since
             //in some instances zoo-keeper doesn't shutdown cleanly and hangs
             //on to file handles so that the registry isn't purged:
-            registry.remove(REMOTING_URI_PATH, true);
-            registry.addObject(REMOTING_URI_PATH, false, new String("rmiviajms:" + rmiServer.getServiceUri()));
+            registry.removeRegistryData(REMOTING_URI_PATH, true);
+            registry.addRegistryObject(REMOTING_URI_PATH, false, new String("rmiviajms:" + rmiServer.getServiceUri()));
             log.info("Registered RMI control server at " + REMOTING_URI_PATH + "=rmiviajms:" + rmiServer.getServiceUri());
             
-            registry.remove(EVENTING_URI_PATH, true);
-            registry.addObject(EVENTING_URI_PATH, false, new String("eventviajms:" + rmiServer.getServiceUri()));
+            registry.removeRegistryData(EVENTING_URI_PATH, true);
+            registry.addRegistryObject(EVENTING_URI_PATH, false, new String("eventviajms:" + rmiServer.getServiceUri()));
             log.info("Registered event server at " + EVENTING_URI_PATH + "=eventviajms:" + rmiServer.getServiceUri());
             
-            registry.remove(REPOSITORY_URI_PATH, true);
-            registry.addObject(REPOSITORY_URI_PATH, false, repositoryUri);
+            registry.removeRegistryData(REPOSITORY_URI_PATH, true);
+            registry.addRegistryObject(REPOSITORY_URI_PATH, false, repositoryUri);
             log.info("Registered common repo url at " + REPOSITORY_URI_PATH + "=" + repositoryUri);
             
         } catch (Exception e) {

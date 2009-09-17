@@ -86,7 +86,7 @@ public class DistributorFactory {
 
         //Create Exporter:
         if (remotingUri == null) {
-            remotingUri = registry.getObject(ControlServer.REMOTING_URI_PATH);
+            remotingUri = registry.getRegistryObject(ControlServer.REMOTING_URI_PATH);
             if (remotingUri == null) {
                 remotingUri = ControlServer.DEFAULT_REMOTING_URI;
             }
@@ -95,7 +95,7 @@ public class DistributorFactory {
 
         //Create Event Client:
         if (eventingUri == null) {
-            eventingUri = registry.getObject(ControlServer.EVENTING_URI_PATH);
+            eventingUri = registry.getRegistryObject(ControlServer.EVENTING_URI_PATH);
             if (eventingUri == null) {
                 eventingUri = ControlServer.DEFAULT_EVENT_URI;
             }
@@ -104,7 +104,7 @@ public class DistributorFactory {
 
         //Create ResourceManager:
         RepositoryManager resourceManager = new RepositoryManagerFactory().create(repositoryProvider);
-        String commonRepoUrl = registry.getObject(ControlServer.REPOSITORY_URI_PATH);
+        String commonRepoUrl = registry.getRegistryObject(ControlServer.REPOSITORY_URI_PATH);
         if (commonRepoUrl != null) {
             resourceManager.setCommonRepoUrl(commonRepoUrl, null);
         }

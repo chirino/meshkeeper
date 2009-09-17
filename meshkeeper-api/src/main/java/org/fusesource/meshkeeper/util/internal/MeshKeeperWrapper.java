@@ -7,6 +7,8 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.util.internal;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
 
@@ -61,6 +63,10 @@ public class MeshKeeperWrapper implements MeshKeeper {
 
     public void undistribute(Distributable distributable) throws Exception {
         next.undistribute(distributable);
+    }
+
+    public ScheduledExecutorService getExecutorService() {
+        return next.getExecutorService();
     }
 
 }

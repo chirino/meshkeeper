@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
@@ -25,11 +26,9 @@ import org.fusesource.meshkeeper.MeshKeeper.Remoting;
 import org.fusesource.meshkeeper.MeshKeeper.Eventing;
 import org.fusesource.meshkeeper.MeshKeeper.Registry;
 import org.fusesource.meshkeeper.MeshKeeper.Repository;
-import org.fusesource.meshkeeper.MeshKeeper.Launcher;
 import org.fusesource.meshkeeper.MeshArtifact;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
-import org.fusesource.meshkeeper.distribution.registry.RegistryHelper;
 import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
 import org.fusesource.meshkeeper.distribution.repository.RepositoryManager;
 
@@ -59,6 +58,13 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
 
     }
 
+    /* (non-Javadoc)
+     * @see org.fusesource.meshkeeper.MeshKeeper#getExecutorService()
+     */
+    public ScheduledExecutorService getExecutorService() {
+        return DistributorFactory.getExecutorService();
+    }
+    
     /*
      * (non-Javadoc)
      * 
@@ -252,7 +258,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      *             If there is an error adding the node.
      */
     public String addRegistryObject(String path, boolean sequential, Serializable o) throws Exception {
-        return registry.addObject(path, sequential, o);
+        return registry.addRegistryObject(path, sequential, o);
     }
 
     /**
@@ -267,7 +273,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      *             If the object couldn't be retrieved.
      */
     public <T> T getRegistryObject(String path) throws Exception {
-        return (T) registry.getObject(path);
+        return (T) registry.getRegistryObject(path);
     }
 
     /**
@@ -280,7 +286,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      *             If the object couldn't be retrieved.
      */
     public byte[] getRegistryData(String path) throws Exception {
-        return registry.getData(path);
+        return registry.getRegistryData(path);
     }
 
     /**
@@ -294,7 +300,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      *             If the path couldn't be removed.
      */
     public void removeRegistryData(String path, boolean recursive) throws Exception {
-        registry.remove(path, recursive);
+        registry.removeRegistryData(path, recursive);
     }
 
     /**
@@ -314,7 +320,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      *             If there is an error adding the node.
      */
     public String addRegistryData(String path, boolean sequential, byte[] data) throws Exception {
-        return registry.addData(path, sequential, data);
+        return registry.addRegistryData(path, sequential, data);
     }
 
     /**
@@ -336,7 +342,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      *            The watcher
      */
     public void removeRegistryWatcher(String path, RegistryWatcher watcher) throws Exception {
-        registry.addRegistryWatcher(path, watcher);
+        registry.removeRegistryWatcher(path, watcher);
     }
 
     /**
@@ -354,7 +360,14 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      */
     public <T> Collection<T> waitForRegistrations(String path, int min, long timeout) throws TimeoutException, Exception {
-        return RegistryHelper.waitForRegistrations(registry, path, min, timeout);
+        return registry.waitForRegistrations(path, min, timeout);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.fusesource.meshkeeper.MeshKeeper.Registry#waitForRegistration(java.lang.String, long)
+     */
+    public <T> T waitForRegistration(String path, long timeout) throws TimeoutException, Exception {
+        return (T) registry.waitForRegistration(path, timeout);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////
@@ -458,7 +471,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      *             If there is an error locating the resource.
      */
     public void resolveResource(MeshArtifact resource) throws Exception {
-        resourceManager.locateResource(resource);
+        resourceManager.resolveResource(resource);
     }
 
     /**
@@ -504,12 +517,10 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
             this.object = object;
         }
 
-        @SuppressWarnings("unchecked")
         public D getProxy() {
             return stub;
         }
 
-        @SuppressWarnings("unchecked")
         public D getTarget() {
             return object;
         }
@@ -518,7 +529,6 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
             return path;
         }
 
-        @SuppressWarnings("unchecked")
         private synchronized D export() throws Exception {
             if (stub == null) {
                 stub = (D) remoting.export(object);
@@ -533,7 +543,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
                 if (stub == null) {
                     export();
                 }
-                this.path = registry.addObject(path, sequential, (Serializable) stub);
+                this.path = registry.addRegistryObject(path, sequential, (Serializable) stub);
             }
             return this.path;
         }
@@ -545,7 +555,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
             }
 
             if (path != null) {
-                registry.remove(path, true);
+                registry.removeRegistryData(path, true);
             }
         }
 
@@ -553,5 +563,4 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
             unexport();
         }
     }
-
 }

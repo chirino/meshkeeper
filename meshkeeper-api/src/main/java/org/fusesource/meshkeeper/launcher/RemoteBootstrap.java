@@ -8,9 +8,9 @@
 package org.fusesource.meshkeeper.launcher;
 
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.Marshalled;
-import org.fusesource.meshkeeper.distribution.DistributorFactory;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -18,14 +18,15 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-
 /**
- * Java main class that be be used to bootstrap the classpath
- * via remote classpath downloading of another main class.
- *
+ * Java main class that be be used to bootstrap the classpath via remote
+ * classpath downloading of another main class.
+ * 
  * @author chirino
  */
 public class RemoteBootstrap {
+
+    private static MeshKeeper mesh;
 
     private File cache;
     private String classLoader;
@@ -41,10 +42,14 @@ public class RemoteBootstrap {
             super(message);
         }
     }
-    
+
+    public static MeshKeeper getMeshKeeper() {
+        return mesh;
+    }
+
     public static void main(String args[]) throws Throwable {
 
-        if( System.getProperty("meshkeeper.application")==null ) {
+        if (System.getProperty("meshkeeper.application") == null) {
             System.setProperty("meshkeeper.application", RemoteBootstrap.class.getName());
         }
 
@@ -93,7 +98,7 @@ public class RemoteBootstrap {
             }
 
             // Validate required arguments/options.
-            if( main.getRunnable() == null ) {
+            if (main.getRunnable() == null) {
                 if (main.getMainClass() == null) {
                     throw new SyntaxException("Main class not specified.");
                 }
@@ -127,26 +132,24 @@ public class RemoteBootstrap {
         // to the booted application.
         System.setProperty("meshkeeper.bootstrap.meshkeeper", this.meshKeeperUri);
         System.setProperty("meshkeeper.bootstrap.cache", cache.getPath());
-        if( runnable !=null ) {
+        if (runnable != null) {
             System.setProperty("meshkeeper.bootstrap.runnable", runnable);
         } else {
             System.setProperty("meshkeeper.bootstrap.classloader", classLoader);
             System.setProperty("meshkeeper.bootstrap.mainclass", mainClass);
         }
 
-        DistributorFactory.setDefaultRegistryUri(this.meshKeeperUri);
-        MeshKeeper meshKeeper = DistributorFactory.createDefaultDistributor();
-
+        mesh = MeshKeeperFactory.createMeshKeeper(meshKeeperUri);
 
         System.out.println("bootstrap started...");
-        if( runnable !=null ) {
+        if (runnable != null) {
             Runnable r = null;
             try {
-                Marshalled<Runnable> marshalled = meshKeeper.registry().getRegistryObject(runnable);
-                if( marshalled == null ) {
-                    throw new Exception("The runnable not found at: "+ runnable);
+                Marshalled<Runnable> marshalled = mesh.registry().getRegistryObject(runnable);
+                if (marshalled == null) {
+                    throw new Exception("The runnable not found at: " + runnable);
                 }
-//              distributor.getRegistry().remove(runnable, false);
+                //              distributor.getRegistry().remove(runnable, false);
                 ClassLoaderFactory clf = marshalled.getClassLoaderFactory();
 
                 System.out.println("Setting up classloader...");
@@ -172,7 +175,7 @@ public class RemoteBootstrap {
         } else {
             Method mainMethod = null;
             try {
-                ClassLoaderFactory clf = meshKeeper.registry().getRegistryObject(this.classLoader);
+                ClassLoaderFactory clf = mesh.registry().getRegistryObject(this.classLoader);
 
                 System.out.println("Setting up classloader...");
                 ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
@@ -193,7 +196,6 @@ public class RemoteBootstrap {
         }
     }
 
-
     ///////////////////////////////////////////////////////////////////
     // Property Accessors
     ///////////////////////////////////////////////////////////////////
@@ -201,12 +203,11 @@ public class RemoteBootstrap {
     public void setDistributor(String uri) {
         meshKeeperUri = uri;
     }
-    
-    public String getDistributor()
-    {
+
+    public String getDistributor() {
         return meshKeeperUri;
     }
-    
+
     public void setClassLoader(String classLoader) {
         this.classLoader = classLoader;
     }

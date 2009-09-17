@@ -26,7 +26,7 @@ public abstract class AbstractRemotingClient implements RemotingClient {
     protected abstract <T> T export(Object obj, Class<?>[] interfaces) throws Exception;
 
     @SuppressWarnings("unchecked")
-    public <T extends Distributable> T export(Distributable obj) throws Exception {
+    public <T extends Distributable> T export(T obj) throws Exception {
         LinkedHashSet<Class<?>> interfaces = new LinkedHashSet<Class<?>>();
         collectDistributableInterfaces(obj.getClass(), interfaces);
         if(interfaces.size() == 0 || (interfaces.size() == 1 && interfaces.contains(Distributable.class)))

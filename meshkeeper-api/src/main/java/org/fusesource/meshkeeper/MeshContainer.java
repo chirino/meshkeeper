@@ -5,30 +5,21 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.fusesource.meshkeeper.distribution.registry;
-
-import org.fusesource.meshkeeper.MeshKeeper;
+package org.fusesource.meshkeeper;
 
 /** 
- * Registry
+ * MeshContainer
  * <p>
  * Description:
  * </p>
  * @author cmacnaug
  * @version 1.0
  */
-public interface RegistryClient extends MeshKeeper.Registry{
+public interface MeshContainer extends MeshProcess {
 
-    /**
-     * Connects to the registry.
-     * @throws Exception
-     */
-    public void start() throws Exception;
+    public Distributable host(String name, Distributable object) throws Exception;
     
-    /**
-     * Disconnects from the registry and cleans up resources
-     * held by the registry. 
-     * @throws Exception
-     */
-    public void destroy() throws Exception;
+    public void unhost(String name);
+    
+    public void run(Runnable r) throws Exception;
 }

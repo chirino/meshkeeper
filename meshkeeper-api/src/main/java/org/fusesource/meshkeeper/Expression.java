@@ -8,8 +8,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.lang.*;
-import java.lang.Process;
 
+import javax.management.RuntimeErrorException;
+
+import org.fusesource.meshkeeper.distribution.PluginClassLoader;
+import org.fusesource.meshkeeper.distribution.PluginResolver;
 import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import org.fusesource.meshkeeper.util.internal.ProcessSupport;
 
@@ -57,6 +60,9 @@ abstract public class Expression implements Serializable {
         return new ExecExpression(value);
     }
 
+    public static MopExpression mop(String artifactId) {
+        return new MopExpression(artifactId);
+    }
 
     public static AppendExpression append(List<Expression> list) {
         return new AppendExpression(list);
@@ -140,7 +146,6 @@ abstract public class Expression implements Serializable {
         }
     }
 
-
     public static class ExecExpression extends Expression {
         private final List<Expression> args;
 
@@ -155,14 +160,31 @@ abstract public class Expression implements Serializable {
             }
             try {
                 Process process = Runtime.getRuntime().exec(cmdline);
-                if( process == null ) {
-                    throw new RuntimeException("Could not execute "+cmdline[0]);
+                if (process == null) {
+                    throw new RuntimeException("Could not execute " + cmdline[0]);
                 }
                 String rc = ProcessSupport.caputure(process);
-                if( rc == null ) {
-                    throw new RuntimeException("Command "+cmdline[0]+" failed");
+                if (rc == null) {
+                    throw new RuntimeException("Command " + cmdline[0] + " failed");
                 }
                 return rc;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public static class MopExpression extends Expression {
+        private String artifactId;
+
+        public MopExpression(String artifactId) {
+            this.artifactId = artifactId;
+        }
+
+        public String evaluate(Properties p) {
+            try {
+                // Resolve the class path using Mop
+                return PluginClassLoader.getDefaultPluginLoader().getPluginResolver().resolveClassPath(artifactId);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

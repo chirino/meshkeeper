@@ -7,8 +7,7 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.event;
 
-import org.fusesource.meshkeeper.MeshEvent;
-import org.fusesource.meshkeeper.MeshEventListener;
+import org.fusesource.meshkeeper.MeshKeeper;
 
 /** 
  * EventClient
@@ -18,13 +17,7 @@ import org.fusesource.meshkeeper.MeshEventListener;
  * @author cmacnaug
  * @version 1.0
  */
-public interface EventClient {
-    
-    public void sendEvent(MeshEvent event, String topic) throws Exception;
-    
-    public void openEventListener(MeshEventListener listener, String topic) throws Exception;
-    
-    public void closeEventListener(MeshEventListener listener, String topic) throws Exception;
+public interface EventClient extends MeshKeeper.Eventing{
     
     public void close() throws Exception;
 }

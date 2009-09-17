@@ -62,7 +62,7 @@ public class ResourceTest extends TestCase {
         resource.setRepositoryPath("testfolder");
         resource.setType(MeshArtifact.DIRECTORY);
 
-        rm.locateResource(resource);
+        rm.resolveResource(resource);
 
         assertEquals(new File("test-file-repo", resource.getRepositoryPath()), new File(resource.getLocalPath()));
 
@@ -87,7 +87,7 @@ public class ResourceTest extends TestCase {
         resource.setRepositoryPath(resourcePath);
         resource.setType(MeshArtifact.DIRECTORY);
 
-        rm.locateResource(resource);
+        rm.resolveResource(resource);
 
         assertEquals(new File("test-file-repo", resource.getRepositoryPath()), new File(resource.getLocalPath()));
 

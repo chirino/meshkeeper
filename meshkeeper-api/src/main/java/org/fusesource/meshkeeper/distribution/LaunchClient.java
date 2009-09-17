@@ -7,6 +7,10 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution;
 
+import static org.fusesource.meshkeeper.Expression.file;
+import static org.fusesource.meshkeeper.Expression.mop;
+import static org.fusesource.meshkeeper.Expression.path;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,17 +25,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.HostProperties;
+import org.fusesource.meshkeeper.JavaLaunch;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.MeshProcessListener;
+import org.fusesource.meshkeeper.MeshContainer;
 import org.fusesource.meshkeeper.RegistryWatcher;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServerFactory;
 import org.fusesource.meshkeeper.classloader.Marshalled;
+import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import org.fusesource.meshkeeper.launcher.LaunchAgentService;
+import org.fusesource.meshkeeper.launcher.MeshContainerService;
+import org.fusesource.meshkeeper.launcher.RemoteBootstrap;
 
 /**
  * LaunchClient
@@ -58,10 +68,13 @@ class LaunchClient implements MeshKeeper.Launcher {
     private final HashMap<String, LaunchAgentService> boundAgents = new HashMap<String, LaunchAgentService>();
     private final HashMap<String, HashSet<Integer>> reservedPorts = new HashMap<String, HashSet<Integer>>();
     private String name;
+    private String classLoaderFactoryPath;
     private ClassLoaderServer classLoaderServer;
+    private int meshContainerCounter;
 
     public void start() throws Exception {
-        name = meshKeeper.registry().addRegistryObject("/launchclients/" + System.getProperty("user.name"), true, null);
+        name = meshKeeper.registry().addRegistryObject(LAUNCHER_REGISTRY_PATH + System.getProperty("user.name"), true, null);
+        name = name.substring(name.lastIndexOf("/") + 1);
 
         agentWatcher = new RegistryWatcher() {
 
@@ -147,7 +160,7 @@ class LaunchClient implements MeshKeeper.Launcher {
 
     public synchronized void destroy() throws Exception {
 
-        if( classLoaderServer !=null ) {
+        if (classLoaderServer != null) {
             classLoaderServer.stop();
         }
 
@@ -163,8 +176,15 @@ class LaunchClient implements MeshKeeper.Launcher {
             //            listener.onTRException("Error releasing agents.", e);
         }
 
-        meshKeeper.registry().removeRegistryData(name, false);
+        meshKeeper.registry().removeRegistryData(LAUNCHER_REGISTRY_PATH + name, true);
         meshKeeper.registry().removeRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
+        if (classLoaderFactoryPath != null) {
+            meshKeeper.registry().removeRegistryData(classLoaderFactoryPath, false);
+        }
+
+        //Clear out any container registrations: 
+        meshKeeper.registry().removeRegistryData(MESHCONTAINER_REGISTRY_PATH + name, true);
+
         knownAgents.clear();
         agentProps.clear();
         closed.set(true);
@@ -273,6 +293,43 @@ class LaunchClient implements MeshKeeper.Launcher {
         return agent.launch(launch, (MeshProcessListener) meshKeeper.remoting().export(listener));
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.fusesource.meshkeeper.MeshKeeper.Launcher#launchMeshContainer(java
+     * .lang.String, org.fusesource.meshkeeper.MeshProcessListener)
+     */
+    public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception {
+
+        LaunchDescription ld = new LaunchDescription();
+        ld.add(launch.getJvm());
+        ld.add(launch.getJvmArgs());
+        ld.setWorkingDirectory(ld.getWorkingDirectory());
+        ld.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
+        ld.add("-cp");
+        ld.add(path(file(mop(PluginResolver.PROJECT_GROUP_ID + ":meshkeeper-api:" + PluginClassLoader.getModuleVersion())), file(launch.getClasspath())));
+                
+        ld.add(RemoteBootstrap.class.getName());
+        ld.add("--cache");
+        ld.add(file("./classloader-cache"));
+        ld.add("--distributor");
+        ld.add(meshKeeper.getDistributorUri());
+        ld.add("--classloader");
+        ld.add(getClassLoaderFactoryPath());
+        // Add the MeshContainer class to be launched:
+        ld.add(org.fusesource.meshkeeper.launcher.MeshContainer.class.getName());
+
+        String regPath = MESHCONTAINER_REGISTRY_PATH + name + "/" + ++meshContainerCounter;
+        ld.add(regPath);
+
+        MeshProcess proc = launchProcess(agentId, ld, listener);
+        MeshContainerService proxy = meshKeeper.registry().waitForRegistration(regPath, launchTimeout);
+
+        MeshContainerImpl mc = new MeshContainerImpl(proc, proxy);
+        return mc;
+    }
+
     public void println(MeshProcess process, String line) {
         byte[] data = (line + "\n").getBytes();
         try {
@@ -309,9 +366,9 @@ class LaunchClient implements MeshKeeper.Launcher {
         return agent.launch(marshalled, handler);
     }
 
-    public ClassLoaderServer getClassLoaderServer() throws Exception {
-        if( classLoaderServer==null ) {
-            if( meshKeeper == null ) {
+    public synchronized ClassLoaderServer getClassLoaderServer() throws Exception {
+        if (classLoaderServer == null) {
+            if (meshKeeper == null) {
                 throw new IllegalArgumentException("distributor or classLoaderServer property must be set");
             }
             classLoaderServer = ClassLoaderServerFactory.create("basic:", meshKeeper);
@@ -322,6 +379,16 @@ class LaunchClient implements MeshKeeper.Launcher {
 
     public void setClassLoaderServer(ClassLoaderServer classLoaderServer) {
         this.classLoaderServer = classLoaderServer;
+    }
+
+    public synchronized String getClassLoaderFactoryPath() throws Exception {
+        if (classLoaderFactoryPath == null) {
+            ClassLoaderServer cls = getClassLoaderServer();
+            ClassLoaderFactory stub = cls.export(LaunchClient.class.getClassLoader(), 1);
+            classLoaderFactoryPath = meshKeeper.registry().addRegistryObject("/launchclient-clf/" + System.getProperty("user.name"), true, stub);
+        }
+
+        return classLoaderFactoryPath;
     }
 
     public long getBindTimeout() {
@@ -355,4 +422,100 @@ class LaunchClient implements MeshKeeper.Launcher {
     public void setMeshKeeper(MeshKeeper distributor) {
         this.meshKeeper = distributor;
     }
+
+    private static class MeshContainerImpl implements MeshContainer {
+        private final MeshProcess process;
+        private final MeshContainerService container;
+
+        MeshContainerImpl(MeshProcess processProxy, MeshContainerService containerProxy) {
+            this.process = processProxy;
+            this.container = containerProxy;
+
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.fusesource.meshkeeper.MeshContainer#host(org.fusesource.meshkeeper
+         * .Distributable)
+         */
+        public Distributable host(String name, Distributable object) throws Exception {
+            return container.host(name, object);
+
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.fusesource.meshkeeper.MeshContainer#unhost(org.fusesource.meshkeeper
+         * .Distributable)
+         */
+        public void unhost(String name) {
+            try {
+                container.unhost(name);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.fusesource.meshkeeper.MeshContainer#run(java.lang.Runnable)
+         */
+        public void run(Runnable r) throws Exception {
+            container.run(r);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.fusesource.meshkeeper.MeshProcess#close(int)
+         */
+        public void close(int fd) throws IOException {
+            process.close(fd);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.fusesource.meshkeeper.MeshProcess#isRunning()
+         */
+        public boolean isRunning() throws Exception {
+            return process.isRunning();
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.fusesource.meshkeeper.MeshProcess#kill()
+         */
+        public void kill() throws Exception {
+            container.close();
+            process.kill();
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.fusesource.meshkeeper.MeshProcess#open(int)
+         */
+        public void open(int fd) throws IOException {
+            process.open(fd);
+
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.fusesource.meshkeeper.MeshProcess#write(int, byte[])
+         */
+        public void write(int fd, byte[] data) throws IOException {
+            process.write(fd, data);
+        }
+
+    }
+
 }

@@ -10,11 +10,15 @@ package org.fusesource.meshkeeper.distribution.registry.vm;
 import java.io.Serializable;
 
 import org.fusesource.meshkeeper.RegistryWatcher;
+import org.fusesource.meshkeeper.distribution.registry.AbstractRegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
+import org.fusesource.meshkeeper.distribution.registry.RegistryHelper;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -26,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author cmacnaug
  * @version 1.0
  */
-public class VMRegistry implements RegistryClient {
+public class VMRegistry extends AbstractRegistryClient {
 
     private static final VMRegistryServer SERVER = new VMRegistryServer();
     private HashMap<String, HashSet<RegistryWatcher>> watchers = new HashMap<String, HashSet<RegistryWatcher>>();
@@ -65,7 +69,7 @@ public class VMRegistry implements RegistryClient {
      * org.fusesource.meshkeeper.distribution.registry.Registry#addData(java
      * .lang.String, boolean, byte[])
      */
-    public String addData(String path, boolean sequential, byte[] data) throws Exception {
+    public String addRegistryData(String path, boolean sequential, byte[] data) throws Exception {
         checkStarted();
         return SERVER.addData(path, sequential, data);
     }
@@ -77,7 +81,7 @@ public class VMRegistry implements RegistryClient {
      * org.fusesource.meshkeeper.distribution.registry.Registry#addObject(java
      * .lang.String, boolean, java.io.Serializable)
      */
-    public String addObject(String path, boolean sequential, Serializable o) throws Exception {
+    public String addRegistryObject(String path, boolean sequential, Serializable o) throws Exception {
         checkStarted();
         return SERVER.addObject(path, sequential, o);
     }
@@ -90,7 +94,7 @@ public class VMRegistry implements RegistryClient {
      * .lang.String)
      */
     @SuppressWarnings("unchecked")
-    public <T> T getObject(String path) throws Exception {
+    public <T> T getRegistryObject(String path) throws Exception {
         checkStarted();
         return (T)SERVER.getObject(path);
     }
@@ -102,7 +106,7 @@ public class VMRegistry implements RegistryClient {
      * org.fusesource.meshkeeper.distribution.registry.Registry#getData(java
      * .lang.String)
      */
-    public byte[] getData(String path) throws Exception {
+    public byte[] getRegistryData(String path) throws Exception {
         checkStarted();
         return SERVER.getData(path);
     }
@@ -114,7 +118,7 @@ public class VMRegistry implements RegistryClient {
      * org.fusesource.meshkeeper.distribution.registry.Registry#remove(java
      * .lang.String, boolean)
      */
-    public void remove(String path, boolean recursive) throws Exception {
+    public void removeRegistryData(String path, boolean recursive) throws Exception {
         checkStarted();
         SERVER.remove(path, recursive);
     }

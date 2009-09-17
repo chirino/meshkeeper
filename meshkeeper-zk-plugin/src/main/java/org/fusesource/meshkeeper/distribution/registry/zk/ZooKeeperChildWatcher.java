@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -45,6 +46,7 @@ class ZooKeeperChildWatcher {
                     switch (event.getType()) {
                     case NodeChildrenChanged:
                     {
+                        //System.out.println("NodeChildrenChangedEvent");
                         watch();
                         break;
                     }
@@ -59,19 +61,24 @@ class ZooKeeperChildWatcher {
         this.callback = new ChildrenCallback() {
 
             public void processResult(int rc, String path, Object ctx, List<String> children) {
-                if (!started.get()) {
-                    return;
-                }
-                if (children == null) {
-                    children = new ArrayList<String>();
-                }
-                
-                for (RegistryWatcher watcher : watchers) {
-                    watcher.onChildrenChanged(path, children);
-                }
+                handleChildUpdate(path, children);
             }
         };
 
+    }
+    
+    private void handleChildUpdate(String path, List<String> children)
+    {
+        if (!started.get()) {
+            return;
+        }
+        if (children == null) {
+            children = new ArrayList<String>();
+        }
+        
+        for (RegistryWatcher watcher : watchers) {
+            watcher.onChildrenChanged(path, children);
+        }
     }
 
     public void addWatcher(RegistryWatcher watcher) {
@@ -106,7 +113,17 @@ class ZooKeeperChildWatcher {
 
     private void watch() {
         if (started.get()) {
+            //System.out.println("Registering watch for: " + path);
             zk.getChildren(path, watcher, callback, callback);
+//            try {
+//                handleChildUpdate(path, zk.getChildren(path, watcher));
+//            } catch (KeeperException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            } catch (InterruptedException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            }
         }
     }
 }

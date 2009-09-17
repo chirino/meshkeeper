@@ -64,6 +64,6 @@ public interface LaunchAgentService extends Distributable {
      * @throws Exception
      */
     public MeshProcess launch(Marshalled<Runnable> runnable, MeshProcessListener handler) throws Exception;
-
+    
     public HostProperties getHostProperties() throws Exception;
 }

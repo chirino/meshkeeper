@@ -9,39 +9,67 @@ package org.fusesource.meshkeeper.distribution.registry;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import org.fusesource.meshkeeper.RegistryWatcher;
 
-/** 
+/**
  * RegistryHelper
  * <p>
  * Description:
  * </p>
+ * 
  * @author cmacnaug
  * @version 1.0
  */
 public class RegistryHelper {
 
     /**
-     * Waits for count objects to register at the specified node. 
+     * Waits for count objects to register at the specified node.
      * 
      * @param <T>
-     * @param reg The registry
-     * @param path The path
-     * @param min The minimum number of objects to wait for.
-     * @param timeout The maximum amount of time to wait.
+     * @param reg
+     *            The registry
+     * @param path
+     *            The path
+     * @param min
+     *            The minimum number of objects to wait for.
+     * @param timeout
+     *            The maximum amount of time to wait.
      * @return
      * @throws Exception
      */
-    public static <T> Collection<T> waitForRegistrations(RegistryClient reg, String path, int min, long timeout) throws TimeoutException, Exception
-    {
-        return new RegistrationWatcher<T>(path, reg).waitForRegistrations(min, timeout).values();
+    public static <T> Collection<T> waitForRegistrations(RegistryClient reg, String path, int min, long timeout) throws TimeoutException, Exception {
+        return new RegistrationWatcher<T>(path, null, reg).waitForRegistrations(min, timeout).values();
     }
- 
-    
+
+    /**
+     * Waits for count objects to register at the specified node.
+     * 
+     * @param <T>
+     * @param reg
+     *            The registry
+     * @param path
+     *            The path
+     * @param min
+     *            The minimum number of objects to wait for.
+     * @param timeout
+     *            The maximum amount of time to wait.
+     * @return
+     * @throws Exception
+     */
+    public static <T> T waitForRegistration(RegistryClient reg, String path, long timeout) throws TimeoutException, Exception {
+        String parentPath = path.substring(0, path.lastIndexOf("/"));
+        String node = path.substring(path.lastIndexOf("/") + 1);
+        HashSet<String> filters = new HashSet<String>();
+        filters.add(node);
+        return new RegistrationWatcher<T>(parentPath, filters, reg).waitForRegistrations(1, timeout).get(node);
+    }
+
     /**
      * 
      */
@@ -50,19 +78,23 @@ public class RegistryHelper {
         final HashMap<String, T> map = new HashMap<String, T>();
         RegistryClient registry;
         String path;
+        Set<String> filters;
 
-        RegistrationWatcher(String path, RegistryClient registry) throws Exception {
+        RegistrationWatcher(String path, Set<String> filters, RegistryClient registry) throws Exception {
             this.path = path;
             this.registry = registry;
+            this.filters = filters;
             registry.addRegistryWatcher(path, this);
         }
 
         public synchronized void onChildrenChanged(String path, List<String> nodes) {
+            //System.out.println("Nodes changed for " + path + ": " + nodes);
             for (String node : nodes) {
-                if (!map.containsKey(node)) {
+                
+                if (filter(node) && !map.containsKey(node)) {
                     try {
-                        System.out.println("Loading: " + node);
-                        Object o = registry.getObject(path + "/" + node);
+                        //System.out.println("Loading: " + node);
+                        Object o = registry.getRegistryObject(path + "/" + node);
                         map.put(node, (T) o);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -72,6 +104,22 @@ public class RegistryHelper {
             // Removes agents that go away.
             map.keySet().retainAll(nodes);
             notifyAll();
+        }
+
+        private boolean filter(String node) {
+            if (filters == null) {
+                return true;
+            } else {
+                if(filters.contains(node))
+                {
+                    return true;
+                }
+                else
+                {
+                    //System.out.println("Node didn't match filter: " + node);
+                    return false;
+                }
+            }
         }
 
         public Map<String, T> waitForRegistrations(final int min, long timeout) throws InterruptedException, TimeoutException {
@@ -101,5 +149,5 @@ public class RegistryHelper {
         }
 
     }
-    
+
 }

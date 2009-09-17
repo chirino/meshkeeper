@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
@@ -81,6 +82,18 @@ public interface MeshKeeper {
      */
     public interface Launcher {
 
+        /**
+         * Indicates the path in which Launchers should register themselves.
+         */
+        public static final String LAUNCHER_REGISTRY_PATH = "/launchclients/";
+        
+        /**
+         * Launchers request that mesh containers register themselves at this path in a folder
+         * under the launcher's name.
+         * 
+         */
+        public static final String MESHCONTAINER_REGISTRY_PATH = "/meshcontainers/";
+        
         /**
          * Requests the specified number of tcp ports from the specified process
          * launcher.
@@ -181,6 +194,10 @@ public interface MeshKeeper {
          * @throws Exception If there is an error executing the runnable
          */
         public MeshProcess launch(String agentId, Runnable runnable, MeshProcessListener listener) throws Exception;
+        
+        
+        public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception;
+        
         
         /**
          * Gets the {@link ClassLoaderServer} used for remote executables. If the {@link ClassLoaderServer}
@@ -318,6 +335,17 @@ public interface MeshKeeper {
          * @throws Exception
          */
         public <T> Collection<T> waitForRegistrations(String path, int min, long timeout) throws TimeoutException, Exception;
+        
+        /**
+         * Convenience method that waits for a registry path to be created.
+         *
+         * @param <T>
+         * @param path The path
+         * @param timeout The maximum amount of time to wait.
+         * @return The 
+         * @throws Exception
+         */
+        public <T> T waitForRegistration(String path, long timeout) throws TimeoutException, Exception;
     }
     
     public interface Remoting {
@@ -441,6 +469,13 @@ public interface MeshKeeper {
      */
     public void undistribute(Distributable distributable) throws Exception;
 
+    /**
+     * Accesses the MeshKeeper's executor. Tasks run on the executor should not block. 
+     * 
+     * @return The executor service.
+     */
+    public ScheduledExecutorService getExecutorService();
+    
     /**
      * Gets the Mesh Registy support interface. Registry support provides a location accessible
      * to all participants in the Mesh where objects and data can be stored, discovered, and

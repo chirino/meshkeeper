@@ -53,7 +53,6 @@
     <module>meshkeeper-wagon-plugin</module>
     <module>meshkeeper-eventviajms-plugin</module>
     <module>meshkeeper-activemq-plugin</module>
-    <module>meshkeeper-distro</module>
     <module>meshkeeper-packaging-test</module>
   </modules>
 
@@ -222,6 +221,15 @@
       <modules>
         <module>meshkeeper-examples</module>
         <module>website</module>
+      </modules>
+    </profile>
+    
+    <profile>
+      <id>full</id>
+      <modules>
+        <module>meshkeeper-examples</module>
+        <module>website</module>
+        <module>meshkeeper-distro</module>
       </modules>
     </profile>
 
