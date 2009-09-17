@@ -7,6 +7,7 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.registry.zk;
 
+import java.io.File;
 import java.io.Serializable;
 
 import org.fusesource.meshkeeper.MeshKeeper.Registry;
@@ -30,7 +31,11 @@ public class RegistryTest extends TestCase {
     ControlService server;
 
     protected void setUp() throws Exception {
+        String SLASH = File.separator;
+        String testDir = System.getProperty("basedir", ".") + SLASH + "target" + SLASH + "test-data" + SLASH + "RegistryTest";
+        
         server = new ZooKeeperServerFactory().createPlugin("tcp://localhost:2000");
+        server.setDirectory(testDir);
         server.start();
 
         client = new ZooKeeperFactory().createPlugin("zk:tcp://localhost:2000");
