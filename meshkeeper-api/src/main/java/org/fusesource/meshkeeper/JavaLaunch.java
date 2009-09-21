@@ -7,6 +7,10 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Arrays;
+
 import static org.fusesource.meshkeeper.Expression.*;
 
 /** 
@@ -20,44 +24,72 @@ import static org.fusesource.meshkeeper.Expression.*;
 public class JavaLaunch {
 
     private Expression jvm = string("java");
-    Expression jvmArgs = string("");
-    Expression classpath = string("");
+    Expression classpath;
     FileExpression workingDir;
     Expression mainClass;
-    Expression args;
-    
+    ArrayList<Expression> jvmArgs = new ArrayList<Expression>();
+    ArrayList<Expression> args = new ArrayList<Expression>();
+    ArrayList<Expression> systemProperties = new ArrayList<Expression>();
+
     public Expression getJvm() {
         return jvm;
-    }
-    
-    public void setJvm(Expression jvm) {
-        this.jvm = jvm;
     }
     
     public void setJvm(String jvm) {
         this.jvm = string(jvm);
     }
-    
-    public Expression getJvmArgs() {
+    public void setJvm(Expression jvm) {
+        this.jvm = jvm;
+    }
+
+    public List<Expression> getJvmArgs() {
         return jvmArgs;
     }
-    
-    public void setJvmArgs(Expression jvmArgs) {
-        this.jvmArgs = jvmArgs;
+
+    public JavaLaunch addJvmArgs(String... args) {
+        return addJvmArgs(string(args));
     }
-    
-    public void setJvmArgs(String jvmArgs) {
-        this.jvmArgs = string(jvmArgs);
+
+    public JavaLaunch addJvmArgs(Expression... args) {
+        return addJvmArgs(Arrays.asList(args));
     }
-    
+    public JavaLaunch addJvmArgs(List<Expression> args) {
+        this.jvmArgs.addAll(args);
+        return this;
+    }
+
+    public JavaLaunch addSystemProperty(String key, String value) {
+        systemProperties.add(string("-D"+key+"="+value));
+        return this;
+    }
+
+    public JavaLaunch addSystemProperty(Expression key, Expression value) {
+        systemProperties.add(append(string("-D"), key, string("="), value));
+        return this;
+    }
+
+    public JavaLaunch propageSystemProperties(String... names) {
+        for (String name : names) {
+            if( System.getProperty(name)!=null ) {
+                addSystemProperty(name, System.getProperty(name));
+            }
+        }
+        return this;
+    }
+
     public Expression getClasspath() {
         return classpath;
     }
-    
     public void setClasspath(Expression classpath) {
         this.classpath = classpath;
     }
-    
+    public void setClasspath(FileExpression... classpath) {
+        this.classpath = path(classpath);
+    }
+    public void setClasspath(String... classpath) {
+        this.classpath = path(file(classpath));
+    }
+
     public FileExpression getWorkingDir() {
         return workingDir;
     }
@@ -65,7 +97,6 @@ public class JavaLaunch {
     public void setWorkingDir(String workingDir) {
         this.workingDir = file(workingDir);
     }
-    
     public void setWorkingDir(FileExpression workingDir) {
         this.workingDir = workingDir;
     }
@@ -74,29 +105,42 @@ public class JavaLaunch {
         return mainClass;
     }
     
+    public void setMainClass(String mainClass) {
+        this.mainClass = string(mainClass);
+    }
     public void setMainClass(Expression mainClass) {
         this.mainClass = mainClass;
     }
     
-    public Expression args() {
+    public ArrayList<Expression> args() {
         return args;
     }
     
-    public void setArgs(Expression args) {
-        this.args = args;
+    public JavaLaunch addArgs(String... args) {
+        return addArgs(string(args));
     }
-    
+    public JavaLaunch addArgs(Expression... args) {
+        return addArgs(Arrays.asList(args));
+    }
+    public JavaLaunch addArgs(List<Expression> args) {
+        this.args.addAll(args);
+        return this;
+    }
+
     public LaunchDescription toLaunchDescription()
     {
         LaunchDescription ld = new LaunchDescription();
+        ld.setWorkingDirectory(workingDir);
         ld.add(jvm);
         ld.add(jvmArgs);
-        ld.add(string("-cp"));
-        ld.add(classpath);
+        if( classpath!=null ) {
+            ld.add(string("-cp"));
+            ld.add(classpath);
+        }
+        ld.add(systemProperties);
         ld.add(mainClass);
         ld.add(args);
-        ld.setWorkingDirectory(workingDir);
         return ld;
     }
-   
+
 }

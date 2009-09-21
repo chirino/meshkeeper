@@ -12,7 +12,10 @@ import org.fusesource.meshkeeper.launcher.LocalProcess;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
+import static org.fusesource.meshkeeper.Expression.*;
 
 /**
  * @author chirino
@@ -24,17 +27,21 @@ public class LaunchDescription implements Serializable {
     ArrayList<LaunchTask> preLaunchTasks = new ArrayList<LaunchTask>();
     
 
-    public LaunchDescription add(String value) {
-        return add(Expression.string(value));
+    public LaunchDescription add(String... values) {
+        return add(string(values));
     }
 
-    public LaunchDescription add(Expression value) {
-        command.add(value);
+    public LaunchDescription add(Expression... value) {
+        return add(Arrays.asList(value));
+    }
+
+    public LaunchDescription add(List<Expression> value) {
+        command.addAll(value);
         return this;
     }
 
     public LaunchDescription setEnv(String key, String value) {
-        return setEnv(key, Expression.string(value));
+        return setEnv(key, string(value));
     }
 
     public LaunchDescription setEnv(String key, Expression value) {
@@ -116,7 +123,7 @@ public class LaunchDescription implements Serializable {
      * agent will resolve it, copying it to it's local resource
      * cache. 
      * 
-     * To refer to the Resource on the command line call {@link #add(Expression)}
+     * To refer to the Resource on the command line call {@link #add(Expression[])} )}
      * with {@link Expression#resource(MeshArtifact)} e.g.
      * 
      * <code>
@@ -124,7 +131,7 @@ public class LaunchDescription implements Serializable {
      * LaunchResource lr = new LauncResource();
      * ... 
      * ld.addResource(lr);
-     * ld.add(Expression.resource(lr);
+     * ld.add(resource(lr);
      * </code>
      * 
      * 
@@ -143,17 +150,17 @@ public class LaunchDescription implements Serializable {
         preLaunchTasks.add(new SubLaunchTask(launch));
     }
 
-    public Expression.FileExpression getWorkingDirectory() {
+    public FileExpression getWorkingDirectory() {
         return workingDirectory;
     }
 
-    public void setWorkingDirectory(Expression.FileExpression workingDirectory) {
+    public void setWorkingDirectory(FileExpression workingDirectory) {
         this.workingDirectory = workingDirectory;
     }
 
 
     public void setWorkingDirectory(String workingDirectory) {
-        this.workingDirectory =  Expression.file(workingDirectory);
+        this.workingDirectory =  file(workingDirectory);
     }
 
     public ArrayList<Expression> getCommand() {

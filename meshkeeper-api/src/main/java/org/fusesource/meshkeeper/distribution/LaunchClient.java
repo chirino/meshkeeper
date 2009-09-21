@@ -288,49 +288,56 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
         return agent.launch(launch, (MeshProcessListener) meshKeeper.remoting().export(listener));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.fusesource.meshkeeper.MeshKeeper.Launcher#launchMeshContainer(java
-     * .lang.String, org.fusesource.meshkeeper.MeshProcessListener)
-     */
-    public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception {
+    public static class MeshContainerLaunch extends JavaLaunch {
+        private String regPath;
+    }
 
-        LaunchDescription ld = new LaunchDescription();
-        ld.add(launch.getJvm());
-        ld.add(launch.getJvmArgs());
-        ld.setWorkingDirectory(ld.getWorkingDirectory());
-        //This is likely not right when the launch agent is running remotely:
-        ld.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
-        ld.add("-cp");
-        ld.add(path(file(mop(PluginResolver.PROJECT_GROUP_ID + ":meshkeeper-api:" + PluginClassLoader.getModuleVersion())), file(launch.getClasspath())));
+    public JavaLaunch createMeshContainerLaunch() throws Exception {
+        MeshContainerLaunch launch = new MeshContainerLaunch();
+        launch.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
+        launch.setClasspath(mop(PluginResolver.PROJECT_GROUP_ID + ":meshkeeper-api:" + PluginClassLoader.getModuleVersion()));
+        launch.setMainClass(RemoteBootstrap.class.getName());
+        launch.addArgs("--cache");
+        launch.addArgs(file("./classloader-cache"));
+        launch.addArgs("--distributor");
+        launch.addArgs(meshKeeper.getDistributorUri());
 
-        ld.add(RemoteBootstrap.class.getName());
-        ld.add("--cache");
-        ld.add(file("./classloader-cache"));
-        ld.add("--distributor");
-        ld.add(meshKeeper.getDistributorUri());
         ClassLoaderServer cls = getClassLoaderServer();
         ClassLoader userCl = meshKeeper.getUserClassLoader();
         if (userCl == null) {
             userCl = this.getClass().getClassLoader();
-            //throw new IllegalArgumentException("userClassLoader not set in meshKeeper");
         }
         ClassLoaderFactory stub = cls.export(userCl, 100);
         String clf = meshKeeper.registry().addRegistryObject("/launchclient-clf/" + System.getProperty("user.name"), true, stub);
-        ld.add("--classloader");
-        ld.add(clf);
+
+        launch.addArgs("--classloader");
+        launch.addArgs(clf);
 
         // Add the MeshContainer class to be launched:
-        ld.add(org.fusesource.meshkeeper.launcher.MeshContainer.class.getName());
+        launch.addArgs(org.fusesource.meshkeeper.launcher.MeshContainer.class.getName());
+        launch.regPath = MESHCONTAINER_REGISTRY_PATH + name + "/" + ++meshContainerCounter;
+        launch.addArgs(launch.regPath);
+        
+        return launch;
+    }
 
-        String regPath = MESHCONTAINER_REGISTRY_PATH + name + "/" + ++meshContainerCounter;
-        ld.add(regPath);
+    public MeshContainer launchMeshContainer(String agentId) throws Exception {
+        return launchMeshContainer(agentId, null, null);
+    }
 
-        MeshProcess proc = launchProcess(agentId, ld, listener);
+    public MeshContainer launchMeshContainer(String agentId, MeshProcessListener listener) throws Exception {
+        return launchMeshContainer(agentId, null, listener);
+    }
+
+    public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception {
+        if( launch == null ) {
+            launch = createMeshContainerLaunch();
+        }
+        
+        String regPath = ((MeshContainerLaunch) launch).regPath;
+
+        MeshProcess proc = launchProcess(agentId, launch.toLaunchDescription(), listener);
         MeshContainerService proxy = meshKeeper.registry().waitForRegistration(regPath, launchTimeout);
-
         MeshContainerImpl mc = new MeshContainerImpl(proc, proxy);
         return mc;
     }

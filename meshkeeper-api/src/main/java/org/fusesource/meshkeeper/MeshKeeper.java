@@ -17,7 +17,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
-
+import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
+import org.fusesource.meshkeeper.launcher.LaunchAgent;
+import org.fusesource.meshkeeper.launcher.RemoteBootstrap;
+import org.fusesource.meshkeeper.distribution.PluginResolver;
+import org.fusesource.meshkeeper.distribution.PluginClassLoader;
+import static org.fusesource.meshkeeper.Expression.*;
 
 
 /**
@@ -196,9 +201,14 @@ public interface MeshKeeper {
         public MeshProcess launch(String agentId, Runnable runnable, MeshProcessListener listener) throws Exception;
         
         
+        public JavaLaunch createMeshContainerLaunch() throws Exception;
+
+        public MeshContainer launchMeshContainer(String agentId) throws Exception;
+
+        public MeshContainer launchMeshContainer(String agentId, MeshProcessListener listener) throws Exception;
+
         public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception;
-        
-        
+
         /**
          * Gets the {@link ClassLoaderServer} used for remote executables. If the {@link ClassLoaderServer}
          * has not been set by the application, then one will be created. 

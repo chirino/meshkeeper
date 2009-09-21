@@ -60,10 +60,9 @@ public class MeshContainerTest extends TestCase {
 
     public void testMeshContainer() throws Exception {
         //Create default JavaLaunch:
-        JavaLaunch jl = new JavaLaunch();
         meshKeeper.launcher().waitForAvailableAgents(5000);
         String agentId = meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
-        MeshContainer container = meshKeeper.launcher().launchMeshContainer(agentId, jl, new DefaultProcessListener("TestContainer"));
+        MeshContainer container = meshKeeper.launcher().launchMeshContainer(agentId, new DefaultProcessListener("TestContainer"));
 
         try {
             CallBack callback = new CallBack();

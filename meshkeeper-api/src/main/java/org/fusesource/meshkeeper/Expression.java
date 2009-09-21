@@ -39,12 +39,38 @@ abstract public class Expression implements Serializable {
         return new StringExpression(value);
     }
 
+    public static StringExpression[] string(String... args) {
+        if( args ==null ) {
+            return null;
+        }
+        StringExpression rc[] = new StringExpression[args.length];
+        for (int i = 0; i < rc.length; i++) {
+            rc[i] = string(args[i]);
+        }
+        return rc;
+    }
+
+
     public static FileExpression file(String value) {
         return new FileExpression(string(value));
     }
 
     public static FileExpression file(Expression value) {
         return new FileExpression(value);
+    }
+
+    public static FileExpression[] file(String... value) {
+        return file(string(value));
+    }
+    public static FileExpression[] file(Expression... value) {
+        if( value ==null ) {
+            return null;
+        }
+        FileExpression[] rc = new FileExpression[value.length];
+        for (int i = 0; i < rc.length; i++) {
+            rc[i] = file(value[i]);
+        }
+        return rc;
     }
 
     public static PathExpression path(List<FileExpression> list) {
