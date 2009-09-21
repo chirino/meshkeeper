@@ -7,6 +7,8 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper;
 
+import org.fusesource.meshkeeper.launcher.MeshContainerService;
+
 /** 
  * MeshContainer
  * <p>
@@ -15,11 +17,6 @@ package org.fusesource.meshkeeper;
  * @author cmacnaug
  * @version 1.0
  */
-public interface MeshContainer extends MeshProcess {
+public interface MeshContainer extends MeshProcess, MeshContainerService {
 
-    public Distributable host(String name, Distributable object) throws Exception;
-    
-    public void unhost(String name);
-    
-    public void run(Runnable r) throws Exception;
 }

@@ -167,6 +167,14 @@
     <defaultGoal>install</defaultGoal>
     <plugins>
       <plugin>
+        <!--version 2.7 of the eclipse plugin resolves workspace plugins
+        like mop incorrectly:
+        -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-eclipse-plugin</artifactId>
+        <version>2.5.1</version>
+        </plugin>
+      <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <source>1.5</source>

@@ -27,9 +27,10 @@ import java.util.LinkedList;
 public class RemoteBootstrap {
 
     private static MeshKeeper mesh;
+    private static ClassLoader classLoader;
 
     private File cache;
-    private String classLoader;
+    private String classLoaderFactory;
     private String mainClass;
     private String[] args;
     private String meshKeeperUri;
@@ -45,6 +46,10 @@ public class RemoteBootstrap {
 
     public static MeshKeeper getMeshKeeper() {
         return mesh;
+    }
+    
+    public static ClassLoader getClassLoader() {
+        return classLoader;
     }
 
     public static void main(String args[]) throws Throwable {
@@ -102,7 +107,7 @@ public class RemoteBootstrap {
                 if (main.getMainClass() == null) {
                     throw new SyntaxException("Main class not specified.");
                 }
-                if (main.getClassLoader() == null) {
+                if (main.getClassLoaderFactory() == null) {
                     throw new SyntaxException("--classloader not specified.");
                 }
             }
@@ -135,7 +140,7 @@ public class RemoteBootstrap {
         if (runnable != null) {
             System.setProperty("meshkeeper.bootstrap.runnable", runnable);
         } else {
-            System.setProperty("meshkeeper.bootstrap.classloader", classLoader);
+            System.setProperty("meshkeeper.bootstrap.classloader", classLoaderFactory);
             System.setProperty("meshkeeper.bootstrap.mainclass", mainClass);
         }
 
@@ -153,10 +158,10 @@ public class RemoteBootstrap {
                 ClassLoaderFactory clf = marshalled.getClassLoaderFactory();
 
                 System.out.println("Setting up classloader...");
-                ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
+                classLoader = clf.createClassLoader(getClass().getClassLoader(), cache);
 
                 System.out.println("Executing runnable.");
-                r = marshalled.get(cl);
+                r = marshalled.get(classLoader);
             } catch (Throwable e) {
                 e.printStackTrace();
                 System.exit(100);
@@ -175,13 +180,13 @@ public class RemoteBootstrap {
         } else {
             Method mainMethod = null;
             try {
-                ClassLoaderFactory clf = mesh.registry().getRegistryObject(this.classLoader);
+                ClassLoaderFactory clf = mesh.registry().getRegistryObject(this.classLoaderFactory);
 
                 System.out.println("Setting up classloader...");
-                ClassLoader cl = clf.createClassLoader(getClass().getClassLoader(), cache);
-
+                classLoader = clf.createClassLoader(getClass().getClassLoader(), cache);
+                
                 System.out.println("Executing main.");
-                Class<?> clazz = cl.loadClass(mainClass);
+                Class<?> clazz = classLoader.loadClass(mainClass);
                 // Invoke the main.
                 mainMethod = clazz.getMethod("main", new Class[] { String[].class });
             } catch (Throwable e) {
@@ -209,7 +214,7 @@ public class RemoteBootstrap {
     }
 
     public void setClassLoader(String classLoader) {
-        this.classLoader = classLoader;
+        this.classLoaderFactory = classLoader;
     }
 
     public void setCache(File cache) {
@@ -220,8 +225,8 @@ public class RemoteBootstrap {
         return cache;
     }
 
-    public String getClassLoader() {
-        return classLoader;
+    public String getClassLoaderFactory() {
+        return classLoaderFactory;
     }
 
     public String[] getArgs() {

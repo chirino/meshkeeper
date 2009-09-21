@@ -52,7 +52,7 @@ import org.fusesource.meshkeeper.launcher.RemoteBootstrap;
  * @author cmacnaug
  * @version 1.0
  */
-class LaunchClient implements MeshKeeper.Launcher {
+class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
 
     Log log = LogFactory.getLog(this.getClass());
 
@@ -295,7 +295,7 @@ class LaunchClient implements MeshKeeper.Launcher {
      * org.fusesource.meshkeeper.MeshKeeper.Launcher#launchMeshContainer(java
      * .lang.String, org.fusesource.meshkeeper.MeshProcessListener)
      */
-    public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, ClassLoader loader, MeshProcessListener listener) throws Exception {
+    public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception {
 
         LaunchDescription ld = new LaunchDescription();
         ld.add(launch.getJvm());
@@ -305,18 +305,23 @@ class LaunchClient implements MeshKeeper.Launcher {
         ld.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
         ld.add("-cp");
         ld.add(path(file(mop(PluginResolver.PROJECT_GROUP_ID + ":meshkeeper-api:" + PluginClassLoader.getModuleVersion())), file(launch.getClasspath())));
-                
+
         ld.add(RemoteBootstrap.class.getName());
         ld.add("--cache");
         ld.add(file("./classloader-cache"));
         ld.add("--distributor");
         ld.add(meshKeeper.getDistributorUri());
         ClassLoaderServer cls = getClassLoaderServer();
-        ClassLoaderFactory stub = cls.export(loader, 1);
+        ClassLoader userCl = meshKeeper.getUserClassLoader();
+        if (userCl == null) {
+            userCl = this.getClass().getClassLoader();
+            //throw new IllegalArgumentException("userClassLoader not set in meshKeeper");
+        }
+        ClassLoaderFactory stub = cls.export(userCl, 100);
         String clf = meshKeeper.registry().addRegistryObject("/launchclient-clf/" + System.getProperty("user.name"), true, stub);
         ld.add("--classloader");
         ld.add(clf);
-        
+
         // Add the MeshContainer class to be launched:
         ld.add(org.fusesource.meshkeeper.launcher.MeshContainer.class.getName());
 
@@ -430,7 +435,7 @@ class LaunchClient implements MeshKeeper.Launcher {
          * org.fusesource.meshkeeper.MeshContainer#host(org.fusesource.meshkeeper
          * .Distributable)
          */
-        public Distributable host(String name, Distributable object) throws Exception {
+        public <T> T host(String name, T object, Class<?> ... serviceInterfaces) throws Exception {
             return container.host(name, object);
 
         }
@@ -458,6 +463,15 @@ class LaunchClient implements MeshKeeper.Launcher {
         public void run(Runnable r) throws Exception {
             container.run(r);
         }
+        
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.fusesource.meshkeeper.MeshProcess#close(int)
+         */
+        public void close() {
+            container.close();
+        }
 
         /*
          * (non-Javadoc)
@@ -466,8 +480,8 @@ class LaunchClient implements MeshKeeper.Launcher {
          */
         public void close(int fd) throws IOException {
             process.close(fd);
-        }
-
+        }        
+        
         /*
          * (non-Javadoc)
          * 

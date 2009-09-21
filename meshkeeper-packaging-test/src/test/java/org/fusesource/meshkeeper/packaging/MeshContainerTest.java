@@ -36,13 +36,13 @@ public class MeshContainerTest extends TestCase {
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getName());
+        meshKeeper = MavenTestSupport.createMeshKeeper("MeshContainerTest");
     }
-    
+
     protected void tearDown() throws Exception {
-        if( meshKeeper!=null ) {
+        if (meshKeeper != null) {
             meshKeeper.destroy();
-            meshKeeper=null;
+            meshKeeper = null;
         }
     }
 
@@ -58,31 +58,40 @@ public class MeshContainerTest extends TestCase {
         }
     }
 
-    public void testNoop() {
+    public void testMeshContainer() throws Exception {
+        //Create default JavaLaunch:
+        JavaLaunch jl = new JavaLaunch();
+        meshKeeper.launcher().waitForAvailableAgents(5000);
+        String agentId = meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
+        MeshContainer container = meshKeeper.launcher().launchMeshContainer(agentId, jl, new DefaultProcessListener("TestContainer"));
+
+        try {
+            CallBack callback = new CallBack();
+            MeshContainerTestObject proxy = (MeshContainerTestObject) container.host("testObject", new MeshContainerTestObject(meshKeeper.remoting().export(callback)));
+            proxy.start();
+
+            System.out.println("Waiting for callback to fire");
+            assertTrue(callback.latch.await(30, TimeUnit.SECONDS));
+            System.out.println("Callback fired!");
+        } catch (Exception thrown) {
+            thrown.printStackTrace();
+            throw thrown;
+        }
     }
-    
-//    public void testMeshContainer() throws Exception {
-//        //Create default JavaLaunch:
-//        JavaLaunch jl = new JavaLaunch();
-//        meshKeeper.launcher().waitForAvailableAgents(5000);
-//        String agentId = meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
-//        MeshContainer container = meshKeeper.launcher().launchMeshContainer(agentId, jl, this.getClass().getClassLoader(), new DefaultProcessListener("MESH-CONTAINER"));
-//
-//        CallBack callback = new CallBack();
-//        MeshContainerTestObject proxy = (MeshContainerTestObject) container.host("testObject", new MeshContainerTestObject(meshKeeper.remoting().export(callback)));
-//        proxy.start();
-//
-//        assertTrue(callback.latch.await(30, TimeUnit.SECONDS));
-//    }
 
     public static class MeshContainerTestObject implements Distributable, Serializable {
         ICallBack callback;
+
+        public MeshContainerTestObject() {
+
+        }
 
         MeshContainerTestObject(ICallBack callback) {
             this.callback = callback;
         }
 
         public void start() {
+            System.out.println("Firing callback");
             callback.done();
         }
     }

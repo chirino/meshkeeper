@@ -30,7 +30,7 @@ import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
  */
 public interface MeshKeeper {
 
-    public interface DistributionRef<D extends Distributable>
+    public interface DistributionRef<D>
     {
         public String getRegistryPath();
         public D getProxy();
@@ -196,7 +196,7 @@ public interface MeshKeeper {
         public MeshProcess launch(String agentId, Runnable runnable, MeshProcessListener listener) throws Exception;
         
         
-        public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, ClassLoader loader, MeshProcessListener listener) throws Exception;
+        public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception;
         
         
         /**
@@ -362,7 +362,7 @@ public interface MeshKeeper {
          * @return
          * @throws Exception
          */
-        public <T extends Distributable> T export(T obj) throws Exception;
+        public <T> T export(T obj, Class <?> ... interfaces) throws Exception;
 
         /**
          * Unexports a previously exported object.
@@ -370,7 +370,7 @@ public interface MeshKeeper {
          * @param obj The object that had previously been exported.
          * @throws Exception If there is an error unexporting the object.
          */
-        public void unexport(Distributable obj) throws Exception;
+        public void unexport(Object obj) throws Exception;
         
     }
     
@@ -445,8 +445,8 @@ public interface MeshKeeper {
      * This is a convenience method to register and export a Distributable object. This is equivalent
      * to calling:
      * <code>
-     * <br>{@link #export(Distributable)};
-     * <br>{@link #addRegistryObject(String, boolean, Serializable)};
+     * <br>{@link #remoting().export(Distributable)};
+     * <br>{@link #registry().addRegistryObject(String, boolean, Serializable)};
      * </code>
      * <p>
      * It is best practice to call {@link #undistribute(Distributable)} once the object is no longer needed.
@@ -457,7 +457,7 @@ public interface MeshKeeper {
      * @param distributable The {@link Distributable} object.
      * @return a {@link DistributionRef} to the distributed object.
      */
-    public <T extends Distributable> DistributionRef<T> distribute(String path, boolean sequential, T distributable) throws Exception;
+    public <T, S extends T> DistributionRef<T> distribute(String path, boolean sequential, S distributable, Class<?> ... serviceInterfaces) throws Exception;
 
     /**
      * Called to undistribute a previously distributed object. This is equivalent to calling
@@ -467,7 +467,7 @@ public interface MeshKeeper {
      * </code>
      * @param distributable The object that previously distributed.
      */
-    public void undistribute(Distributable distributable) throws Exception;
+    public void undistribute(Object distributable) throws Exception;
 
     /**
      * Accesses the MeshKeeper's executor. Tasks run on the executor should not block. 

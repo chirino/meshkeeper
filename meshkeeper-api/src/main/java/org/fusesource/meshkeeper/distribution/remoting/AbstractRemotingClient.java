@@ -24,24 +24,30 @@ import org.fusesource.meshkeeper.distribution.AbstractPluginClient;
  */
 public abstract class AbstractRemotingClient extends AbstractPluginClient implements RemotingClient {
 
-    protected abstract <T> T export(Object obj, Class<?>[] interfaces) throws Exception;
-
-    @SuppressWarnings("unchecked")
-    public <T extends Distributable> T export(T obj) throws Exception {
+    protected abstract <T> T exportInterfaces(T obj, Class<?>[] interfaces) throws Exception;
+    
+    public final <T> T export(T obj, Class<?>... serviceInterfaces) throws Exception {
         LinkedHashSet<Class<?>> interfaces = new LinkedHashSet<Class<?>>();
-        collectDistributableInterfaces(obj.getClass(), interfaces);
-        if(interfaces.size() == 0 || (interfaces.size() == 1 && interfaces.contains(Distributable.class)))
-        {
-            return (T) export(obj, null);
+        if (serviceInterfaces == null || serviceInterfaces.length == 0) {
+            collectDistributableInterfaces(obj.getClass(), interfaces);
+        } else {
+            for (Class<?> serviceInterface : serviceInterfaces) {
+                validateInterface(serviceInterface);
+                interfaces.add(serviceInterface);
+            }
         }
-                
+
+        //If the only interfaces is the Distributable interface itself, then we're
+        //just trying to export the class:
+        if (interfaces.size() == 0 || (interfaces.size() == 1 && interfaces.contains(Distributable.class))) {
+            return (T) exportInterfaces(obj, (Class<?> []) null);
+        }
+
         Class<?>[] distributable = null;
-        if (interfaces.size() > 0) {
-            //System.out.println("Found distributable interfaces for: " + obj + ": " + interfaces);
-            distributable = new Class<?>[interfaces.size()];
-            interfaces.toArray(distributable);
-        }
-        return (T) export(obj, distributable);
+        //System.out.println("Found distributable interfaces for: " + obj + ": " + interfaces);
+        distributable = new Class<?>[interfaces.size()];
+        interfaces.toArray(distributable);
+        return (T) exportInterfaces(obj, distributable);
     }
 
     protected static void validateInterface(Class<?> i) {

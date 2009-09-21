@@ -7,7 +7,6 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.remoting.vm;
 
-import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.distribution.remoting.AbstractRemotingClient;
 
 /**
@@ -41,7 +40,7 @@ public class VMExporter extends AbstractRemotingClient {
      * org.fusesource.meshkeeper.distribution.rmi.IExporter#unexport(org.fusesource
      * .meshkeeper.distribution.Distributable)
      */
-    public void unexport(Distributable obj) throws Exception {
+    public void unexport(Object obj) throws Exception {
         return;
     }
 
@@ -52,8 +51,7 @@ public class VMExporter extends AbstractRemotingClient {
      * org.fusesource.meshkeeper.distribution.rmi.AbstractExporter#export(java
      * .lang.Object, java.lang.Class<?>[])
      */
-    @Override
-    protected <T> T export(Object obj, Class<?>[] interfaces) throws Exception {
+    protected <T> T exportInterfaces(T obj, Class<?> [] interfaces) throws Exception {
         //It is possible that in the future we would actually want to create
         //a proxy here. The reason for doing this would be to better match the 
         //threading model associated with @Oneway method calls which in the distributed

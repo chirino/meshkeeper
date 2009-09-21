@@ -7,14 +7,18 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.launcher;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeper.DistributionRef;
+import org.fusesource.meshkeeper.distribution.PluginClassLoader;
 
 /**
  * MeshContainer
@@ -30,24 +34,20 @@ public class MeshContainer implements MeshContainerService {
     public static MeshKeeper mesh;
     public static final Log LOG = LogFactory.getLog(LaunchAgent.class);
 
-    private HashMap<String, Distributable> hosted = new HashMap<String, Distributable>();
+    private HashMap<String, Object> hosted = new HashMap<String, Object>();
+    private String name;
 
     private CountDownLatch closeLatch = new CountDownLatch(1);
-    
-    public MeshContainer() {
-        mesh = RemoteBootstrap.getMeshKeeper();
-        try {
-            mesh.start();
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+
+    public MeshContainer(String name) {
+        this.name = name;
     }
 
-    public synchronized <T extends Distributable> T host(String name, Distributable object) throws Exception {
+    public synchronized <T> T host(String name, T object, Class<?>... interfaces) throws Exception {
 
         T proxy = null;
         if (!hosted.containsKey(name)) {
+            LOG.info(this + " Hosting: " + name + ":" + object);
             proxy = (T) mesh.remoting().export(object);
             hosted.put(name, object);
         } else {
@@ -59,7 +59,7 @@ public class MeshContainer implements MeshContainerService {
 
     public synchronized void unhost(String name) throws Exception {
 
-        Distributable d = hosted.get(name);
+        Object d = hosted.get(name);
         if (d != null) {
             mesh.remoting().unexport(d);
         }
@@ -79,6 +79,10 @@ public class MeshContainer implements MeshContainerService {
         return mesh;
     }
 
+    public String toString() {
+        return name;
+    }
+
     public static final void main(String[] args) {
 
         if (args.length == 0) {
@@ -86,9 +90,11 @@ public class MeshContainer implements MeshContainerService {
         }
         String path = args[0];
 
-        MeshContainer container = new MeshContainer();
+        MeshContainer.mesh = RemoteBootstrap.getMeshKeeper();
+        mesh.setUserClassLoader(new MeshContainerClassLoader());
+        MeshContainer container = new MeshContainer(path);
         try {
-            DistributionRef ref = container.mesh.distribute(path, false, container);
+            DistributionRef<MeshContainerService> ref = MeshContainer.getMeshKeeper().distribute(path, false, (MeshContainerService) container, MeshContainerService.class);
             System.out.println("Started MeshContainer: " + ref.getRegistryPath() + " cl: " + container.getClass().getClassLoader());
             container.closeLatch.await();
         } catch (Exception e) {
@@ -99,6 +105,74 @@ public class MeshContainer implements MeshContainerService {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private static class MeshContainerClassLoader extends ClassLoader {
+        ArrayList<ClassLoader> delegates = new ArrayList<ClassLoader>(2);
+
+        MeshContainerClassLoader() {
+            super(MeshContainer.class.getClassLoader());
+
+            //Search first in bootstrap class loader:
+            delegates.add(RemoteBootstrap.getClassLoader());
+            //Then try the plugin class loader:
+            delegates.add(PluginClassLoader.getDefaultPluginLoader());
+        }
+
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            System.out.println("Finding class: " + name);
+            //Look for an already loaded class:
+            try {
+                return super.findClass(name);
+            } catch (ClassNotFoundException cnfe) {
+            }
+
+            for (ClassLoader delegate : delegates) {
+                //Try the delegates
+                try {
+                    return delegate.loadClass(name);
+                } catch (ClassNotFoundException cnfe) {
+                }
+            }
+
+            throw new ClassNotFoundException(name);
+
+        }
+
+        protected URL findResource(String name) {
+            //Look for an already loaded class:
+            URL url = super.findResource(name);
+
+            for (ClassLoader delegate : delegates) {
+                if (url == null) {
+                    url = delegate.getResource(name);
+                } else {
+                    break;
+                }
+            }
+            return url;
+        }
+
+        protected Enumeration<URL> findResources(String name) throws IOException {
+            Enumeration<URL> urls = null;
+            try {
+                urls = super.findResources(name);
+            } catch (IOException ioe) {
+            }
+
+            for (ClassLoader delegate : delegates) {
+                if (urls == null) {
+                    //Try the plugin classloader:
+                    try {
+                        urls = delegate.getResources(name);
+                    } catch (IOException ioe) {
+                    }
+                } else {
+                    break;
+                }
+            }
+            return urls;
         }
     }
 

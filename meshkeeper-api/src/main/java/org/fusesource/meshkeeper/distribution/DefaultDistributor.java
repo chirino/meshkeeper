@@ -14,10 +14,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshEvent;
 import org.fusesource.meshkeeper.MeshEventListener;
@@ -53,27 +53,41 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
     private ClassLoader userClassLoader;
 
     private String registryUri;
-    private final HashMap<Distributable, DistributionRef<?>> distributed = new HashMap<Distributable, DistributionRef<?>>();
+    private final HashMap<Object, DistributionRef<?>> distributed = new HashMap<Object, DistributionRef<?>>();
+
+    private AtomicBoolean started = new AtomicBoolean(false);
+    private AtomicBoolean destroyed = new AtomicBoolean(false);
 
     DefaultDistributor() {
 
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.fusesource.meshkeeper.MeshKeeper#getExecutorService()
      */
     public ScheduledExecutorService getExecutorService() {
         return DistributorFactory.getExecutorService();
     }
-    
+
     public void setUserClassLoader(ClassLoader classLoader) {
-        userClassLoader = classLoader;
+        if (userClassLoader != classLoader) {
+            userClassLoader = classLoader;
+            remoting.setUserClassLoader(classLoader);
+            eventClient.setUserClassLoader(classLoader);
+            registry.setUserClassLoader(classLoader);
+            if (launchClient != null) {
+                launchClient.setUserClassLoader(classLoader);
+            }
+        }
+
     }
 
     public ClassLoader getUserClassLoader() {
         return userClassLoader;
     }
-    
+
     /*
      * (non-Javadoc)
      * 
@@ -120,35 +134,49 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
     }
 
     public synchronized Launcher launcher() {
-        if (launchClient == null) {
-            launchClient = new LaunchClient();
-            launchClient.setMeshKeeper(this);
-            try {
-                launchClient.start();
-            } catch (Exception e) {
-                log.warn("Error starting launch client", e);
-            }
-        }
+
         return launchClient;
     }
 
     public void start() {
-       
+        if (destroyed.get()) {
+            throw new IllegalStateException("Can't start destoyed MeshKeeper");
+        }
+        if(started.compareAndSet(false, true))
+        {
+            if (launchClient == null) {
+                launchClient = new LaunchClient();
+                launchClient.setMeshKeeper(this);
+                try {
+                    launchClient.start();
+                } catch (Exception e) {
+                    log.warn("Error starting launch client", e);
+                }
+                
+                if(userClassLoader != null)
+                {
+                    launchClient.setUserClassLoader(userClassLoader);
+                }
+            }
+        }
     }
 
     public synchronized void destroy() throws Exception {
-        log.info("Shutting down");
-        if (launchClient != null) {
-            launchClient.destroy();
+        if(destroyed.compareAndSet(false, true))
+        {
+            log.info("Shutting down");
+            if (launchClient != null) {
+                launchClient.destroy();
+            }
+    
+            eventClient.destroy();
+            for (DistributionRef<?> ref : distributed.values()) {
+                ref.unregister();
+            }
+    
+            registry.destroy();
+            log.info("Shut down");
         }
-
-        eventClient.destroy();
-        for (DistributionRef<?> ref : distributed.values()) {
-            ref.unregister();
-        }
-
-        registry.destroy();
-        log.info("Shut down");
     }
 
     synchronized void setRemotingClient(RemotingClient remoting) {
@@ -197,13 +225,14 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
         return registryUri;
     }
 
-    private <T extends Distributable> DistributionRef<T> getRef(T object, boolean create) {
+    @SuppressWarnings("unchecked")
+    private <T, S extends T> DistributionRef<T> getRef(S object, boolean create, Class<?> ... serviceInterfaces) {
         DistributionRef<T> ref = null;
         synchronized (distributed) {
 
             ref = (DistributionRef<T>) distributed.get(object);
             if (ref == null && create) {
-                ref = new DistributionRef<T>(object);
+                ref = new DistributionRef<T>(object, serviceInterfaces);
                 distributed.put(object, ref);
             }
         }
@@ -224,8 +253,8 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If there is an error distributing the object.
      */
-    public final <T extends Distributable> DistributionRef<T> distribute(String path, boolean sequential, T object) throws Exception {
-        DistributionRef<T> ref = getRef(object, true);
+    public final <T, S extends T> DistributionRef<T> distribute(String path, boolean sequential, S object, Class<?> ... serviceInterfaces) throws Exception {
+        DistributionRef<T> ref = getRef((T)object, true, serviceInterfaces);
         ref.register(path, sequential);
         return ref;
     }
@@ -238,7 +267,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If there is an error exporting the object.
      */
-    public final void undistribute(Distributable object) throws Exception {
+    public final void undistribute(Object object) throws Exception {
         DistributionRef<?> ref = getRef(object, false);
         if (ref != null) {
             ref.unregister();
@@ -281,6 +310,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If the object couldn't be retrieved.
      */
+    @SuppressWarnings("unchecked")
     public <T> T getRegistryObject(String path) throws Exception {
         return (T) registry.getRegistryObject(path);
     }
@@ -371,10 +401,15 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
     public <T> Collection<T> waitForRegistrations(String path, int min, long timeout) throws TimeoutException, Exception {
         return registry.waitForRegistrations(path, min, timeout);
     }
-    
-    /* (non-Javadoc)
-     * @see org.fusesource.meshkeeper.MeshKeeper.Registry#waitForRegistration(java.lang.String, long)
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.fusesource.meshkeeper.MeshKeeper.Registry#waitForRegistration(java
+     * .lang.String, long)
      */
+    @SuppressWarnings("unchecked")
     public <T> T waitForRegistration(String path, long timeout) throws TimeoutException, Exception {
         return (T) registry.waitForRegistration(path, timeout);
     }
@@ -393,8 +428,8 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If there is an error distributing the object.
      */
-    public final <T extends Distributable> T export(T object) throws Exception {
-        DistributionRef<T> ref = getRef(object, true);
+    public final <T> T export(T object, Class<?> ... serviceInterfaces) throws Exception {
+        DistributionRef<T> ref = getRef(object, true, serviceInterfaces);
         ref.export();
         return ref.stub;
     }
@@ -409,7 +444,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If there is an error unexporting the object.
      */
-    public final void unexport(Distributable object) throws Exception {
+    public final void unexport(Object object) throws Exception {
         DistributionRef<?> ref = getRef(object, false);
         if (ref != null) {
             ref.unregister();
@@ -517,12 +552,13 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
         resourceManager.purgeLocalRepo();
     }
 
-    private class DistributionRef<D extends Distributable> implements MeshKeeper.DistributionRef<D> {
+    private class DistributionRef<D> implements MeshKeeper.DistributionRef<D> {
         private D object;
         private D stub;
         private String path;
+        private Class<?>[] serviceInterfaces;
 
-        DistributionRef(D object) {
+        DistributionRef(D object, Class<?> ... serviceInterfaces) {
             this.object = object;
         }
 
@@ -540,7 +576,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
 
         private synchronized D export() throws Exception {
             if (stub == null) {
-                stub = (D) remoting.export(object);
+                stub = (D) remoting.export(object, serviceInterfaces);
                 if (log.isDebugEnabled())
                     log.debug("Exported: " + object + " to " + stub);
             }

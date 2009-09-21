@@ -28,13 +28,13 @@ import junit.framework.TestCase;
 public class RegistryTest extends TestCase {
 
     RegistryClient client;
-    ControlService server;
+    ZooKeeperServer server;
 
     protected void setUp() throws Exception {
         String SLASH = File.separator;
         String testDir = System.getProperty("basedir", ".") + SLASH + "target" + SLASH + "test-data" + SLASH + "RegistryTest";
         
-        server = new ZooKeeperServerFactory().createPlugin("tcp://localhost:2000");
+        server = (ZooKeeperServer) new ZooKeeperServerFactory().createPlugin("tcp://localhost:2000");
         server.setDirectory(testDir);
         server.start();
 
@@ -77,6 +77,20 @@ public class RegistryTest extends TestCase {
         
         assertNotNull(client.waitForRegistration("/temp/foo/1", 20000));        
     }
+    
+//    public void testRecursiveDelete() throws Exception
+//    {
+//        client.addRegistryData("/delete/a/b", true, new byte [100]);
+//        client.addRegistryData("/delete/d/e", false, new byte [100]);
+//        client.addRegistryData("/delete/c", true, new byte [100]);
+//        client.addRegistryData("/delete/f", false, new byte [100]);
+//        
+//        client.removeRegistryData("/delete", false);
+//        assertNull(client.getRegistryData("/delete"));
+//        client.removeRegistryData("/delete", true);
+//        
+//        assertNull(client.getRegistryData("/delete/d/e"));
+//    }
 
     public static class TestObject implements Serializable {
        

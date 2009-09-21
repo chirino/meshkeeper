@@ -30,6 +30,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.KeeperException.NotEmptyException;
 import org.apache.zookeeper.data.Stat;
 import org.fusesource.meshkeeper.RegistryWatcher;
 import org.fusesource.meshkeeper.distribution.registry.AbstractRegistryClient;
@@ -156,11 +157,23 @@ class ZooKeeperRegistry extends AbstractRegistryClient {
     public void removeRegistryData(String path, boolean recursive) throws Exception {
         checkConnected();
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("Removing: " + path);
+            }
             zk.delete(path, -1);
             //Delete ancestors:
             deleteEmptyAncestors(path);
         } catch (NoNodeException nne) {
             //Done.
+        } catch (NotEmptyException nee) {
+            //If it's not recursive and not empty, just set data null.
+            if (!recursive) {
+                zk.setData(path, null, -1);
+            } else {
+                for (String child : zk.getChildren(path, false)) {
+                    removeRegistryData(path + "/" + child, true);
+                }
+            }
         }
     }
 
@@ -169,7 +182,7 @@ class ZooKeeperRegistry extends AbstractRegistryClient {
         if (path.endsWith("/")) {
             path.substring(0, path.length() - 1);
         }
-        
+
         createParentPath(path + "/");
         ZooKeeperChildWatcher w = watcherMap.get(path);
         if (w == null) {
@@ -217,7 +230,7 @@ class ZooKeeperRegistry extends AbstractRegistryClient {
         if (ls > 1) {
             String parent = path.substring(0, ls);
             try {
-                
+
                 zk.create(parent, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             } catch (NodeExistsException e) {
                 return;
@@ -225,7 +238,9 @@ class ZooKeeperRegistry extends AbstractRegistryClient {
                 createParentPath(parent);
                 zk.create(parent, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
-            System.out.println("Created: " + parent);
+            if (log.isDebugEnabled()) {
+                log.debug("Created: " + parent);
+            }
         }
     }
 

@@ -19,7 +19,7 @@ import org.fusesource.meshkeeper.Distributable;
  */
 public interface MeshContainerService extends Distributable {
 
-    public <T extends Distributable> T host(String name, Distributable object) throws Exception ;
+    public <T> T host(String name, T object, Class<?> ... interfaces) throws Exception ;
 
     public void unhost(String name) throws Exception ;
 

@@ -9,7 +9,6 @@ package org.fusesource.meshkeeper.util.internal;
 
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
 
 /**
@@ -30,8 +29,8 @@ public class MeshKeeperWrapper implements MeshKeeper {
         next.destroy();
     }
 
-    public <T extends Distributable> DistributionRef<T> distribute(String path, boolean sequential, T distributable) throws Exception {
-        return next.distribute(path, sequential, distributable);
+    public <T, S extends T> DistributionRef<T> distribute(String path, boolean sequential, S distributable, Class<?>... serviceInterfaces) throws Exception {
+        return next.distribute(path, sequential, (T)distributable, serviceInterfaces);
     }
 
     public Eventing eventing() {
@@ -62,7 +61,7 @@ public class MeshKeeperWrapper implements MeshKeeper {
         next.start();
     }
 
-    public void undistribute(Distributable distributable) throws Exception {
+    public void undistribute(Object distributable) throws Exception {
         next.undistribute(distributable);
     }
 

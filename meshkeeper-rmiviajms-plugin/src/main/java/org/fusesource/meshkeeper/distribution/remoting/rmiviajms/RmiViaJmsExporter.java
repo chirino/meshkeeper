@@ -13,6 +13,7 @@ import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.Oneway;
 import org.fusesource.meshkeeper.distribution.remoting.AbstractRemotingClient;
 import org.fusesource.rmiviajms.JMSRemoteObject;
+import org.fusesource.rmiviajms.internal.JMSRemoteSystem;
 
 /**
  * RmiViaJmsExporter
@@ -27,11 +28,12 @@ class RmiViaJmsExporter extends AbstractRemotingClient {
 
     String providerUri;
 
-    protected <T> T export(Object obj, Class<?>[] interfaces) throws Exception {
+    @SuppressWarnings("unchecked")
+    protected <T> T exportInterfaces(T obj, Class<?>[] interfaces) throws Exception {
         return (T) JMSRemoteObject.export(obj, interfaces);
     }
 
-    public void unexport(Distributable obj) throws Exception {
+    public void unexport(Object obj) throws Exception {
         if (obj instanceof Remote) {
             JMSRemoteObject.unexportObject((Remote) obj, true);
         }
@@ -47,10 +49,17 @@ class RmiViaJmsExporter extends AbstractRemotingClient {
         Thread.currentThread().setContextClassLoader(RmiViaJmsExporter.class.getClassLoader());
         try {
             MeshKeeperRemoteJMSSystem.initialize(providerUri);
+            //System.out.println("Initialized remote system: " + JMSRemoteSystem.INSTANCE);
             JMSRemoteObject.addOneWayAnnotation(Oneway.class);
         } finally {
             Thread.currentThread().setContextClassLoader(original);
         }
+    }
+
+    @Override
+    public void setUserClassLoader(ClassLoader loader) {
+        //System.out.println("Setting user classloader: " + loader);
+        JMSRemoteSystem.INSTANCE.setUserClassLoader(loader);
     }
 
     public void destroy() throws InterruptedException, Exception {
