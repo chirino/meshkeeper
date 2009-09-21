@@ -44,8 +44,9 @@
     <dependency>
       <groupId>org.apache.hadoop.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
-      <version>3.0.0</version>
+      <version>3.2.1</version>
     </dependency>
+    
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>

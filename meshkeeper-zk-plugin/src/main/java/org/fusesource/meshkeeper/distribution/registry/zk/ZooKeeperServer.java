@@ -36,7 +36,6 @@ public class ZooKeeperServer implements ControlService {
     private NIOServerCnxn.Factory serverFactory;
 
     public void start() throws Exception {
-        ServerStats.registerAsConcrete();
         File file = new File(directory);
         if (purge && file.exists()) {
             try {
@@ -63,7 +62,6 @@ public class ZooKeeperServer implements ControlService {
             serverFactory.shutdown();
             serverFactory = null;
         }
-        ServerStats.unregister();
         log.info("Destroyed");
     }
 
