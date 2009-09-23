@@ -10,9 +10,11 @@ package org.fusesource.meshkeeper.distribution.registry.zk;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.server.NIOServerCnxn;
-import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.PurgeTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.fusesource.meshkeeper.control.ControlService;
+import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 import java.io.File;
@@ -36,33 +38,64 @@ public class ZooKeeperServer implements ControlService {
     private NIOServerCnxn.Factory serverFactory;
 
     public void start() throws Exception {
+
         File file = new File(directory);
-        if (purge && file.exists()) {
-            try {
-                FileSupport.recursiveDelete(file.getCanonicalPath());
-            } catch (Exception e) {
-                log.error("Error purging store", e);
-            }
-        }
-        file.mkdirs();
+
+        //        if (purge && file.exists()) { 
+        //            try 
+        //            {
+        //                FileSupport.recursiveDelete(file.getCanonicalPath()); 
+        //            } 
+        //            catch (Exception e) 
+        //            {
+        //                log.debug("Error purging store", e); 
+        //            } 
+        //
+        //            file.mkdirs();
+        //        }
 
         // Reduces startup time..
-        System.setProperty("zookeeper.preAllocSize", "100");
-        FileTxnLog.setPreallocSize(100);
-        org.apache.zookeeper.server.ZooKeeperServer zs = new org.apache.zookeeper.server.ZooKeeperServer(file, file, tick);
+        //System.setProperty("zookeeper.preAllocSize", "100");
+        //FileTxnLog.setPreallocSize(100);
+
+        org.apache.zookeeper.server.ZooKeeperServer zkServer = new org.apache.zookeeper.server.ZooKeeperServer();
+        FileTxnSnapLog ftxn = new FileTxnSnapLog(file, file);
+        zkServer.setTxnLogFactory(ftxn);
+        zkServer.setTickTime(tick);
         serverFactory = new NIOServerCnxn.Factory(port);
-        serverFactory.startup(zs);
-        
+        serverFactory.startup(zkServer);
+
         String actualHost = InetAddress.getLocalHost().getHostName();
-        serviceUri = "zk:tcp://" + actualHost + ":" + zs.getClientPort();
+        serviceUri = "zk:tcp://" + actualHost + ":" + zkServer.getClientPort();
+
+        if (purge) {
+
+            if (log.isDebugEnabled()) {
+                log.debug("Purging registry");
+            }
+            RegistryClient zk = null;
+            try {
+                zk = new ZooKeeperFactory().createPlugin(getServiceUri());
+                zk.removeRegistryData("/", true);
+            } finally {
+                zk.destroy();
+            }
+        }
     }
 
     public void destroy() throws Exception {
         if (serverFactory != null) {
             serverFactory.shutdown();
-            serverFactory = null;
+            org.apache.zookeeper.server.ZooKeeperServer zkServer = serverFactory.getZooKeeperServer();
+            if (zkServer != null) {
+                if (zkServer.isRunning()) {
+                    zkServer.shutdown();
+                }
+            }
         }
-        log.info("Destroyed");
+        if (log.isDebugEnabled()) {
+            log.debug("Destroyed");
+        }
     }
 
     public String getUserid() {
@@ -116,6 +149,5 @@ public class ZooKeeperServer implements ControlService {
     public String getServiceUri() {
         return serviceUri;
     }
-
 
 }

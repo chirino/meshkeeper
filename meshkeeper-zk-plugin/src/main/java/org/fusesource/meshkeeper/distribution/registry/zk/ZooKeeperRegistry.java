@@ -160,6 +160,18 @@ class ZooKeeperRegistry extends AbstractRegistryClient {
             if (log.isDebugEnabled()) {
                 log.debug("Removing: " + path);
             }
+
+            //ZK doesn't allow you to delete the root, throw a NotEmptyExecption to 
+            //delete any children.
+            if (path.equals("/")) {
+                for (String child : zk.getChildren(path, false)) {
+                    if (child.equals("zookeeper")) {
+                        continue;
+                    }
+                    removeRegistryData("/" + child, true);
+                }
+                return;
+            }
             zk.delete(path, -1);
             //Delete ancestors:
             deleteEmptyAncestors(path);

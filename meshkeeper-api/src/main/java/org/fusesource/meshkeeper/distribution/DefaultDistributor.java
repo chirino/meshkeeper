@@ -173,9 +173,14 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
             for (DistributionRef<?> ref : distributed.values()) {
                 ref.unregister();
             }
+            
+            remoting.destroy();
     
             registry.destroy();
+            
             log.info("Shut down");
+            
+            
         }
     }
 

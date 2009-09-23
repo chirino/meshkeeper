@@ -24,7 +24,6 @@ import org.apache.maven.wagon.shared.http.HttpMethodConfiguration;
 import org.fusesource.meshkeeper.MeshArtifact;
 import org.fusesource.meshkeeper.distribution.repository.AbstractRepositoryClient;
 import org.fusesource.meshkeeper.distribution.repository.AuthenticationInfo;
-import org.fusesource.meshkeeper.distribution.repository.RepositoryClient;
 import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 /**
@@ -164,7 +163,7 @@ public class WagonResourceManager extends AbstractRepositoryClient {
     private Wagon connectWagon(Repository repo, AuthenticationInfo authInfo) throws Exception {
         Class<? extends Wagon> wagonClass = wagonProviders.get(repo.getProtocol());
         Wagon w = wagonClass.newInstance();
-        String protocol = repo.getProtocol();
+        
         if (w instanceof AbstractHttpClientWagon) {
             //Override the default http configuration since it erroneously sets 
             //Accept Encoding: gzip, then barfs when it doesn't check for it.

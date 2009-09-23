@@ -121,7 +121,7 @@ public class MeshContainer implements MeshContainerService {
         }
 
         protected Class<?> findClass(String name) throws ClassNotFoundException {
-            System.out.println("Finding class: " + name);
+            //System.out.println("Finding class: " + name);
             //Look for an already loaded class:
             try {
                 return super.findClass(name);

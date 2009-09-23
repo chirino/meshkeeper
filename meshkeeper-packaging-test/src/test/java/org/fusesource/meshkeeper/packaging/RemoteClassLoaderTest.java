@@ -48,7 +48,7 @@ public class RemoteClassLoaderTest extends TestCase {
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getName());
+        meshKeeper = MavenTestSupport.createMeshKeeper("RemoteClassLoaderTest");
     }
 
     protected void tearDown() throws Exception {
@@ -95,7 +95,16 @@ public class RemoteClassLoaderTest extends TestCase {
         ExitProcessListener exitListener = new ExitProcessListener();
         MeshProcess process = meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
         exitListener.assertExitCode(2);
-        assertTrue(exitListener.getOutAsString().startsWith("Invalid Syntax:"));
+        try
+        {
+            assertTrue(exitListener.getOutAsString().startsWith("Invalid Syntax:"));
+        }
+        finally
+        {
+            System.out.println("==== client output ====");
+            System.out.println(exitListener.getOutAsString());
+            System.out.println(exitListener.getErrAsString());
+        }
     }
 
     public void testLoadRemoteClass() throws Exception {
@@ -161,7 +170,7 @@ public class RemoteClassLoaderTest extends TestCase {
         private ArrayList<Throwable> errors = new ArrayList<Throwable>();
 
         public void assertExitCode(int value) throws InterruptedException {
-            assertTrue("timed out waiting for exit", exitLatch.await(30, TimeUnit.SECONDS));
+            assertTrue("timed out waiting for exit", exitLatch.await(60, TimeUnit.SECONDS));
             assertEquals(value, exitCode.get());
         }
 

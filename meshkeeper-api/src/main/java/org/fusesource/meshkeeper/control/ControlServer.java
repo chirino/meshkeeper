@@ -90,7 +90,7 @@ public class ControlServer {
             log.info("Registry Server started: " + registryServer.getName());
             
         } catch (Exception e) {
-            log.error(e);
+            log.error("Error starting regisry server", e);
             destroy();
             throw new Exception("Error starting Registry Server", e);
         }

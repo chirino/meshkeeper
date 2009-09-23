@@ -10,6 +10,8 @@ package org.fusesource.meshkeeper.distribution.registry.zk;
 import java.io.File;
 import java.io.Serializable;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.MeshKeeper.Registry;
 import org.fusesource.meshkeeper.control.ControlService;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
@@ -27,6 +29,8 @@ import junit.framework.TestCase;
  */
 public class RegistryTest extends TestCase {
 
+    Log LOG = LogFactory.getLog(RegistryTest.class);
+    
     RegistryClient client;
     ZooKeeperServer server;
 
@@ -47,8 +51,23 @@ public class RegistryTest extends TestCase {
         server.destroy();
     }
 
+    public void testPurgeOnRestart() throws Exception
+    {
+        LOG.info("Running: testPurgeOnRestart");
+        client.addRegistryObject("/add/foo/1", true, new TestObject());    
+        
+        client.destroy();
+        server.destroy();
+        
+        setUp();
+        
+        assertNull(client.getRegistryObject("/add/foo/1"));
+    }
+    
     public void testAddData() throws Exception
     {
+        LOG.info("Running: testAddData");
+        
         client.addRegistryObject("/add/foo/1", false, new TestObject());    
         TestObject o = client.getRegistryObject("/add/foo/1");
         assertNotNull(o);
@@ -56,6 +75,8 @@ public class RegistryTest extends TestCase {
     
     public void testRegistryWatcher() throws Exception
     {
+        LOG.info("Running: testRegistryWatcher");
+        
         Runnable r = new Runnable()
         {
             public void run()
@@ -78,19 +99,21 @@ public class RegistryTest extends TestCase {
         assertNotNull(client.waitForRegistration("/temp/foo/1", 20000));        
     }
     
-//    public void testRecursiveDelete() throws Exception
-//    {
-//        client.addRegistryData("/delete/a/b", true, new byte [100]);
-//        client.addRegistryData("/delete/d/e", false, new byte [100]);
-//        client.addRegistryData("/delete/c", true, new byte [100]);
-//        client.addRegistryData("/delete/f", false, new byte [100]);
-//        
-//        client.removeRegistryData("/delete", false);
-//        assertNull(client.getRegistryData("/delete"));
-//        client.removeRegistryData("/delete", true);
-//        
-//        assertNull(client.getRegistryData("/delete/d/e"));
-//    }
+    public void testRecursiveDelete() throws Exception
+    {
+        LOG.info("Running: testRecursiveDelete");
+        
+        client.addRegistryData("/delete/a/b", true, new byte [100]);
+        client.addRegistryData("/delete/d/e", false, new byte [100]);
+        client.addRegistryData("/delete/c", true, new byte [100]);
+        client.addRegistryData("/delete/f", false, new byte [100]);
+        
+        client.removeRegistryData("/delete", false);
+        assertNull(client.getRegistryData("/delete"));
+        client.removeRegistryData("/delete", true);
+        
+        assertNull(client.getRegistryData("/delete/d/e"));
+    }
 
     public static class TestObject implements Serializable {
        

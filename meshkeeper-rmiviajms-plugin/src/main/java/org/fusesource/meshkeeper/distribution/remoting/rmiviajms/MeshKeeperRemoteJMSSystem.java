@@ -8,6 +8,7 @@
 package org.fusesource.meshkeeper.distribution.remoting.rmiviajms;
 
 import java.net.URI;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -34,6 +35,22 @@ public class MeshKeeperRemoteJMSSystem extends JMSRemoteSystem {
     private static JMSProvider provider;
 
     private static URI CONNECT_URI;
+
+    private static AtomicInteger remoteSysRefCount = new AtomicInteger(0);
+
+    public static void addRef() {
+        remoteSysRefCount.incrementAndGet();
+    }
+
+    public static void removeRef() {
+        if (remoteSysRefCount.decrementAndGet() == 0) {
+            try {
+                MeshKeeperRemoteJMSSystem.INSTANCE.reset();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
 
     static void initialize(String providerUri) throws Exception {
         PROVIDER_URI = providerUri;
