@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -42,6 +43,7 @@ import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import org.fusesource.meshkeeper.launcher.LaunchAgentService;
 import org.fusesource.meshkeeper.launcher.MeshContainerService;
 import org.fusesource.meshkeeper.launcher.RemoteBootstrap;
+import org.fusesource.meshkeeper.util.DefaultProcessListener;
 
 /**
  * LaunchClient
@@ -63,6 +65,8 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
     private long bindTimeout = 1000 * 10;
     private HashMap<String, LaunchAgentService> knownAgents = new HashMap<String, LaunchAgentService>();
     private HashMap<String, HostProperties> agentProps = new HashMap<String, HostProperties>();
+
+    private HashSet<MeshProcessWatcher> runningProcesses = new HashSet<MeshProcessWatcher>();
 
     private AtomicBoolean closed = new AtomicBoolean();
     private final HashMap<String, LaunchAgentService> boundAgents = new HashMap<String, LaunchAgentService>();
@@ -175,6 +179,8 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
             //            listener.onTRException("Error releasing agents.", e);
         }
 
+        killRunningProcesses();
+
         meshKeeper.registry().removeRegistryData(LAUNCHER_REGISTRY_PATH + name, true);
         meshKeeper.registry().removeRegistryWatcher(LaunchAgentService.REGISTRY_PATH, agentWatcher);
         //Clear out any container registrations: 
@@ -285,7 +291,17 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
         checkNotClosed();
 
         LaunchAgentService agent = getAgent(agentId);
-        return agent.launch(launch, (MeshProcessListener) meshKeeper.remoting().export(listener));
+        MeshProcessWatcher watcher = new MeshProcessWatcher(listener);
+        addWatchedProcess(watcher);
+        try {
+            watcher.setProcess(agent.launch(launch, watcher.getProxy()));
+        } catch (Exception e) {
+            watcher.cleanup();
+            throw e;
+        }
+
+        return watcher.getProcess();
+
     }
 
     public static class MeshContainerLaunch extends JavaLaunch {
@@ -317,7 +333,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
         launch.addArgs(org.fusesource.meshkeeper.launcher.MeshContainer.class.getName());
         launch.regPath = MESHCONTAINER_REGISTRY_PATH + name + "/" + ++meshContainerCounter;
         launch.addArgs(launch.regPath);
-        
+
         return launch;
     }
 
@@ -330,10 +346,10 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
     }
 
     public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception {
-        if( launch == null ) {
+        if (launch == null) {
             launch = createMeshContainerLaunch();
         }
-        
+
         String regPath = ((MeshContainerLaunch) launch).regPath;
 
         MeshProcess proc = launchProcess(agentId, launch.toLaunchDescription(), listener);
@@ -442,7 +458,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
          * org.fusesource.meshkeeper.MeshContainer#host(org.fusesource.meshkeeper
          * .Distributable)
          */
-        public <T> T host(String name, T object, Class<?> ... serviceInterfaces) throws Exception {
+        public <T> T host(String name, T object, Class<?>... serviceInterfaces) throws Exception {
             return container.host(name, object);
 
         }
@@ -470,7 +486,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
         public void run(Runnable r) throws Exception {
             container.run(r);
         }
-        
+
         /*
          * (non-Javadoc)
          * 
@@ -487,8 +503,8 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
          */
         public void close(int fd) throws IOException {
             process.close(fd);
-        }        
-        
+        }
+
         /*
          * (non-Javadoc)
          * 
@@ -525,6 +541,116 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
          */
         public void write(int fd, byte[] data) throws IOException {
             process.write(fd, data);
+        }
+
+    }
+
+    private synchronized void addWatchedProcess(MeshProcessWatcher watched) {
+        runningProcesses.add(watched);
+    }
+
+    private synchronized void removeWatchedProcess(MeshProcessWatcher watched) {
+        runningProcesses.remove(watched);
+        notifyAll();
+    }
+
+    private void killRunningProcesses() {
+        while (true) {
+            MeshProcessWatcher[] running = null;
+            synchronized (this) {
+                if (runningProcesses.isEmpty()) {
+                    return;
+                }
+                log.warn("Killing " + runningProcesses.size() + " processes");
+                running = new MeshProcessWatcher[runningProcesses.size()];
+                running = runningProcesses.toArray(running);
+            }
+
+            for (MeshProcessWatcher w : running) {
+                try {
+                    w.getProcess().kill();
+                } catch (Exception e) {
+                    w.cleanup();
+                }
+            }
+
+            synchronized (this) {
+                while (!runningProcesses.isEmpty()) {
+                    int count = runningProcesses.size();
+                    try {
+                        wait(killTimeout);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    if (count == runningProcesses.size()) {
+                        log.warn("Timed out waiting to kill processes");
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    private class MeshProcessWatcher implements MeshProcessListener {
+        private final MeshProcessListener delegate;
+        private MeshProcessListener proxy = null;
+        private AtomicBoolean running = new AtomicBoolean(true);
+        private MeshProcess process;
+
+        MeshProcessWatcher(MeshProcessListener delegate) {
+            if (delegate == null) {
+                this.delegate = new DefaultProcessListener("");
+            } else {
+                this.delegate = delegate;
+            }
+        }
+
+        public synchronized MeshProcessListener getProxy() throws Exception {
+            if (proxy == null) {
+                proxy = meshKeeper.remoting().export(this, MeshProcessListener.class);
+            }
+            return proxy;
+        }
+
+        public synchronized void setProcess(MeshProcess process) {
+            this.process = process;
+        }
+
+        public synchronized MeshProcess getProcess() {
+            return process;
+        }
+
+        public void cleanup() {
+            synchronized (this) {
+                if (proxy != null) {
+                    try {
+                        meshKeeper.remoting().unexport(this);
+                    } catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            removeWatchedProcess(this);
+        }
+
+        public void onProcessError(Throwable thrown) {
+            delegate.onProcessError(thrown);
+        }
+
+        public void onProcessExit(int exitCode) {
+            delegate.onProcessExit(exitCode);
+            running.set(false);
+            cleanup();
+        }
+
+        public void onProcessInfo(String message) {
+            delegate.onProcessInfo(message);
+        }
+
+        public void onProcessOutput(int fd, byte[] output) {
+            delegate.onProcessOutput(fd, output);
         }
 
     }
