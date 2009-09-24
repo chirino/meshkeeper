@@ -77,6 +77,16 @@ public class MeshKeeperRemoteJMSSystem extends JMSRemoteSystem {
             throw new RuntimeException("Error creating rmi destination", e);
         }
     }
+    
+    @Override
+    protected Destination createTopic(String systemId) {
+        try {
+            return provider.createTopic(QUEUE_PREFIX + systemId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error creating rmi destination", e);
+        }
+    }
 
     public String toString() {
         return "MeshKeeperRemoteSystem at " + PROVIDER_URI;
