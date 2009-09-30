@@ -190,6 +190,13 @@ public class LaunchAgent implements LaunchAgentService {
         monitor.stop();
 
         meshKeeper.undistribute(this);
+        
+        notifyAll();
+    }
+    
+    public synchronized void join() throws InterruptedException
+    {
+        wait();
     }
 
     /**

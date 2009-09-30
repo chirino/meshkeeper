@@ -8,9 +8,7 @@
   the AGPL license a copy of which has been included with this 
   distribution in the license.txt file.  
   =====================================================================
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+--><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.fusesource.meshkeeper</groupId>
   <artifactId>meshkeeper</artifactId>
@@ -54,6 +52,7 @@
     <module>meshkeeper-eventviajms-plugin</module>
     <module>meshkeeper-activemq-plugin</module>
     <module>meshkeeper-packaging-test</module>
+    <module>meshkeeper-cloudmix</module>
   </modules>
 
   <scm>
@@ -237,6 +236,13 @@
       <modules>
         <module>meshkeeper-examples</module>
         <module>website</module>
+        <module>meshkeeper-distro</module>
+      </modules>
+    </profile>
+    
+    <profile>
+      <id>deploy</id>
+      <modules>
         <module>meshkeeper-distro</module>
       </modules>
     </profile>

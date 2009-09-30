@@ -15,7 +15,6 @@ import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
 
-
 /**
  * ControlServer
  * <p>
@@ -40,7 +39,7 @@ public class ControlServer {
     public static final String REMOTING_URI_PATH = "/control/remoting-uri";
     public static final String EVENTING_URI_PATH = "/control/eventing-uri";
     public static final String REPOSITORY_URI_PATH = "/control/repository-uri";
-    
+
     ControlService rmiServer;
     ControlService registryServer;
     RegistryClient registry;
@@ -48,12 +47,12 @@ public class ControlServer {
     private String jmsUri = DEFAULT_JMS_URI;
     private String registryUri = DEFAULT_REGISTRY_URI;
     private String repositoryUri = System.getProperty("meshkeeper.repository.uri");
-    
+
     private String directory = MeshKeeperFactory.getDefaultServerDirectory().getPath();
     private Thread shutdownHook;
 
     public void start() throws Exception {
-        
+
         shutdownHook = new Thread("MeshKeeper Control Server Shutdown Hook") {
             public void run() {
                 log.debug("Executing Shutdown Hook for " + ControlServer.this);
@@ -65,7 +64,6 @@ public class ControlServer {
             }
         };
 
-        
         //Start the jms server:
         log.info("Creating JMS Server at " + jmsUri);
         final String SLASH = File.separator;
@@ -74,54 +72,54 @@ public class ControlServer {
             rmiServer.setDirectory(directory + SLASH + "jms");
             rmiServer.start();
             log.info("JMS Server started: " + rmiServer.getName());
-            
+
         } catch (Exception e) {
             log.error(e);
             destroy();
             throw new Exception("Error starting JMS Server", e);
         }
-        
+
         //Start the registry server:
         log.info("Creating Registry Server at " + registryUri);
         try {
             registryServer = SERVICE_FACTORY.create(registryUri);
             registryServer.setDirectory(directory + SLASH + "registry");
             registryServer.start();
-            log.info("Registry Server started: " + registryServer.getName());
-            
+            log.info("Registry Server started: " + registryServer.getName() + " uri: " + registryServer.getServiceUri());
+
         } catch (Exception e) {
             log.error("Error starting regisry server", e);
             destroy();
             throw new Exception("Error starting Registry Server", e);
         }
 
-        if( repositoryUri == null ) {
+        if (repositoryUri == null) {
             // Just default it to a local directory..  Only really useful in the local test case.
             repositoryUri = new File(directory + SLASH + "repository").toURI().toString();
         }
 
         //Connect to the registry and publish service connection info:
         try {
-            
+
             registry = new RegistryFactory().create("zk:" + registryUri);
 
             //Register the control services:
-            
+
             //(note that we delete these first since
             //in some instances zoo-keeper doesn't shutdown cleanly and hangs
             //on to file handles so that the registry isn't purged:
             registry.removeRegistryData(REMOTING_URI_PATH, true);
             registry.addRegistryObject(REMOTING_URI_PATH, false, new String("rmiviajms:" + rmiServer.getServiceUri()));
             log.info("Registered RMI control server at " + REMOTING_URI_PATH + "=rmiviajms:" + rmiServer.getServiceUri());
-            
+
             registry.removeRegistryData(EVENTING_URI_PATH, true);
             registry.addRegistryObject(EVENTING_URI_PATH, false, new String("eventviajms:" + rmiServer.getServiceUri()));
             log.info("Registered event server at " + EVENTING_URI_PATH + "=eventviajms:" + rmiServer.getServiceUri());
-            
+
             registry.removeRegistryData(REPOSITORY_URI_PATH, true);
             registry.addRegistryObject(REPOSITORY_URI_PATH, false, repositoryUri);
             log.info("Registered repository uri at " + REPOSITORY_URI_PATH + "=" + repositoryUri);
-            
+
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             destroy();
@@ -158,16 +156,26 @@ public class ControlServer {
             }
         }
 
+        synchronized (this) {
+            notifyAll();
+        }
+
+    }
+
+    public void join() throws InterruptedException {
+        synchronized (this) {
+            wait();
+        }
     }
 
     public void setRepositoryUri(String repositoryProvider) {
         this.repositoryUri = repositoryProvider;
     }
-    
+
     public String getRepositoryUri() {
         return repositoryUri;
     }
-    
+
     public String getJmsUri() {
         return jmsUri;
     }

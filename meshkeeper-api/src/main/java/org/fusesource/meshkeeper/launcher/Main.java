@@ -90,7 +90,7 @@ public class Main {
             agent.setDirectory(new File(directory));
             agent.setMeshKeeper(meshKeeper);
             agent.start();
-            
+            agent.join();
         } catch (UsageException e) {
             System.out.println("Invalid usage: "+e.getMessage());
             System.out.println();

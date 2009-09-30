@@ -103,6 +103,8 @@ public class Main {
             server.setRepositoryUri(repository);
             server.setRegistryUri(registry);
             server.start();
+            server.join();
+            System.out.println("Control Server Exited");
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-3);
