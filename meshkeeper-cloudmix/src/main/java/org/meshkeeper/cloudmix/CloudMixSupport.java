@@ -263,7 +263,7 @@ public class CloudMixSupport {
             support.setPreferredControlServerAgent(args[2]);
         }
 
-        support.setControllerUrl("http://vm-fuseubt1:8181");
+        //support.setControllerUrl("http://vm-fuseubt1:8181");
 
         try {
             if (command.equalsIgnoreCase("deploy")) {
