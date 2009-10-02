@@ -183,7 +183,14 @@ public class PluginClassLoader extends URLClassLoader {
      */
     @Override
     public URL findResource(final String name) {
-        URL url = super.findResource(name);
+        URL url = null;
+        if (name.equals("log4j.properties")) {
+            url = getParent().getResource(name);
+            if (url != null) {
+                return url;
+            }
+        }
+        url = super.findResource(name);
         if (LOG.isDebugEnabled()) {
 
             if (url == null) {
@@ -319,7 +326,7 @@ public class PluginClassLoader extends URLClassLoader {
 
     public synchronized PluginResolver getPluginResolver() {
         if (PLUGIN_RESOLVER == null) {
-            ClassLoader loader = PluginClassLoader.DEFAULT_PLUGIN_CLASSLOADER;
+            PluginClassLoader loader = this;
             try {
                 // Extract the jar to temp file...
                 InputStream is = PluginClassLoader.class.getClassLoader().getResourceAsStream("meshkeeper-mop-resolver.jar");
@@ -330,7 +337,7 @@ public class PluginClassLoader extends URLClassLoader {
                 } finally {
                     IOSupport.close(is);
                 }
-                addUrl(tempJar.toURL());
+                loader.addUrl(tempJar.toURL());
                 PLUGIN_RESOLVER = (PluginResolver) loader.loadClass("org.fusesource.meshkeeper.distribution.MopPluginResolver").newInstance();
             } catch (Throwable thrown) {
                 LOG.error("Error loading plugin resolver:" + thrown.getMessage(), thrown);

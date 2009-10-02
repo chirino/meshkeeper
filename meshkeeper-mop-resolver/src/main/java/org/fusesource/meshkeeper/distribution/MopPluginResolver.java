@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.LinkedHashMap;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.fusesource.mop.MOP;
 import org.fusesource.mop.MOPRepository;
-import org.fusesource.mop.org.apache.commons.logging.Log;
-import org.fusesource.mop.org.apache.commons.logging.LogFactory;
 import org.fusesource.mop.org.apache.maven.artifact.Artifact;
 import org.fusesource.mop.org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.fusesource.mop.org.apache.maven.repository.RepositorySystem;

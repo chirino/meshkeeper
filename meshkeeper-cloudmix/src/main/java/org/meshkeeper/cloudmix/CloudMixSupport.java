@@ -247,14 +247,15 @@ public class CloudMixSupport {
 
     public static final void main(String[] args) {
 
-        String command = "status";
+        String command = "deploy";
 
         if (args.length > 0) {
             command = args[0];
         }
 
         CloudMixSupport support = new CloudMixSupport();
-
+        support.setControllerUrl("http://vm-fuseubt1:8181");
+        
         if (args.length > 1) {
             support.setControllerUrl(args[1]);
         }
@@ -263,7 +264,6 @@ public class CloudMixSupport {
             support.setPreferredControlServerAgent(args[2]);
         }
 
-        //support.setControllerUrl("http://vm-fuseubt1:8181");
 
         try {
             if (command.equalsIgnoreCase("deploy")) {

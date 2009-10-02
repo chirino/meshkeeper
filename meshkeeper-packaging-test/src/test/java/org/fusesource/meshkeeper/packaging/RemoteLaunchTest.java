@@ -36,7 +36,7 @@ import junit.framework.TestCase;
  * <p>
  * Description:
  * </p>
- *
+ * 
  * @author cmacnaug
  * @version 1.0
  */
@@ -49,14 +49,13 @@ public class RemoteLaunchTest extends TestCase {
     }
 
     protected void tearDown() throws Exception {
-        if( meshKeeper!=null ) {
+        if (meshKeeper != null) {
             meshKeeper.destroy();
-            meshKeeper=null;
+            meshKeeper = null;
         }
     }
 
-    private String getAgent() throws InterruptedException, TimeoutException
-    {
+    private String getAgent() throws InterruptedException, TimeoutException {
         meshKeeper.launcher().waitForAvailableAgents(5000);
         return meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
     }
@@ -154,6 +153,9 @@ public class RemoteLaunchTest extends TestCase {
                 }
                 notifyAll();
             } else if (fd == MeshProcess.FD_STD_ERR) {
+                if (output.trim().length() == 0) {
+                    return;
+                }
                 System.out.print("STDERR: " + output + " [" + output.length() + " bytes]");
                 if (state == TEST_ERROR && EXPECTED_ERROR.equals(output.trim())) {
                     state = SUCCESS;
