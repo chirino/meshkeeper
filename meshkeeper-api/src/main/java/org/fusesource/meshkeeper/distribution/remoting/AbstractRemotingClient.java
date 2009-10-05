@@ -10,6 +10,8 @@ package org.fusesource.meshkeeper.distribution.remoting;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.distribution.AbstractPluginClient;
 
@@ -23,6 +25,8 @@ import org.fusesource.meshkeeper.distribution.AbstractPluginClient;
  * @version 1.0
  */
 public abstract class AbstractRemotingClient extends AbstractPluginClient implements RemotingClient {
+
+    protected static final Log LOG = LogFactory.getLog(AbstractRemotingClient.class);
 
     /**
      * Subclasses must implement this method. If multicastAddress, is not null,
@@ -42,7 +46,7 @@ public abstract class AbstractRemotingClient extends AbstractPluginClient implem
     public final <T> T export(T obj, Class<?>... serviceInterfaces) throws Exception {
         return exportInternal(obj, null, serviceInterfaces);
     }
-    
+
     public final <T> T exportMulticast(T obj, String address, Class<?>... serviceInterfaces) throws Exception {
         return exportInternal(obj, address, serviceInterfaces);
     }
@@ -61,8 +65,16 @@ public abstract class AbstractRemotingClient extends AbstractPluginClient implem
         //If the only interfaces is the Distributable interface itself, then we're
         //just trying to export the class:
         if (interfaces.size() == 0 || (interfaces.size() == 1 && interfaces.contains(Distributable.class))) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Exporting " + obj.getClass() + " with no service interfaces");
+            }
             return (T) exportInterfaces(obj, multicastAddress, (Class<?>[]) null);
         }
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Exporting " + obj.getClass() + " as: " + interfaces);
+        }
+        
 
         Class<?>[] distributable = null;
         //System.out.println("Found distributable interfaces for: " + obj + ": " + interfaces);

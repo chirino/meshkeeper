@@ -606,6 +606,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
 
         DistributionRef(D object, Class<?>... serviceInterfaces) {
             this.object = object;
+            this.serviceInterfaces = serviceInterfaces;
         }
 
         public String getMultiCastPrefix() {
