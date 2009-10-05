@@ -24,9 +24,30 @@ import org.fusesource.meshkeeper.distribution.AbstractPluginClient;
  */
 public abstract class AbstractRemotingClient extends AbstractPluginClient implements RemotingClient {
 
-    protected abstract <T> T exportInterfaces(T obj, Class<?>[] interfaces) throws Exception;
-    
+    /**
+     * Subclasses must implement this method. If multicastAddress, is not null,
+     * then this implementor must ensure that the object is registered such that
+     * multiple registrations at the same address will cause method calls to
+     * either returned stub to be invoked on both registered objects.
+     * 
+     * @param <T>
+     * @param obj
+     * @param multicastAddress
+     * @param interfaces
+     * @return
+     * @throws Exception
+     */
+    protected abstract <T> T exportInterfaces(T obj, String multicastAddress, Class<?>[] interfaces) throws Exception;
+
     public final <T> T export(T obj, Class<?>... serviceInterfaces) throws Exception {
+        return exportInternal(obj, null, serviceInterfaces);
+    }
+    
+    public final <T> T exportMulticast(T obj, String address, Class<?>... serviceInterfaces) throws Exception {
+        return exportInternal(obj, address, serviceInterfaces);
+    }
+
+    private final <T> T exportInternal(T obj, String multicastAddress, Class<?>... serviceInterfaces) throws Exception {
         LinkedHashSet<Class<?>> interfaces = new LinkedHashSet<Class<?>>();
         if (serviceInterfaces == null || serviceInterfaces.length == 0) {
             collectDistributableInterfaces(obj.getClass(), interfaces);
@@ -40,14 +61,14 @@ public abstract class AbstractRemotingClient extends AbstractPluginClient implem
         //If the only interfaces is the Distributable interface itself, then we're
         //just trying to export the class:
         if (interfaces.size() == 0 || (interfaces.size() == 1 && interfaces.contains(Distributable.class))) {
-            return (T) exportInterfaces(obj, (Class<?> []) null);
+            return (T) exportInterfaces(obj, multicastAddress, (Class<?>[]) null);
         }
 
         Class<?>[] distributable = null;
         //System.out.println("Found distributable interfaces for: " + obj + ": " + interfaces);
         distributable = new Class<?>[interfaces.size()];
         interfaces.toArray(distributable);
-        return (T) exportInterfaces(obj, distributable);
+        return (T) exportInterfaces(obj, multicastAddress, distributable);
     }
 
     protected static void validateInterface(Class<?> i) {

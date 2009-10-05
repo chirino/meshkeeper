@@ -135,6 +135,20 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
 
     public synchronized Launcher launcher() {
 
+        if (launchClient == null)
+        {
+            launchClient = new LaunchClient();
+            launchClient.setMeshKeeper(this);
+            try {
+                launchClient.start();
+            } catch (Exception e) {
+                log.warn("Error starting launch client", e);
+            }
+
+            if (userClassLoader != null) {
+                launchClient.setUserClassLoader(userClassLoader);
+            }
+        }
         return launchClient;
     }
 
@@ -142,45 +156,27 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
         if (destroyed.get()) {
             throw new IllegalStateException("Can't start destoyed MeshKeeper");
         }
-        if(started.compareAndSet(false, true))
-        {
-            if (launchClient == null) {
-                launchClient = new LaunchClient();
-                launchClient.setMeshKeeper(this);
-                try {
-                    launchClient.start();
-                } catch (Exception e) {
-                    log.warn("Error starting launch client", e);
-                }
-                
-                if(userClassLoader != null)
-                {
-                    launchClient.setUserClassLoader(userClassLoader);
-                }
-            }
-        }
+        started.set(true);
     }
 
     public synchronized void destroy() throws Exception {
-        if(destroyed.compareAndSet(false, true))
-        {
+        if (destroyed.compareAndSet(false, true)) {
             log.info("Shutting down");
             if (launchClient != null) {
                 launchClient.destroy();
             }
-    
+
             eventClient.destroy();
             for (DistributionRef<?> ref : distributed.values()) {
                 ref.unregister();
             }
-            
+
             remoting.destroy();
-    
+
             registry.destroy();
-            
+
             log.info("Shut down");
-            
-            
+
         }
     }
 
@@ -231,7 +227,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
     }
 
     @SuppressWarnings("unchecked")
-    private <T, S extends T> DistributionRef<T> getRef(S object, boolean create, Class<?> ... serviceInterfaces) {
+    private <T, S extends T> DistributionRef<T> getRef(S object, boolean create, Class<?>... serviceInterfaces) {
         DistributionRef<T> ref = null;
         synchronized (distributed) {
 
@@ -258,8 +254,8 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If there is an error distributing the object.
      */
-    public final <T, S extends T> DistributionRef<T> distribute(String path, boolean sequential, S object, Class<?> ... serviceInterfaces) throws Exception {
-        DistributionRef<T> ref = getRef((T)object, true, serviceInterfaces);
+    public final <T, S extends T> DistributionRef<T> distribute(String path, boolean sequential, S object, Class<?>... serviceInterfaces) throws Exception {
+        DistributionRef<T> ref = getRef((T) object, true, serviceInterfaces);
         ref.register(path, sequential);
         return ref;
     }
@@ -433,10 +429,54 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If there is an error distributing the object.
      */
-    public final <T> T export(T object, Class<?> ... serviceInterfaces) throws Exception {
+    public final <T> T export(T object, Class<?>... serviceInterfaces) throws Exception {
         DistributionRef<T> ref = getRef(object, true, serviceInterfaces);
         ref.export();
         return ref.stub;
+    }
+
+    /**
+     * Exports a object returning an RMI proxy to it, but to a specific address.
+     * This allows users to register multiple objects sharing the same
+     * interfaces to a single location thus allowing multicast method call to
+     * all objects registered at the adress The proxy can then be passed to
+     * other applications in the mesh to use via RMI. It is best practice to
+     * unexport the object when it is no longer used.
+     * 
+     * @param <T>
+     *            The type to which to cast the returned stub
+     * @param obj
+     *            The object to export
+     * @param address
+     *            The address (e.g. ServiceInterfaceFoo
+     * @param interfaces
+     *            The interfaces to which to limit the export.
+     * @return The proxy that can be used to invoke method calls on the exported
+     *         object.
+     * @throws Exception
+     *             If there is an error exporting
+     */
+    public <T> T exportMulticast(T obj, String address, Class<?>... interfaces) throws Exception {
+        DistributionRef<T> ref = getRef(obj, true, interfaces);
+        ref.setMultiCastPrefix(address);
+        ref.export();
+        return ref.stub;
+    }
+
+    /**
+     * Gets a proxy object for a multicast export.
+     * 
+     * @param <T>
+     * @param address
+     *            The address to which multicast objects are exported.
+     * @param interfaces
+     *            The interfaces for the proxy.
+     * @return The proxy for the multicast address.
+     * @throws Exception
+     *             If there is an error
+     */
+    public <T> T getMulticastProxy(String address, Class<?> mainInterface, Class <?> ... extraInterfaces) throws Exception {
+        return (T) remoting.getMulticastProxy(address, mainInterface, extraInterfaces);
     }
 
     /**
@@ -561,10 +601,19 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
         private D object;
         private D stub;
         private String path;
+        private String multiCastPrefix;
         private Class<?>[] serviceInterfaces;
 
-        DistributionRef(D object, Class<?> ... serviceInterfaces) {
+        DistributionRef(D object, Class<?>... serviceInterfaces) {
             this.object = object;
+        }
+
+        public String getMultiCastPrefix() {
+            return multiCastPrefix;
+        }
+
+        public void setMultiCastPrefix(String multiCastPrefix) {
+            this.multiCastPrefix = multiCastPrefix;
         }
 
         public D getProxy() {
@@ -581,7 +630,11 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
 
         private synchronized D export() throws Exception {
             if (stub == null) {
-                stub = (D) remoting.export(object, serviceInterfaces);
+                if (multiCastPrefix != null) {
+                    stub = (D) remoting.exportMulticast(object, multiCastPrefix, serviceInterfaces);
+                } else {
+                    stub = (D) remoting.export(object, serviceInterfaces);
+                }
                 if (log.isDebugEnabled())
                     log.debug("Exported: " + object + " to " + stub);
             }

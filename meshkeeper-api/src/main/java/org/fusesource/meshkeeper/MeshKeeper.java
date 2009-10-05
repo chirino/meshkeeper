@@ -373,7 +373,34 @@ public interface MeshKeeper {
          * @throws Exception
          */
         public <T> T export(T obj, Class <?> ... interfaces) throws Exception;
+        
+        /**
+         * Exports a  object returning an RMI proxy to it, but to a specific address. This allows users
+         * to register multiple objects sharing the same interfaces to a single location thus allowing
+         * multicast method call to all objects registered at the adress  The proxy
+         * can then be passed to other applications in the mesh to use via RMI. It is best practice
+         * to unexport the object when it is no longer used.
+         * 
+         * @param <T> The type to which to cast the returned stub
+         * @param obj The object to export
+         * @param address The address (e.g. ServiceInterfaceFoo
+         * @param interfaces The interfaces to which to limit the export.
+         * @return The proxy that can be used to invoke method calls on the exported object. 
+         * @throws Exception If there is an error exporting
+         */
+        public <T> T exportMulticast(T obj, String address, Class <?> ... interfaces) throws Exception;
 
+        /**
+         * Gets a proxy object for a multicast export. 
+         * @param <T>
+         * @param address The address to which multicast objects are exported. 
+         * @param mainIngerface The interface for the proxy.
+         * @param interfaces Any extra interfaces for the proxy. 
+         * @return The proxy for the multicast address. 
+         * @throws Exception If there is an error
+         */
+        public <T> T getMulticastProxy(String address, Class<?> mainInterface, Class <?> ... extraInterfaces) throws Exception;
+        
         /**
          * Unexports a previously exported object.
          *

@@ -43,7 +43,11 @@ public class VMExporter extends AbstractRemotingClient {
     public void unexport(Object obj) throws Exception {
         return;
     }
-
+  
+    public <T> T getMulticastProxy(String address, Class<?> mainInterface,  Class<?>... interfaces) throws Exception {
+        throw new UnsupportedOperationException("multicast not implemented");
+    }
+    
     /*
      * (non-Javadoc)
      * 
@@ -51,7 +55,10 @@ public class VMExporter extends AbstractRemotingClient {
      * org.fusesource.meshkeeper.distribution.rmi.AbstractExporter#export(java
      * .lang.Object, java.lang.Class<?>[])
      */
-    protected <T> T exportInterfaces(T obj, Class<?> [] interfaces) throws Exception {
+    protected <T> T exportInterfaces(T obj, String multicastAddress, Class<?>[] interfaces) throws Exception {
+        if (multicastAddress != null) {
+            throw new UnsupportedOperationException("multicast not implemented");
+        }
         //It is possible that in the future we would actually want to create
         //a proxy here. The reason for doing this would be to better match the 
         //threading model associated with @Oneway method calls which in the distributed

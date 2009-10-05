@@ -28,14 +28,25 @@ class RmiViaJmsExporter extends AbstractRemotingClient {
 
     String providerUri;
     private AtomicBoolean started = new AtomicBoolean(false);
-    
+
     //TODO we should keep track of what gets exported and unexport it during destroy.
 
     @SuppressWarnings("unchecked")
-    protected <T> T exportInterfaces(T obj, Class<?>[] interfaces) throws Exception {
-        return (T) JMSRemoteObject.export(obj, interfaces);
+    protected <T> T exportInterfaces(T obj, String multiCastAddress, Class<?>[] interfaces) throws Exception {
+        if (multiCastAddress != null) {
+            return (T) JMSRemoteObject.export(obj, JMSRemoteObject.MULTICAST_PREFIX + multiCastAddress, interfaces);
+        } else {
+            return (T) JMSRemoteObject.export(obj, interfaces);
+        }
     }
 
+    /* (non-Javadoc)
+     * @see org.fusesource.meshkeeper.MeshKeeper.Remoting#getMulticastProxy(java.lang.String, java.lang.Class<?>[])
+     */
+    public <T> T getMulticastProxy(String address, Class<?> mainInterface, Class<?>... interfaces) throws Exception {
+        return (T) JMSRemoteObject.toProxy(JMSRemoteObject.MULTICAST_PREFIX + address, mainInterface, interfaces);
+    }
+    
     public void unexport(Object obj) throws Exception {
         if (obj instanceof Remote) {
             JMSRemoteObject.unexportObject((Remote) obj, true);
@@ -78,5 +89,4 @@ class RmiViaJmsExporter extends AbstractRemotingClient {
     public String toString() {
         return "RmiViaJmsExporter at " + MeshKeeperRemoteJMSSystem.PROVIDER_URI;
     }
-
 }
