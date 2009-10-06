@@ -9,6 +9,7 @@ package org.meshkeeper.cloudmix;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -54,6 +55,7 @@ public class CloudMixSupport {
         GridClient controller = getGridClient();
 
         boolean removed = false;
+        
         for (String profile : new String[] { MESH_KEEPER_AGENT_PROFILE_ID, MESH_KEEPER_CONTROL_PROFILE_ID }) {
             ProfileDetails existing = controller.getProfile(profile);
             if (existing != null) {
@@ -86,7 +88,7 @@ public class CloudMixSupport {
         }
 
         boolean foundFeatures = false;
-        for (String feature : new String[] { MESH_KEEPER_AGENT_FEATURE_ID, MESH_KEEPER_CONTROL_FEATURE_ID }) {
+        for (String feature : new String[] { MESH_KEEPER_CONTROL_FEATURE_ID, MESH_KEEPER_AGENT_FEATURE_ID }) {
             List<String> agents = controller.getAgentsAssignedToFeature(feature);
             if (agents != null && !agents.isEmpty()) {
                 foundFeatures = true;
@@ -97,22 +99,28 @@ public class CloudMixSupport {
         if (!foundFeatures) {
             LOG.info("MeshKeeper not currently deployed");
         }
+
     }
 
     public void deployMeshKeeperProfile() throws URISyntaxException {
         GridClient controller = getGridClient();
 
-        killMeshKeeper();
+        //killMeshKeeper();
 
         //Set up the controller:
         ProfileDetails controlProfile = new ProfileDetails();
         controlProfile.setId(MESH_KEEPER_CONTROL_PROFILE_ID);
-        controlProfile.setDescription("Hosts MeshKeeper control server instances");
+        controlProfile.setDescription("This Profile hosts MeshKeeper control server instances");
 
         FeatureDetails controlFeature = new FeatureDetails();
         controlFeature.setId(MESH_KEEPER_CONTROL_FEATURE_ID);
         controlFeature.setMaximumInstances("1");
         if (preferredControlServerAgent != null) {
+//            AgentDetails agent = controller.getAgentDetails(preferredControlServerAgent);
+//            if (agent.getContainerType().contains("mop")) {
+//                LOG.info("Setting preferred control agent:" + preferredControlServerAgent);
+//                controlFeature.preferredMachine(preferredControlServerAgent);
+//            }
             controlFeature.preferredMachine(preferredControlServerAgent);
         }
         controlFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.control.Main.class.getName());
@@ -122,20 +130,34 @@ public class CloudMixSupport {
         controlProfile.getFeatures().add(new Dependency(controlFeature.getId()));
         controller.addProfile(controlProfile);
 
+//        LOG.info("Agent Details Matching MeshKeeper Profile");
+//        for (AgentDetails agent : controller.getAllAgentDetails()) {
+//            if (agent.matchesProfile(controlProfile.getId())) {
+//                LOG.info("Eligible control agent: " + agent + " supports " + Arrays.asList(agent.getSupportPackageTypes()));
+//            }
+//        }
+
         assertProvisioned(controlProfile);
-        LOG.info("Sleeping 10s to wait for controller activation");
-
-        try {
-            Thread.currentThread().sleep(10000);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-        }
-
+        
         //Get the control host:
         List<String> agents = controller.getAgentsAssignedToFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
         AgentDetails details = controller.getAgentDetails(agents.get(0));
+        details.getHostname();
         String controlHost = details.getHostname();
+        
+        LOG.info("MeshKeeperController is on: " + controlHost);
 
+        
+        LOG.info("Sleeping 60s to wait for controller activation");
+
+        try {
+            Thread.currentThread().sleep(120000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+        
+
+        
         ProfileDetails agentProfile = new ProfileDetails();
         agentProfile.setId(MESH_KEEPER_AGENT_PROFILE_ID);
         agentProfile.setDescription("MeshKeeper launch agent");
@@ -255,7 +277,8 @@ public class CloudMixSupport {
 
         CloudMixSupport support = new CloudMixSupport();
         support.setControllerUrl("http://vm-fuseubt1:8181");
-        
+        support.setPreferredControlServerAgent("vm-fuseubt1.bedford.progress.com");
+
         if (args.length > 1) {
             support.setControllerUrl(args[1]);
         }
@@ -263,7 +286,6 @@ public class CloudMixSupport {
         if (args.length > 2) {
             support.setPreferredControlServerAgent(args[2]);
         }
-
 
         try {
             if (command.equalsIgnoreCase("deploy")) {
