@@ -39,11 +39,10 @@ public class MopPluginResolver implements PluginResolver {
     private static MOPRepository MOP_REPO;
     private String defaultPluginVersion = "LATEST";
 
-    public synchronized List<File> resolvePlugin(String ... mavenArtifacts) throws Exception {
+    public synchronized List<File> resolvePlugin(String... mavenArtifacts) throws Exception {
 
         ArrayList<ArtifactId> artifactIds = new ArrayList<ArtifactId>(mavenArtifacts.length);
-        for(String artifact : mavenArtifacts)
-        {
+        for (String artifact : mavenArtifacts) {
             artifactIds.add(ArtifactId.parse(artifact));
         }
 
@@ -51,13 +50,12 @@ public class MopPluginResolver implements PluginResolver {
 
     }
 
-    public String resolveClassPath(String mavenArtifact) throws Exception
-    {
+    public String resolveClassPath(String mavenArtifact) throws Exception {
         ArrayList<ArtifactId> artifactIds = new ArrayList<ArtifactId>(1);
         artifactIds.add(ArtifactId.parse(mavenArtifact));
         return getMopRepository().classpath(artifactIds);
     }
-    
+
     private ArtifactFilter getArtifactFilter() {
         if (ARTIFACT_FILTER == null) {
 
@@ -67,7 +65,7 @@ public class MopPluginResolver implements PluginResolver {
             } catch (Exception e) {
                 deps = Collections.EMPTY_SET;
             }
-            
+
             final HashSet<String> filters = new HashSet<String>(deps.size());
             for (Artifact a : deps) {
                 filters.add(a.getArtifactId());
@@ -90,6 +88,9 @@ public class MopPluginResolver implements PluginResolver {
         if (MOP_REPO == null) {
             MOP_REPO = new MOPRepository();
 
+            if (System.getProperty(MOPRepository.MOP_BASE) == null && System.getProperty(MOPRepository.MOP_REPO_CONFIG_PROP) == null) {
+                LOG.warn("Neither: " + MOPRepository.MOP_BASE + " or " + MOPRepository.MOP_REPO_CONFIG_PROP + " are set. Will use default repos");
+            }
             // The plexus container is created on demand /w the context classloader.
             // Lets load it now, so we can properly set it's classloader.
             ClassLoader original = Thread.currentThread().getContextClassLoader();
@@ -100,15 +101,18 @@ public class MopPluginResolver implements PluginResolver {
                 Thread.currentThread().setContextClassLoader(original);
             }
 
-            // Setup the repos so that folks can download our plugins dynamically.
-            LinkedHashMap<String,String> repositories = MOP_REPO.getRemoteRepositories();
-            repositories.clear();
-            repositories.put(RepositorySystem.DEFAULT_REMOTE_REPO_ID, RepositorySystem.DEFAULT_REMOTE_REPO_URL);
-            repositories.put("fusesource.m2", "http://repo.fusesource.com/maven2");
-            
-//  We could add our meshkeeper repos.. but they require authorization.. so there is no point.
-//            repositories.put("meshkeeper.release", "http://meshkeeper.fusesource.org/repo/release");
-//            repositories.put("meshkeeper.snapshot", "http://meshkeeper.fusesource.org/repo/snapshot");
+            //If mop.base or a mop repo config is specified use mop's repo configuration, for locating plugins:
+            if (System.getProperty(MOPRepository.MOP_BASE) == null && System.getProperty(MOPRepository.MOP_REPO_CONFIG_PROP) == null) {
+                // Setup the repos so that folks can download our plugins dynamically.
+                LinkedHashMap<String, String> repositories = MOP_REPO.getRemoteRepositories();
+                repositories.clear();
+                repositories.put(RepositorySystem.DEFAULT_REMOTE_REPO_ID, RepositorySystem.DEFAULT_REMOTE_REPO_URL);
+                repositories.put("fusesource.m2", "http://repo.fusesource.com/maven2");
+
+                //              We could add our meshkeeper repos.. but they require authorization.. so there is no point.
+                //              repositories.put("meshkeeper.release", "http://meshkeeper.fusesource.org/repo/release");
+                //              repositories.put("meshkeeper.snapshot", "http://meshkeeper.fusesource.org/repo/snapshot");
+            }
 
         }
         return MOP_REPO;
