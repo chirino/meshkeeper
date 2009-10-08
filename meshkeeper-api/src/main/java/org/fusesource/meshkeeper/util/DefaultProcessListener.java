@@ -7,6 +7,8 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.util;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshProcess;
@@ -27,6 +29,7 @@ import java.io.ObjectStreamException;
  */
 public class DefaultProcessListener implements MeshProcessListener, Serializable {
 
+    Log LOG = LogFactory.getLog(DefaultProcessListener.class);
     protected String name = "";
     private Distributable proxy;
 
@@ -51,9 +54,7 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
      * )
      */
     public void onProcessError(Throwable thrown) {
-        System.err.println(format("ERROR: " + thrown.getStackTrace()));
-        thrown.printStackTrace();
-
+        LOG.error(format("ERROR: " + thrown));
     }
 
     /*
@@ -62,8 +63,7 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
      * @see org.fusesource.meshkeeper.ProcessListener#onProcessExit(int)
      */
     public void onProcessExit(int exitCode) {
-        System.out.println(format("exited with " + exitCode));
-
+        LOG.info(format("exited with " + exitCode));
     }
 
     /*
@@ -74,7 +74,7 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
      * )
      */
     public void onProcessInfo(String message) {
-        System.out.println(format(message));
+        LOG.info(format(message));
     }
 
     /*
@@ -85,9 +85,9 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
      */
     public void onProcessOutput(int fd, byte[] output) {
         if (fd == MeshProcess.FD_STD_ERR) {
-            System.err.println(format(new String(output)));
+            LOG.error(format(new String(output)));
         } else {
-            System.out.println(format(new String(output)));
+            LOG.info(format(new String(output)));
         }
     }
 

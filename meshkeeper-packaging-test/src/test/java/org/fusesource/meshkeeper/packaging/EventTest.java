@@ -33,7 +33,7 @@ public class EventTest extends TestCase {
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getName());
+        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getSimpleName());
     }
 
     protected void tearDown() throws Exception {

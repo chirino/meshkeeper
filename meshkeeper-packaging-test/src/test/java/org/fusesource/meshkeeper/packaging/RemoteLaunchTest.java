@@ -45,7 +45,7 @@ public class RemoteLaunchTest extends TestCase {
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getName());
+        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getSimpleName());
     }
 
     protected void tearDown() throws Exception {
@@ -144,6 +144,9 @@ public class RemoteLaunchTest extends TestCase {
             String output = new String(data);
 
             if (fd == MeshProcess.FD_STD_OUT) {
+                if (output.trim().length() == 0) {
+                    return;
+                }
                 System.out.print("STDOUT: " + output + " [" + output.length() + " bytes]");
                 if (state == TEST_OUTPUT && EXPECTED_OUTPUT.equals(output.trim())) {
                     state = TEST_ERROR;

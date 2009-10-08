@@ -35,7 +35,7 @@ public class RemotingTest extends TestCase {
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getName());
+        meshKeeper = MavenTestSupport.createMeshKeeper(getClass().getSimpleName());
     }
 
     protected void tearDown() throws Exception {
@@ -90,7 +90,7 @@ public class RemotingTest extends TestCase {
     public void testUnknownExceptionFails() throws Exception {
         //Test that the the failure message is clear when an exception is thrown to a caller that doesn't have it on their classpath:
         RemotingTestObject object = new RemotingTestObject();
-        object.foreignJarPath = MavenTestSupport.getDataDirectory().getCanonicalPath() + File.separator + ".." + File.separator + ".." + File.separator + "testing-resources" + File.separator
+        object.foreignJarPath = MavenTestSupport.getBaseDirectory() + File.separator + "testing-resources" + File.separator
                 + "foreign.jar";
 
         MeshContainer container = meshKeeper.launcher().launchMeshContainer(getAgent());

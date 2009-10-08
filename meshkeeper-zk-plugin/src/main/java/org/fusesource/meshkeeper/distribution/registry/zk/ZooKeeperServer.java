@@ -43,21 +43,26 @@ public class ZooKeeperServer implements ControlService {
 
         boolean doPurge = purge;
         //NOTE: this doesn't always work, since zk hangs on to file locks:
-        if (doPurge && file.exists()) {
-            try {
-                FileSupport.recursiveDelete(file.getCanonicalPath());
-                doPurge = false;
-            } catch (Exception e) {
-                log.debug("Error purging store", e);
-            }
-
-            file.mkdirs();
-        }
-
+        
+//        if (doPurge && file.exists()) {
+//            try {
+//                FileSupport.recursiveDelete(file.getCanonicalPath());
+//                doPurge = false;
+//                file.mkdirs();
+//            } catch (Exception e) {
+//                log.debug("Error purging store (likely a benign zoo-keeper bug)", e);
+//            }
+//        }
+        log.info("Purge: " + doPurge);
+        
         // Reduces startup time, and doesn't waste space:
-        System.setProperty("zookeeper.preAllocSize", "100");
-        FileTxnLog.setPreallocSize(100);
-
+        int preallocateSize = 1024;
+        System.setProperty("zookeeper.preAllocSize", "" + preallocateSize);
+        FileTxnLog.setPreallocSize(preallocateSize);
+        log.info("Preallocate Size: " + preallocateSize);
+        
+        
+        
         org.apache.zookeeper.server.ZooKeeperServer zkServer = new org.apache.zookeeper.server.ZooKeeperServer();
         FileTxnSnapLog ftxn = new FileTxnSnapLog(file, file);
        

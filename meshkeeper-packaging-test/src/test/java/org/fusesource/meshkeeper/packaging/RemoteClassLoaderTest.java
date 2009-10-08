@@ -97,7 +97,7 @@ public class RemoteClassLoaderTest extends TestCase {
         exitListener.assertExitCode(2);
         try
         {
-            assertTrue(exitListener.getOutAsString().startsWith("Invalid Syntax:"));
+            assertTrue(exitListener.getOutAsString().contains("Invalid Syntax:"));
         }
         finally
         {

@@ -12,6 +12,7 @@ import java.io.Serializable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.fusesource.meshkeeper.MavenTestSupport;
 import org.fusesource.meshkeeper.MeshKeeper.Registry;
 import org.fusesource.meshkeeper.control.ControlService;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
@@ -36,13 +37,13 @@ public class RegistryTest extends TestCase {
 
     protected void setUp() throws Exception {
         String SLASH = File.separator;
-        String testDir = System.getProperty("basedir", ".") + SLASH + "target" + SLASH + "test-data" + SLASH + "RegistryTest";
+        String testDir = MavenTestSupport.getDataDirectory(RegistryTest.class.getSimpleName()).getCanonicalPath();
         
         server = (ZooKeeperServer) new ZooKeeperServerFactory().createPlugin("tcp://localhost:2000");
         server.setDirectory(testDir);
         server.start();
 
-        client = new ZooKeeperFactory().createPlugin("zk:tcp://localhost:2000");
+        client = new ZooKeeperFactory().createPlugin(server.getServiceUri());
         client.start();
     }
     
