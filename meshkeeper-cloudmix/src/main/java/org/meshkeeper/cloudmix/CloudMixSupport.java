@@ -140,7 +140,8 @@ public class CloudMixSupport {
         String controlHost = details.getHostname();
         
         LOG.info("MeshKeeper controller provisioned to: " + controlHost);
-
+        String registyConnect = "zk:tcp://" + controlHost + ":4040";
+        
         //TODO it would be better to poll for the agent's online state somehow instead:
         long delay = 30;
         LOG.info("Sleeping " + delay +"s to wait for controller to come on line");
@@ -162,10 +163,12 @@ public class CloudMixSupport {
         agentProfile.setId(MESH_KEEPER_AGENT_PROFILE_ID);
         agentProfile.setDescription("MeshKeeper launch agent");
         FeatureDetails agentFeature = new FeatureDetails();
+        //agentFeature.addProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, registyConnect);
         agentFeature.setId(MESH_KEEPER_AGENT_FEATURE_ID);
         agentFeature.depends(controlFeature);
         agentFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName() + 
-                " --registry zk:tcp://" + controlHost + ":4040");
+                " --registry " + registyConnect);
+        
         agentFeature.setOwnsMachine(false);
         agentFeature.setMaximumInstances("100");
         agentFeature.validContainerType("mop");
@@ -177,6 +180,16 @@ public class CloudMixSupport {
         assertProvisioned(agentProfile);
 
         dumpStatus();
+    }
+    
+    public String findMeshKeeperConnnectUrl() throws URISyntaxException, Exception
+    {
+        GridClient controller = getGridClient();
+        List<String> agents = controller.getAgentsAssignedToFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
+        AgentDetails details = controller.getAgentDetails(agents.get(0));
+        details.getHostname();
+        String controlHost = details.getHostname();
+        return "zk:tcp://" + controlHost + ":4040";
     }
 
     /**
