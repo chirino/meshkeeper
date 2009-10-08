@@ -101,7 +101,8 @@ public class ControlServer {
         //Connect to the registry and publish service connection info:
         try {
 
-            registry = new RegistryFactory().create("zk:" + registryUri);
+            log.info("Connecting to registry server at " + registryUri);
+            registry = new RegistryFactory().create(registryServer.getServiceUri());
 
             //Register the control services:
 
