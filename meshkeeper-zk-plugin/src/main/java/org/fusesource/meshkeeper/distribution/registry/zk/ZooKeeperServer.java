@@ -41,34 +41,36 @@ public class ZooKeeperServer implements ControlService {
 
         File file = new File(directory);
 
-        //        if (purge && file.exists()) { 
-        //            try 
-        //            {
-        //                FileSupport.recursiveDelete(file.getCanonicalPath()); 
-        //            } 
-        //            catch (Exception e) 
-        //            {
-        //                log.debug("Error purging store", e); 
-        //            } 
-        //
-        //            file.mkdirs();
-        //        }
+        boolean doPurge = purge;
+        //NOTE: this doesn't always work, since zk hangs on to file locks:
+        if (doPurge && file.exists()) {
+            try {
+                FileSupport.recursiveDelete(file.getCanonicalPath());
+                doPurge = false;
+            } catch (Exception e) {
+                log.debug("Error purging store", e);
+            }
 
-        // Reduces startup time..
-        //System.setProperty("zookeeper.preAllocSize", "100");
-        //FileTxnLog.setPreallocSize(100);
+            file.mkdirs();
+        }
+
+        // Reduces startup time, and doesn't waste space:
+        System.setProperty("zookeeper.preAllocSize", "100");
+        FileTxnLog.setPreallocSize(100);
 
         org.apache.zookeeper.server.ZooKeeperServer zkServer = new org.apache.zookeeper.server.ZooKeeperServer();
         FileTxnSnapLog ftxn = new FileTxnSnapLog(file, file);
+       
         zkServer.setTxnLogFactory(ftxn);
         zkServer.setTickTime(tick);
         serverFactory = new NIOServerCnxn.Factory(port);
         serverFactory.startup(zkServer);
-
-        String actualHost = InetAddress.getLocalHost().getHostName();
+        
+        //InetAddress address = serverFactory.getLocalAddress().getAddress();
+        String actualHost = InetAddress.getLocalHost().getCanonicalHostName();
         serviceUri = "zk:tcp://" + actualHost + ":" + zkServer.getClientPort();
 
-        if (purge) {
+        if (doPurge) {
 
             if (log.isDebugEnabled()) {
                 log.debug("Purging registry");
