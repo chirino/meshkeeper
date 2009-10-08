@@ -42,9 +42,13 @@ public class ZooKeeperServer implements ControlService {
         File file = new File(directory);
 
         boolean doPurge = purge;
-        //NOTE: this doesn't always work, since zk hangs on to file locks:
-        
+
+//NOTE: this doesn't always work, since zk hangs on to file locks
+//It aslo can cause ZK to fail with CRC exceptions when running in 
+//embedded mode:
+//              
 //        if (doPurge && file.exists()) {
+//            log.debug("Attempting to delete zk data");
 //            try {
 //                FileSupport.recursiveDelete(file.getCanonicalPath());
 //                doPurge = false;
@@ -53,13 +57,12 @@ public class ZooKeeperServer implements ControlService {
 //                log.debug("Error purging store (likely a benign zoo-keeper bug)", e);
 //            }
 //        }
-        log.info("Purge: " + doPurge);
         
         // Reduces startup time, and doesn't waste space:
         int preallocateSize = 1024;
         System.setProperty("zookeeper.preAllocSize", "" + preallocateSize);
         FileTxnLog.setPreallocSize(preallocateSize);
-        log.info("Preallocate Size: " + preallocateSize);
+        log.debug("Preallocate Size: " + preallocateSize);
         
         
         
