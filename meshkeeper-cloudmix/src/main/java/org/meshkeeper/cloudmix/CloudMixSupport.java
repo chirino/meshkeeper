@@ -8,10 +8,7 @@
 package org.meshkeeper.cloudmix;
 
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -27,7 +24,6 @@ import org.fusesource.cloudmix.common.dto.FeatureDetails;
 import org.fusesource.cloudmix.common.dto.ProfileDetails;
 import org.fusesource.cloudmix.common.dto.ProfileStatus;
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
-import org.fusesource.meshkeeper.distribution.PluginResolver;
 
 /**
  * CloudMixSupport
@@ -105,7 +101,7 @@ public class CloudMixSupport {
     public void deployMeshKeeperProfile() throws URISyntaxException {
         GridClient controller = getGridClient();
 
-        //killMeshKeeper();
+        killMeshKeeper();
 
         //Set up the controller:
         ProfileDetails controlProfile = new ProfileDetails();
@@ -123,20 +119,18 @@ public class CloudMixSupport {
 //            }
             controlFeature.preferredMachine(preferredControlServerAgent);
         }
-        controlFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.control.Main.class.getName());
+        controlFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " 
+                + org.fusesource.meshkeeper.control.Main.class.getName() 
+                + " --jms activemq:tcp://0.0.0.0:4041"
+                + " --registry zk:tcp://0.0.0.0:4040");
         controlFeature.setOwnedByProfileId(controlProfile.getId());
         controlFeature.setOwnsMachine(false);
+        controlFeature.validContainerType("mop");
         controller.addFeature(controlFeature);
         controlProfile.getFeatures().add(new Dependency(controlFeature.getId()));
         controller.addProfile(controlProfile);
 
-//        LOG.info("Agent Details Matching MeshKeeper Profile");
-//        for (AgentDetails agent : controller.getAllAgentDetails()) {
-//            if (agent.matchesProfile(controlProfile.getId())) {
-//                LOG.info("Eligible control agent: " + agent + " supports " + Arrays.asList(agent.getSupportPackageTypes()));
-//            }
-//        }
-
+        //Wait for the control profile to be provisioned:
         assertProvisioned(controlProfile);
         
         //Get the control host:
@@ -145,27 +139,36 @@ public class CloudMixSupport {
         details.getHostname();
         String controlHost = details.getHostname();
         
-        LOG.info("MeshKeeperController is on: " + controlHost);
+        LOG.info("MeshKeeper controller provisioned to: " + controlHost);
 
-        
-        LOG.info("Sleeping 60s to wait for controller activation");
-
+        //TODO it would be better to poll for the agent's online state somehow instead:
+        long delay = 30;
+        LOG.info("Sleeping " + delay +"s to wait for controller to come on line");
         try {
-            Thread.currentThread().sleep(120000);
+            Thread.sleep(delay * 1000);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
         }
-        
 
-        
+        //TODO it would be better to test conne        
+//        RegistryFactory factory = new RegistryFactory();
+//        try {
+//            factory.create("zk:tcp://" + controlHost + ":4040");
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
         ProfileDetails agentProfile = new ProfileDetails();
         agentProfile.setId(MESH_KEEPER_AGENT_PROFILE_ID);
         agentProfile.setDescription("MeshKeeper launch agent");
         FeatureDetails agentFeature = new FeatureDetails();
         agentFeature.setId(MESH_KEEPER_AGENT_FEATURE_ID);
-        agentFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName() + " --registry zk:tcp://"
-                + controlHost + ":4040");
+        agentFeature.depends(controlFeature);
+        agentFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName() + 
+                " --registry zk:tcp://" + controlHost + ":4040");
         agentFeature.setOwnsMachine(false);
+        agentFeature.setMaximumInstances("100");
+        agentFeature.validContainerType("mop");
         agentFeature.setOwnedByProfileId(agentProfile.getId());
         controller.addFeature(agentFeature);
         agentProfile.getFeatures().add(new Dependency(agentFeature.getId()));
@@ -276,8 +279,9 @@ public class CloudMixSupport {
         }
 
         CloudMixSupport support = new CloudMixSupport();
-        support.setControllerUrl("http://vm-fuseubt1:8181");
-        support.setPreferredControlServerAgent("vm-fuseubt1.bedford.progress.com");
+        support.setControllerUrl(CloudmixHelper.getDefaultRootUrl());
+        //support.setControllerUrl("http://vm-fuseubt1:8181");
+        //support.setPreferredControlServerAgent("vm-fuseubt1.bedford.progress.com");
 
         if (args.length > 1) {
             support.setControllerUrl(args[1]);
@@ -298,8 +302,8 @@ public class CloudMixSupport {
                 printUsage();
             }
 
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
+        } catch (Throwable e) {
+            System.err.println("Error running MeshKeeper CloudMix provisionner: " + e.getMessage());
             e.printStackTrace();
         }
 
