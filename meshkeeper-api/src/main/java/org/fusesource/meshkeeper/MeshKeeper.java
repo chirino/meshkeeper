@@ -17,12 +17,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
-import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
-import org.fusesource.meshkeeper.launcher.LaunchAgent;
-import org.fusesource.meshkeeper.launcher.RemoteBootstrap;
-import org.fusesource.meshkeeper.distribution.PluginResolver;
-import org.fusesource.meshkeeper.distribution.PluginClassLoader;
-import static org.fusesource.meshkeeper.Expression.*;
 
 
 /**
