@@ -10,8 +10,6 @@ package org.fusesource.meshkeeper.classloader;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.distribution.FactoryFinder;
 import org.fusesource.meshkeeper.util.internal.URISupport;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 
 /**
@@ -22,7 +20,7 @@ import org.apache.commons.logging.LogFactory;
  */
 public abstract class ClassLoaderServerFactory {
 
-    private static final Log LOG = LogFactory.getLog(ClassLoaderServerFactory.class);
+//    private static final Log LOG = LogFactory.getLog(ClassLoaderServerFactory.class);
     private static final FactoryFinder FACTORY_FINDER = new FactoryFinder("META-INF/services/org/fusesource/meshkeeper/classloader/");
 
     public static final ClassLoaderServer create(String uri, MeshKeeper meshKeeper) throws Exception {

@@ -48,6 +48,7 @@ public class RemoteRunnableTest extends TestCase {
     }
 
     static class RemoteTask implements Serializable, Runnable {
+        private static final long serialVersionUID = 1L;
         private final ICallBack callback;
 
         public RemoteTask(ICallBack callback) {

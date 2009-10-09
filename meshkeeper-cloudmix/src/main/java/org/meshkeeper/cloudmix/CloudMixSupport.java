@@ -151,7 +151,7 @@ public class CloudMixSupport {
             Thread.currentThread().interrupt();
         }
 
-        //TODO it would be better to test conne        
+        //TODO it would be better to test connectivity:        
 //        RegistryFactory factory = new RegistryFactory();
 //        try {
 //            factory.create("zk:tcp://" + controlHost + ":4040");
@@ -293,8 +293,8 @@ public class CloudMixSupport {
 
         CloudMixSupport support = new CloudMixSupport();
         support.setControllerUrl(CloudmixHelper.getDefaultRootUrl());
-        //support.setControllerUrl("http://vm-fuseubt1:8181");
-        //support.setPreferredControlServerAgent("vm-fuseubt1.bedford.progress.com");
+        support.setControllerUrl("http://vm-fuseubt1:8181");
+        support.setPreferredControlServerAgent("vm-fuseubt1.bedford.progress.com");
 
         if (args.length > 1) {
             support.setControllerUrl(args[1]);

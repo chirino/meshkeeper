@@ -183,14 +183,15 @@ public class WagonResourceManager extends AbstractRepositoryClient {
         return w;
     }
 
+    @SuppressWarnings("unchecked")
     private static final void downloadDirectory(Wagon source, File targetDir, String path) throws Exception {
-        Iterator i = source.getFileList(path).iterator();
+        Iterator<String> i = (Iterator<String>) source.getFileList(path).iterator();
         if (!i.hasNext()) {
             File target = new File(targetDir, path);
             target.mkdirs();
         } else {
             while (i.hasNext()) {
-                String file = (String) i.next();
+                String file = i.next();
                 if (file.endsWith("/")) {
                     downloadDirectory(source, targetDir, path + file);
                 } else {

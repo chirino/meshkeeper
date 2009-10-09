@@ -51,8 +51,10 @@ public class RemotingTest extends TestCase {
     }
 
     public static class RemotingTestObject implements Serializable {
+        private static final long serialVersionUID = 1L;
         public String foreignJarPath;
 
+        @SuppressWarnings("deprecation")
         public void triggerFreignException() throws Exception {
             Object foreignObject = null;
             Method foreignMethod = null;
@@ -82,6 +84,7 @@ public class RemotingTest extends TestCase {
     }
 
     public static class RemotingTestException extends Exception {
+        private static final long serialVersionUID = 1L;
         RemotingTestException(String message, Throwable cause) {
             super(message, cause);
         }

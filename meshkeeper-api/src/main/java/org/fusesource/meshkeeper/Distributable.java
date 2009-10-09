@@ -7,7 +7,6 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper;
 
-import java.io.Serializable;
 
 
 /** 

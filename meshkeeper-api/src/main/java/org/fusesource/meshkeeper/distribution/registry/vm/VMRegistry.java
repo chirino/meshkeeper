@@ -8,18 +8,13 @@
 package org.fusesource.meshkeeper.distribution.registry.vm;
 
 import java.io.Serializable;
-
-import org.fusesource.meshkeeper.RegistryWatcher;
-import org.fusesource.meshkeeper.distribution.registry.AbstractRegistryClient;
-import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
-import org.fusesource.meshkeeper.distribution.registry.RegistryHelper;
-
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.fusesource.meshkeeper.RegistryWatcher;
+import org.fusesource.meshkeeper.distribution.registry.AbstractRegistryClient;
 
 /**
  * VMRegistry

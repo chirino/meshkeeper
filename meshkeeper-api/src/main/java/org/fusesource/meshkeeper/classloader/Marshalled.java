@@ -21,6 +21,7 @@ import java.io.*;
  */
 public class Marshalled<T> implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     private final ClassLoaderFactory classLoaderFactory;
     private final byte[] serializedObject;
 
@@ -37,6 +38,7 @@ public class Marshalled<T> implements Serializable {
         return classLoaderFactory;
     }
 
+    @SuppressWarnings("unchecked")
     public T get(final ClassLoader cl) throws IOException, ClassNotFoundException {
         ClassLoader original = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(cl);

@@ -13,7 +13,6 @@ import java.util.LinkedList;
 
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
-import org.fusesource.meshkeeper.distribution.DistributorFactory;
 
 /**
  * Main
@@ -35,6 +34,9 @@ public class Main {
     }
 
     static class UsageException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
         UsageException(String message) {
             super(message);
         }

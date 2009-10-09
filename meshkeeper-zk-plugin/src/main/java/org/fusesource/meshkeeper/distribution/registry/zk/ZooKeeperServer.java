@@ -7,18 +7,16 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.registry.zk;
 
+import java.io.File;
+import java.net.InetAddress;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.server.NIOServerCnxn;
-import org.apache.zookeeper.server.PurgeTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.fusesource.meshkeeper.control.ControlService;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
-import org.fusesource.meshkeeper.util.internal.FileSupport;
-
-import java.io.File;
-import java.net.InetAddress;
 
 /**
  * @author chirino

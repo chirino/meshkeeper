@@ -7,12 +7,11 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper;
 
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.fusesource.meshkeeper.control.ControlServer;
-import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import junit.framework.TestCase;
 
-import java.io.File;
+import org.fusesource.meshkeeper.control.ControlServer;
+import org.fusesource.meshkeeper.launcher.LaunchAgent;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>

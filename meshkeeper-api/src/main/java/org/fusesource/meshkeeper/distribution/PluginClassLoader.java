@@ -274,6 +274,7 @@ public class PluginClassLoader extends URLClassLoader {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public void loadArtifact(String artifactId) throws IOException, Exception {
         List<File> resolved = null;
         synchronized (RESOLVED_PLUGINS) {
@@ -324,6 +325,7 @@ public class PluginClassLoader extends URLClassLoader {
         return DEFAULT_VERSION;
     }
 
+    @SuppressWarnings("deprecation")
     public synchronized PluginResolver getPluginResolver() {
         if (PLUGIN_RESOLVER == null) {
             PluginClassLoader loader = this;

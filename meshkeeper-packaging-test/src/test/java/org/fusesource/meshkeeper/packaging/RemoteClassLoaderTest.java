@@ -79,7 +79,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        MeshProcess process = meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
+        meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
         exitListener.assertExitCode(1);
     }
 
@@ -93,7 +93,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        MeshProcess process = meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
+        meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
         exitListener.assertExitCode(2);
         try
         {

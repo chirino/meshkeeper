@@ -7,12 +7,10 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.control;
 
-import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.MeshKeeperFactory;
-
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.io.File;
+
+import org.fusesource.meshkeeper.MeshKeeperFactory;
 
 /**
  * Main
@@ -35,6 +33,7 @@ public class Main {
         System.out.println("  [--repository <uri>]        -- specifies a uri to a centralized repository.");
     }
 
+    @SuppressWarnings("serial")
     static class UsageException extends Exception {
         UsageException(String message) {
             super(message);

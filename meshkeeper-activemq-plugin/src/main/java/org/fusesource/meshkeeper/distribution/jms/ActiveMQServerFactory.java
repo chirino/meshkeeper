@@ -8,10 +8,8 @@
 package org.fusesource.meshkeeper.distribution.jms;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.fusesource.meshkeeper.control.ControlService;
-import org.fusesource.meshkeeper.distribution.jms.JMSServerFactory;
 
 
 /**

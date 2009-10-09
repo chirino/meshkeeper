@@ -350,9 +350,5 @@ public class LaunchAgent implements LaunchAgentService {
             cleanupRequested = true;
             notify();
         }
-
-        public String getTempDirectory() {
-            return tempDirectory;
-        }
     }
 }

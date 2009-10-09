@@ -36,7 +36,7 @@ public class MeshKeeperFactory implements FactoryBean, InitializingBean, Disposa
         meshKeeper.destroy();
     }
 
-    public Class getObjectType() {
+    public Class<?> getObjectType() {
         return MeshKeeper.class;
     }
 

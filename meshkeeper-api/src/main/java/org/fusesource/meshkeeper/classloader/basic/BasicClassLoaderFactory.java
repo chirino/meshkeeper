@@ -26,7 +26,7 @@ import java.util.List;
  * @author chirino
  */
 public class BasicClassLoaderFactory implements ClassLoaderFactory {
-
+    private static final long serialVersionUID = 1L;
     private static final int CHUNK_SIZE = 1024*64;
     private static final Log LOG = LogFactory.getLog(BasicClassLoaderFactory.class);
 

@@ -87,6 +87,7 @@ public class RegistryHelper {
             registry.addRegistryWatcher(path, this);
         }
 
+        @SuppressWarnings("unchecked")
         public synchronized void onChildrenChanged(String path, List<String> nodes) {
             //System.out.println("Nodes changed for " + path + ": " + nodes);
             for (String node : nodes) {

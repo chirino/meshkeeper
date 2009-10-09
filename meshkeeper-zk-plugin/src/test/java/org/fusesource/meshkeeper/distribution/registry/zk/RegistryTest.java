@@ -7,17 +7,14 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.registry.zk;
 
-import java.io.File;
 import java.io.Serializable;
+
+import junit.framework.TestCase;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.MavenTestSupport;
-import org.fusesource.meshkeeper.MeshKeeper.Registry;
-import org.fusesource.meshkeeper.control.ControlService;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
-
-import junit.framework.TestCase;
 
 /**
  * RegistryTest
@@ -36,7 +33,6 @@ public class RegistryTest extends TestCase {
     ZooKeeperServer server;
 
     protected void setUp() throws Exception {
-        String SLASH = File.separator;
         String testDir = MavenTestSupport.getDataDirectory(RegistryTest.class.getSimpleName()).getCanonicalPath();
         
         server = (ZooKeeperServer) new ZooKeeperServerFactory().createPlugin("tcp://localhost:2000");
@@ -84,7 +80,7 @@ public class RegistryTest extends TestCase {
             {
                 try
                 {
-                    Thread.currentThread().sleep(5000);
+                    Thread.sleep(5000);
                     client.addRegistryObject("/temp/foo/1", false, new TestObject());
                 }
                 catch (Exception e)
@@ -117,6 +113,8 @@ public class RegistryTest extends TestCase {
     }
 
     public static class TestObject implements Serializable {
+
+        private static final long serialVersionUID = 1L;
        
     }
 }

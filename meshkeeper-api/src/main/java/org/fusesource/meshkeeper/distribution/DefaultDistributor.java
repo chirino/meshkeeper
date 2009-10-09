@@ -475,6 +475,7 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @throws Exception
      *             If there is an error
      */
+    @SuppressWarnings("unchecked")
     public <T> T getMulticastProxy(String address, Class<?> mainInterface, Class <?> ... extraInterfaces) throws Exception {
         return (T) remoting.getMulticastProxy(address, mainInterface, extraInterfaces);
     }
@@ -607,10 +608,6 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
         DistributionRef(D object, Class<?>... serviceInterfaces) {
             this.object = object;
             this.serviceInterfaces = serviceInterfaces;
-        }
-
-        public String getMultiCastPrefix() {
-            return multiCastPrefix;
         }
 
         public void setMultiCastPrefix(String multiCastPrefix) {

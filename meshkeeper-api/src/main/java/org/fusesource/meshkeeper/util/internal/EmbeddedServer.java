@@ -1,12 +1,9 @@
 package org.fusesource.meshkeeper.util.internal;
 
-import java.io.File;
-
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.control.ControlServer;
 import org.fusesource.meshkeeper.launcher.LaunchAgent;
-import org.fusesource.meshkeeper.distribution.DistributorFactory;
 
 /**
  * @author chirino

@@ -270,18 +270,18 @@ public class URISupport {
         return new URI(stripPrefix(uri.getSchemeSpecificPart().trim(), "//"));
     }
 
-    public static String createQueryString(Map options) throws URISyntaxException {
+    public static String createQueryString(Map<String, String> options) throws URISyntaxException {
         try {
             if (options.size() > 0) {
                 StringBuffer rc = new StringBuffer();
                 boolean first = true;
-                for (Iterator iter = options.keySet().iterator(); iter.hasNext();) {
+                for (Iterator<String> iter = options.keySet().iterator(); iter.hasNext();) {
                     if (first) {
                         first = false;
                     } else {
                         rc.append("&");
                     }
-                    String key = (String)iter.next();
+                    String key = iter.next();
                     String value = (String)options.get(key);
                     rc.append(URLEncoder.encode(key, "UTF-8"));
                     rc.append("=");
@@ -301,7 +301,7 @@ public class URISupport {
      * 
      * @throws URISyntaxException
      */
-    public static URI createRemainingURI(URI originalURI, Map params) throws URISyntaxException {
+    public static URI createRemainingURI(URI originalURI, Map<String, String> params) throws URISyntaxException {
         String s = createQueryString(params);
         if (s.length() == 0) {
             s = null;

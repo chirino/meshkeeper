@@ -14,11 +14,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.URI;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,8 +32,6 @@ import org.apache.zookeeper.KeeperException.NotEmptyException;
 import org.apache.zookeeper.data.Stat;
 import org.fusesource.meshkeeper.RegistryWatcher;
 import org.fusesource.meshkeeper.distribution.registry.AbstractRegistryClient;
-import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
-import org.fusesource.meshkeeper.distribution.registry.RegistryHelper;
 
 /**
  * ZooKeeperRegistry

@@ -21,6 +21,8 @@ import static org.fusesource.meshkeeper.Expression.*;
  * @author chirino
 */
 public class LaunchDescription implements Serializable {
+
+    private static final long serialVersionUID = 1L;
     ArrayList<Expression> command = new ArrayList<Expression>();
     HashMap<String, Expression> environment;
     Expression.FileExpression workingDirectory;
@@ -61,6 +63,8 @@ public class LaunchDescription implements Serializable {
     }
 
     private static class InstallLaunchResourceTask implements Serializable, LaunchTask {
+
+        private static final long serialVersionUID = 1L;
         private final MeshArtifact resource;
 
         public InstallLaunchResourceTask(MeshArtifact resource) {
@@ -74,6 +78,9 @@ public class LaunchDescription implements Serializable {
 
 
     private static class SubLaunchTask implements Serializable, LaunchTask, MeshProcessListener {
+
+        private static final long serialVersionUID = 1L;
+
         private final LaunchDescription launch;
 
         transient private CountDownLatch done = new CountDownLatch(1);

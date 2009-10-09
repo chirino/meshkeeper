@@ -24,7 +24,6 @@ import javax.jms.Session;
 import org.fusesource.meshkeeper.MeshEvent;
 import org.fusesource.meshkeeper.MeshEventListener;
 import org.fusesource.meshkeeper.distribution.event.AbstractEventClient;
-import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.jms.JMSProvider;
 
 /**

@@ -128,7 +128,6 @@ class PortReserver {
 
     }
 
-    @SuppressWarnings("unchecked")
     private static <T> T[] makeArray(Class<T> clazz, int size) {
         return (T[]) Array.newInstance(clazz, size);
     }

@@ -48,6 +48,7 @@ public abstract class AbstractRegistryClient extends AbstractPluginClient implem
      * @return The 
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     public <T> T waitForRegistration(String path, long timeout) throws TimeoutException, Exception
     {
         return (T) RegistryHelper.waitForRegistration(this, path, timeout);

@@ -30,19 +30,19 @@ public class ClassLoadingAwareObjectInputStream extends ObjectInputStream {
     /**
      * <p>Maps primitive type names to corresponding class objects.</p>
      */
-    private static final HashMap<String, Class> primClasses = new HashMap<String, Class>(8, 1.0F);
+    private static final HashMap<String, Class<?>> primClasses = new HashMap<String, Class<?>>(8, 1.0F);
 
     public ClassLoadingAwareObjectInputStream(InputStream in) throws IOException {
         super(in);
     }
 
-    protected Class resolveClass(ObjectStreamClass classDesc) throws IOException, ClassNotFoundException {
+    protected Class<?> resolveClass(ObjectStreamClass classDesc) throws IOException, ClassNotFoundException {
         String s = classDesc.getName();
         return load(s);
     }
 
-    protected Class resolveProxyClass(String[] interfaces) throws IOException, ClassNotFoundException {
-        Class[] cinterfaces = new Class[interfaces.length];
+    protected Class<?> resolveProxyClass(String[] interfaces) throws IOException, ClassNotFoundException {
+        Class<?>[] cinterfaces = new Class[interfaces.length];
         for (int i = 0; i < interfaces.length; i++) {
             cinterfaces[i] = load(interfaces[i]);
         }
@@ -57,17 +57,15 @@ public class ClassLoadingAwareObjectInputStream extends ObjectInputStream {
         return new ClassLoader[]{Thread.currentThread().getContextClassLoader()};
     }
 
-    private Class load(String s) throws ClassNotFoundException {
+    private Class<?> load(String s) throws ClassNotFoundException {
         ClassLoader[] cls = getClassLoaders();
-        ClassNotFoundException error = null;
         for (ClassLoader cl : cls) {
             try {
                 return Class.forName(s, false, cl);
             } catch (ClassNotFoundException e) {
-                error = e;
             }
         }
-        final Class clazz = (Class) primClasses.get(s);
+        final Class<?> clazz = (Class<?>) primClasses.get(s);
         if (clazz != null) {
             return clazz;
         } else {

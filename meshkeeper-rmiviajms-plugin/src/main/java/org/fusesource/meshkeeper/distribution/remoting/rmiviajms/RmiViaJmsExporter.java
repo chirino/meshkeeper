@@ -43,6 +43,7 @@ class RmiViaJmsExporter extends AbstractRemotingClient {
     /* (non-Javadoc)
      * @see org.fusesource.meshkeeper.MeshKeeper.Remoting#getMulticastProxy(java.lang.String, java.lang.Class<?>[])
      */
+    @SuppressWarnings("unchecked")
     public <T> T getMulticastProxy(String address, Class<?> mainInterface, Class<?>... interfaces) throws Exception {
         return (T) JMSRemoteObject.toProxy(JMSRemoteObject.MULTICAST_PREFIX + address, mainInterface, interfaces);
     }

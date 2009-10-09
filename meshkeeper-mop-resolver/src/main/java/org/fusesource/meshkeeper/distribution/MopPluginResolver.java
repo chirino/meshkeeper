@@ -63,7 +63,7 @@ public class MopPluginResolver implements PluginResolver {
             try {
                 deps = getMopRepository().resolveArtifacts(new ArtifactId[] { ArtifactId.parse(PROJECT_GROUP_ID + ":" + PROJECT_ARTIFACT_ID, defaultPluginVersion, MOP.DEFAULT_TYPE) });
             } catch (Exception e) {
-                deps = Collections.EMPTY_SET;
+                deps = Collections.emptySet();
             }
 
             final HashSet<String> filters = new HashSet<String>(deps.size());

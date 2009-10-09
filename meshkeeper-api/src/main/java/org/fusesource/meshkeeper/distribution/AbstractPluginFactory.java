@@ -20,6 +20,7 @@ import java.net.URI;
  */
 public abstract class AbstractPluginFactory<P> {
 
+    @SuppressWarnings("unchecked")
     public final P create(String uri) throws Exception {
         URI providerUri = new URI(uri);
         String factoryName = providerUri.getScheme();

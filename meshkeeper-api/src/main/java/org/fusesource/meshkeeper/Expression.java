@@ -7,12 +7,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
-import java.lang.*;
-
-import javax.management.RuntimeErrorException;
 
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
-import org.fusesource.meshkeeper.distribution.PluginResolver;
 import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import org.fusesource.meshkeeper.util.internal.ProcessSupport;
 
@@ -20,6 +16,8 @@ import org.fusesource.meshkeeper.util.internal.ProcessSupport;
  * @author chirino
  */
 abstract public class Expression implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     public final String evaluate() {
         return evaluate(System.getProperties());
@@ -104,6 +102,7 @@ abstract public class Expression implements Serializable {
     }
 
     public static class StringExpression extends Expression {
+        private static final long serialVersionUID = 1L;
         String value;
 
         public StringExpression(String value) {
@@ -116,6 +115,7 @@ abstract public class Expression implements Serializable {
     }
 
     public static class PropertyExpression extends Expression {
+        private static final long serialVersionUID = 1L;
         String name;
         Expression defaultExpression;
 
@@ -134,6 +134,7 @@ abstract public class Expression implements Serializable {
     }
 
     public static class FileExpression extends Expression {
+        private static final long serialVersionUID = 1L;
         Expression name;
 
         public FileExpression(Expression name) {
@@ -152,6 +153,7 @@ abstract public class Expression implements Serializable {
     }
 
     public static class PathExpression extends Expression {
+        private static final long serialVersionUID = 1L;
         final ArrayList<FileExpression> files = new ArrayList<FileExpression>();
 
         public PathExpression(Collection<FileExpression> files) {
@@ -173,6 +175,7 @@ abstract public class Expression implements Serializable {
     }
 
     public static class ExecExpression extends Expression {
+        private static final long serialVersionUID = 1L;
         private final List<Expression> args;
 
         public ExecExpression(List<Expression> args) {
@@ -201,6 +204,7 @@ abstract public class Expression implements Serializable {
     }
 
     public static class MopExpression extends Expression {
+        private static final long serialVersionUID = 1L;
         private String artifactId;
 
         public MopExpression(String artifactId) {
@@ -218,6 +222,7 @@ abstract public class Expression implements Serializable {
     }
 
     public static class AppendExpression extends Expression {
+        private static final long serialVersionUID = 1L;
         final ArrayList<Expression> parts = new ArrayList<Expression>();
 
         public AppendExpression(Collection<Expression> parts) {

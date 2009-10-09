@@ -48,6 +48,7 @@ public class MeshContainerTest extends TestCase {
     }
 
     public static class CallBack implements ICallBack {
+        private static final long serialVersionUID = 1L;
         CountDownLatch latch = new CountDownLatch(1);
 
         public void done() {
@@ -56,6 +57,7 @@ public class MeshContainerTest extends TestCase {
     }
 
     public static class MeshContainerTestObject implements Distributable, Serializable {
+        private static final long serialVersionUID = 1L;
         ICallBack callback;
 
         public MeshContainerTestObject() {
@@ -73,6 +75,7 @@ public class MeshContainerTest extends TestCase {
     }
 
     static class RemoteTask implements Serializable, Runnable {
+        private static final long serialVersionUID = 1L;
         private final ICallBack callback;
 
         public RemoteTask(ICallBack callback) {

@@ -64,7 +64,7 @@ public final class IntrospectionSupport {
     private IntrospectionSupport() {
     }
 
-    public static boolean getProperties(Object target, Map props, String optionPrefix) {
+    public static boolean getProperties(Object target, Map<String, Object> props, String optionPrefix) {
 
         boolean rc = false;
         if (target == null) {
@@ -78,13 +78,13 @@ public final class IntrospectionSupport {
             optionPrefix = "";
         }
 
-        Class clazz = target.getClass();
+        Class<?> clazz = target.getClass();
         Method[] methods = clazz.getMethods();
         for (int i = 0; i < methods.length; i++) {
             Method method = methods[i];
             String name = method.getName();
-            Class type = method.getReturnType();
-            Class params[] = method.getParameterTypes();
+            Class<?> type = method.getReturnType();
+            Class<?> params[] = method.getParameterTypes();
             if ((name.startsWith("is") || name.startsWith("get")) && params.length == 0 && type != null && isSettableType(type)) {
 
                 try {
@@ -140,15 +140,15 @@ public final class IntrospectionSupport {
         return rc;
     }
 
-    public static Map<String, Object> extractProperties(Map props, String optionPrefix) {
+    public static Map<String, Object> extractProperties(Map<String, Object> props, String optionPrefix) {
         if (props == null) {
             throw new IllegalArgumentException("props was null.");
         }
 
         HashMap<String, Object> rc = new HashMap<String, Object>(props.size());
 
-        for (Iterator iter = props.keySet().iterator(); iter.hasNext();) {
-            String name = (String)iter.next();
+        for (Iterator<String> iter = props.keySet().iterator(); iter.hasNext();) {
+            String name = iter.next();
             if (name.startsWith(optionPrefix)) {
                 Object value = props.get(name);
                 name = name.substring(optionPrefix.length());
@@ -160,7 +160,7 @@ public final class IntrospectionSupport {
         return rc;
     }
 
-    public static boolean setProperties(Object target, Map props) {
+    public static <T> boolean setProperties(Object target, Map<String, T> props) {
         boolean rc = false;
 
         if (target == null) {
@@ -170,8 +170,8 @@ public final class IntrospectionSupport {
             throw new IllegalArgumentException("props was null.");
         }
 
-        for (Iterator iter = props.entrySet().iterator(); iter.hasNext();) {
-            Map.Entry entry = (Entry)iter.next();
+        for (Iterator<Entry<String, T>> iter = props.entrySet().iterator(); iter.hasNext();) {
+            Entry<String, T> entry = iter.next();
             if (setProperty(target, (String)entry.getKey(), entry.getValue())) {
                 iter.remove();
                 rc = true;
@@ -183,7 +183,7 @@ public final class IntrospectionSupport {
 
     public static boolean setProperty(Object target, String name, Object value) {
         try {
-            Class clazz = target.getClass();
+            Class<?> clazz = target.getClass();
             Method setter = findSetterMethod(clazz, name);
             if (setter == null) {
                 return false;
@@ -203,7 +203,7 @@ public final class IntrospectionSupport {
         }
     }
 
-    private static Object convert(Object value, Class type) {
+    private static Object convert(Object value, Class<?> type) {
         PropertyEditor editor = PropertyEditorManager.findEditor(type);
         if (editor != null) {
             editor.setAsText(value.toString());
@@ -212,7 +212,7 @@ public final class IntrospectionSupport {
         return null;
     }
 
-    public static String convertToString(Object value, Class type) {
+    public static String convertToString(Object value, Class<?> type) {
         PropertyEditor editor = PropertyEditorManager.findEditor(type);
         if (editor != null) {
             editor.setValue(value);
@@ -221,13 +221,13 @@ public final class IntrospectionSupport {
         return null;
     }
 
-    private static Method findSetterMethod(Class clazz, String name) {
+    private static Method findSetterMethod(Class<?> clazz, String name) {
         // Build the method name.
         name = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
         Method[] methods = clazz.getMethods();
         for (int i = 0; i < methods.length; i++) {
             Method method = methods[i];
-            Class params[] = method.getParameterTypes();
+            Class<?> params[] = method.getParameterTypes();
             if (method.getName().equals(name) && params.length == 1 ) {
                 return method;
             }
@@ -235,7 +235,7 @@ public final class IntrospectionSupport {
         return null;
     }
 
-    private static boolean isSettableType(Class clazz) {
+    private static boolean isSettableType(Class<?> clazz) {
         if (PropertyEditorManager.findEditor(clazz) != null) {
             return true;
         }
@@ -247,11 +247,11 @@ public final class IntrospectionSupport {
         return toString(target, Object.class, null);
     }
     
-    public static String toString(Object target, Class stopClass) {
+    public static String toString(Object target, Class<?> stopClass) {
     	return toString(target, stopClass, null);
     }
 
-    public static String toString(Object target, Class stopClass, Map<String, Object> overrideFields) {
+    public static String toString(Object target, Class<?> stopClass, Map<String, Object> overrideFields) {
         LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
         addFields(target, target.getClass(), stopClass, map);
         if (overrideFields != null) {
@@ -263,10 +263,10 @@ public final class IntrospectionSupport {
         }
         StringBuffer buffer = new StringBuffer(simpleName(target.getClass()));
         buffer.append(" {");
-        Set entrySet = map.entrySet();
+        Set<Entry<String, Object>> entrySet = map.entrySet();
         boolean first = true;
-        for (Iterator iter = entrySet.iterator(); iter.hasNext();) {
-            Map.Entry entry = (Map.Entry)iter.next();
+        for (Iterator<Entry<String, Object>> iter = entrySet.iterator(); iter.hasNext();) {
+            Entry<String, Object> entry = iter.next();
             if (first) {
                 first = false;
             } else {
@@ -284,7 +284,7 @@ public final class IntrospectionSupport {
         buffer.append(value);
     }
 
-    public static String simpleName(Class clazz) {
+    public static String simpleName(Class<?> clazz) {
         String name = clazz.getName();
         int p = name.lastIndexOf(".");
         if (p >= 0) {
@@ -293,7 +293,7 @@ public final class IntrospectionSupport {
         return name;
     }
 
-    private static void addFields(Object target, Class startClass, Class<Object> stopClass, LinkedHashMap<String, Object> map) {
+    private static void addFields(Object target, Class<?> startClass, Class<?> stopClass, LinkedHashMap<String, Object> map) {
 
         if (startClass != stopClass) {
             addFields(target, startClass.getSuperclass(), stopClass, map);
