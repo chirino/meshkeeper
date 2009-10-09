@@ -124,10 +124,12 @@ public interface MeshKeeper {
         public void releaseAllPorts(String agentName) throws Exception;
 
         /**
-         * Waits for 
-         * @param timeout
-         * @throws InterruptedException
-         * @throws TimeoutException
+         * Waits for an agent to become available timing out of one does not 
+         * become available after the given timeout. 
+         * @param timeout The timeout
+         * 
+         * @throws InterruptedException If the thread is interrupted while waiting
+         * @throws TimeoutException If timed out. 
          */
         public void waitForAvailableAgents(long timeout) throws InterruptedException, TimeoutException;
 
