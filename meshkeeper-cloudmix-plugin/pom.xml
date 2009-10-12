@@ -7,8 +7,8 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.fusesource.meshkeeper</groupId>
-  <artifactId>meshkeeper-cloudmix</artifactId>
-  <name>MeshKeeper :: Cloudmix</name>
+  <artifactId>meshkeeper-cloudmix-plugin</artifactId>
+  <name>MeshKeeper :: Cloudmix Provisioning Plugin</name>
   <version>1.0-SNAPSHOT</version>
   <url>http://maven.apache.org</url>
   <dependencies>

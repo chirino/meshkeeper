@@ -20,7 +20,8 @@ import java.net.URL;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.meshkeeper.cloudmix.CloudMixSupport;
+import org.fusesource.meshkeeper.distribution.provisioner.Provisioner;
+import org.fusesource.meshkeeper.distribution.provisioner.ProvisionerFactory;
 
 /**
  * Goal for provisioning meshkeeper.
@@ -31,13 +32,13 @@ import org.meshkeeper.cloudmix.CloudMixSupport;
  */
 public class MeshKeeperProvisioningMojo extends AbstractMojo {
     /**
-     * Type of provisioning to do cloudmix or embedded
+     * Type of provisioning to do. The default options are cloudmix or embedded.
      * 
      * @parameter expression="${provision.provisioningType}"
      *            default-value="embedded"
      * 
      */
-    private String type;
+    private String provider;
 
     /**
      * Type of provisioning to do deploy or undeploy
@@ -48,39 +49,38 @@ public class MeshKeeperProvisioningMojo extends AbstractMojo {
     private String action;
 
     /**
-     * The control-url for cloudmix
+     * The control-url for the provisioner
      * 
      * @parameter expression="${cloudmix.url"}
      *            default-value="http://localhost:8181/"
      */
-    private URL cloudmixUrl;
+    private URL provisionerUrl;
 
     public void execute() throws MojoExecutionException {
-        if (type.equals("cloudmix")) {
-            CloudMixSupport cloudmixSupport = new CloudMixSupport();
-            cloudmixSupport.setControllerUrl(cloudmixUrl.toString());
+        Provisioner provisioner = null;
+        try {
+            provisioner = new ProvisionerFactory().create(provider);
+        } catch (Throwable thrown) {
+            throw new MojoExecutionException("Failure instantiating provisioner", thrown);
+        }
 
-            if (action.equals("deploy")) {
-                try {
-                    cloudmixSupport.deployMeshKeeperProfile();
-                    cloudmixSupport.dumpStatus();
-                } catch (Throwable thrown) {
-                    throw new MojoExecutionException("Failured deploying meshkeeper on cloudmix", thrown);
-                }
-            } else if (action.equals("undeploy")) {
-                try {
-                    cloudmixSupport.killMeshKeeper();
-                } catch (Throwable thrown) {
-                    throw new MojoExecutionException("Failured deploying meshkeeper on cloudmix", thrown);
-                }
-            } else {
-                throw new MojoExecutionException("Invalid provisioning action: " + action);
+        provisioner.setDeploymentUri(provisionerUrl.toString());
+
+        if (action.equals("deploy")) {
+            try {
+                provisioner.reDeploy(true);
+                getLog().info(provisioner.getStatus(null).toString());
+            } catch (Throwable thrown) {
+                throw new MojoExecutionException("Failure provisioning meshkeeper", thrown);
             }
+        } else if (action.equals("undeploy")) {
+            try {
+                provisioner.unDeploy(true);
+            } catch (Throwable thrown) {
+                throw new MojoExecutionException("Failure deprovisioning meshkeeper on cloudmix", thrown);
+            }
+        } else {
+            throw new MojoExecutionException("Invalid provisioning action: " + action);
         }
-        else
-        {
-            throw new MojoExecutionException("unsupported provisioning type: " + type);
-        }
-        
     }
 }

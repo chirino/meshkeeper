@@ -135,7 +135,7 @@
                 <id>javadoc</id>
                 <phase>process-classes</phase>
                 <goals>
-                  <goal>javadoc:aggregate-jar</goal>
+                  <goal>aggregate-jar</goal>
                 </goals>
                 <configuration>
                   <excludePackageNames>org.fusesource.meshkeeper.distribution</excludePackageNames>

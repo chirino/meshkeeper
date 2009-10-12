@@ -22,7 +22,7 @@ public class MeshKeeperFactoryTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        System.setProperty("meshkeeper.base", MavenTestSupport.getDataDirectory().getPath());
+        System.setProperty("meshkeeper.base", MavenTestSupport.getDataDirectory(MeshKeeperFactoryTest.class.getSimpleName()).getCanonicalPath());
         // This shows how to start an embedded server /w java
         controller = MeshKeeperFactory.createControlServer("zk:tcp://localhost:2101");
     }
@@ -44,7 +44,6 @@ public class MeshKeeperFactoryTest extends TestCase {
         mk = MeshKeeperFactory.createMeshKeeper("zk:tcp://localhost:2101");
         assertNotNull(mk.registry().getRegistryData(ControlServer.REMOTING_URI_PATH));
         mk.destroy();
-
 
         // Test out starting a launcher agent
         mk = MeshKeeperFactory.createMeshKeeper("zk:tcp://localhost:2101");

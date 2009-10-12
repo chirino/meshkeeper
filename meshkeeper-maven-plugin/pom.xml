@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?><project>
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
   <parent>
     <artifactId>meshkeeper</artifactId>
     <groupId>org.fusesource.meshkeeper</groupId>
@@ -24,10 +25,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-    	<groupId>org.fusesource.meshkeeper</groupId>
-    	<artifactId>meshkeeper-cloudmix</artifactId>
-    	<version>1.0-SNAPSHOT</version>
-    	<type>maven-plugin</type>
+      <groupId>org.fusesource.meshkeeper</groupId>
+      <artifactId>meshkeeper-api</artifactId>
+      <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
 </project>

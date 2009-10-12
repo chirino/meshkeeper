@@ -189,6 +189,17 @@ public class ControlServer {
         return registryUri;
     }
 
+    /**
+     * @return The connect uri that should be used to connect to the registry.
+     */
+    public String getRegistryConnectUri() {
+        if (registryServer != null) {
+            return registryServer.getServiceUri();
+        } else {
+            return registryUri;
+        }
+    }
+
     public void setRegistryUri(String registryProvider) {
         this.registryUri = registryProvider;
     }
