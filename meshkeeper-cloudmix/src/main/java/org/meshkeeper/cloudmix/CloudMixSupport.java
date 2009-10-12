@@ -47,11 +47,28 @@ public class CloudMixSupport {
     private String preferredControlServerAgent;
     private RestGridClient gridClient;
 
+    public static class ProvisioningFailure extends Exception {
+        private static final long serialVersionUID = 8167843986234465129L;
+
+        ProvisioningFailure(String message) {
+            super(message);
+        }
+
+        ProvisioningFailure(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+    }
+
+    public void setLog(Log log) {
+        LOG = log;
+    }
+
     public void killMeshKeeper() throws URISyntaxException {
         GridClient controller = getGridClient();
 
         boolean removed = false;
-        
+
         for (String profile : new String[] { MESH_KEEPER_AGENT_PROFILE_ID, MESH_KEEPER_CONTROL_PROFILE_ID }) {
             ProfileDetails existing = controller.getProfile(profile);
             if (existing != null) {
@@ -98,7 +115,7 @@ public class CloudMixSupport {
 
     }
 
-    public void deployMeshKeeperProfile() throws URISyntaxException {
+    public void deployMeshKeeperProfile() throws URISyntaxException, ProvisioningFailure {
         GridClient controller = getGridClient();
 
         killMeshKeeper();
@@ -112,17 +129,15 @@ public class CloudMixSupport {
         controlFeature.setId(MESH_KEEPER_CONTROL_FEATURE_ID);
         controlFeature.setMaximumInstances("1");
         if (preferredControlServerAgent != null) {
-//            AgentDetails agent = controller.getAgentDetails(preferredControlServerAgent);
-//            if (agent.getContainerType().contains("mop")) {
-//                LOG.info("Setting preferred control agent:" + preferredControlServerAgent);
-//                controlFeature.preferredMachine(preferredControlServerAgent);
-//            }
+            //            AgentDetails agent = controller.getAgentDetails(preferredControlServerAgent);
+            //            if (agent.getContainerType().contains("mop")) {
+            //                LOG.info("Setting preferred control agent:" + preferredControlServerAgent);
+            //                controlFeature.preferredMachine(preferredControlServerAgent);
+            //            }
             controlFeature.preferredMachine(preferredControlServerAgent);
         }
-        controlFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " 
-                + org.fusesource.meshkeeper.control.Main.class.getName() 
-                + " --jms activemq:tcp://0.0.0.0:4041"
-                + " --registry zk:tcp://0.0.0.0:4040");
+        controlFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.control.Main.class.getName()
+                + " --jms activemq:tcp://0.0.0.0:4041" + " --registry zk:tcp://0.0.0.0:4040");
         controlFeature.setOwnedByProfileId(controlProfile.getId());
         controlFeature.setOwnsMachine(false);
         controlFeature.validContainerType("mop");
@@ -132,19 +147,19 @@ public class CloudMixSupport {
 
         //Wait for the control profile to be provisioned:
         assertProvisioned(controlProfile);
-        
+
         //Get the control host:
         List<String> agents = controller.getAgentsAssignedToFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
         AgentDetails details = controller.getAgentDetails(agents.get(0));
         details.getHostname();
         String controlHost = details.getHostname();
-        
+
         LOG.info("MeshKeeper controller provisioned to: " + controlHost);
         String registyConnect = "zk:tcp://" + controlHost + ":4040";
-        
+
         //TODO it would be better to poll for the agent's online state somehow instead:
         long delay = 30;
-        LOG.info("Sleeping " + delay +"s to wait for controller to come on line");
+        LOG.info("Sleeping " + delay + "s to wait for controller to come on line");
         try {
             Thread.sleep(delay * 1000);
         } catch (InterruptedException ie) {
@@ -152,12 +167,12 @@ public class CloudMixSupport {
         }
 
         //TODO it would be better to test connectivity:        
-//        RegistryFactory factory = new RegistryFactory();
-//        try {
-//            factory.create("zk:tcp://" + controlHost + ":4040");
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        //        RegistryFactory factory = new RegistryFactory();
+        //        try {
+        //            factory.create("zk:tcp://" + controlHost + ":4040");
+        //        } catch (Exception e) {
+        //            e.printStackTrace();
+        //        }
 
         ProfileDetails agentProfile = new ProfileDetails();
         agentProfile.setId(MESH_KEEPER_AGENT_PROFILE_ID);
@@ -166,9 +181,9 @@ public class CloudMixSupport {
         //agentFeature.addProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, registyConnect);
         agentFeature.setId(MESH_KEEPER_AGENT_FEATURE_ID);
         agentFeature.depends(controlFeature);
-        agentFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName() + 
-                " --registry " + registyConnect);
-        
+        agentFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName() + " --registry "
+                + registyConnect);
+
         agentFeature.setOwnsMachine(false);
         agentFeature.setMaximumInstances("100");
         agentFeature.validContainerType("mop");
@@ -181,9 +196,8 @@ public class CloudMixSupport {
 
         dumpStatus();
     }
-    
-    public String findMeshKeeperConnnectUrl() throws URISyntaxException, Exception
-    {
+
+    public String findMeshKeeperConnnectUrl() throws URISyntaxException, Exception {
         GridClient controller = getGridClient();
         List<String> agents = controller.getAgentsAssignedToFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
         AgentDetails details = controller.getAgentDetails(agents.get(0));
@@ -195,7 +209,7 @@ public class CloudMixSupport {
     /**
      * Asserts that all the requested features have been provisioned properly
      */
-    protected void assertProvisioned(ProfileDetails profile) {
+    protected void assertProvisioned(ProfileDetails profile) throws ProvisioningFailure {
         long start = System.currentTimeMillis();
 
         Set<String> provisionedFeatures = new TreeSet<String>();
@@ -231,7 +245,7 @@ public class CloudMixSupport {
 
             long delta = now - start;
             if (delta > 20000) {
-                throw new RuntimeException("Provision failure. Not enough instances of features: " + failedFeatures + " after waiting " + (20000 / 1000) + " seconds");
+                throw new ProvisioningFailure("Provision failure. Not enough instances of features: " + failedFeatures + " after waiting " + (20000 / 1000) + " seconds");
             } else {
                 try {
                     Thread.sleep(1000);

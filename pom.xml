@@ -51,8 +51,9 @@
     <module>meshkeeper-wagon-plugin</module>
     <module>meshkeeper-eventviajms-plugin</module>
     <module>meshkeeper-activemq-plugin</module>
-    <module>meshkeeper-packaging-test</module>
     <module>meshkeeper-cloudmix</module>
+    <module>meshkeeper-maven-plugin</module>
+    <module>meshkeeper-packaging-test</module>
   </modules>
 
   <scm>
