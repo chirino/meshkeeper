@@ -1,0 +1,56 @@
+<plugin>
+  <description>MeshKeeper is a platform for launching, coordinating and controlling arbitrary scripts,
+    executables, java processes and objects within a mesh of computers.</description>
+  <groupId>org.fusesource.meshkeeper</groupId>
+  <artifactId>meshkeeper-maven-plugin</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <goalPrefix>meshkeeper</goalPrefix>
+  <isolatedRealm>false</isolatedRealm>
+  <inheritedByDefault>true</inheritedByDefault>
+  <mojos>
+    <mojo>
+      <goal>provision</goal>
+      <description>Goal for provisioning meshkeeper.</description>
+      <requiresDirectInvocation>false</requiresDirectInvocation>
+      <requiresProject>true</requiresProject>
+      <requiresReports>false</requiresReports>
+      <aggregator>false</aggregator>
+      <requiresOnline>false</requiresOnline>
+      <inheritedByDefault>true</inheritedByDefault>
+      <phase>process-sources</phase>
+      <implementation>org.meshkeeper.maven.plugin.MeshKeeperProvisioningMojo</implementation>
+      <language>java</language>
+      <instantiationStrategy>per-lookup</instantiationStrategy>
+      <executionStrategy>once-per-session</executionStrategy>
+      <parameters>
+        <parameter>
+          <name>action</name>
+          <type>java.lang.String</type>
+          <required>false</required>
+          <editable>true</editable>
+          <description>Type of provisioning to do deploy or undeploy</description>
+        </parameter>
+        <parameter>
+          <name>cloudmixUrl</name>
+          <type>java.net.URL</type>
+          <required>false</required>
+          <editable>true</editable>
+          <description>The control-url for cloudmix</description>
+        </parameter>
+        <parameter>
+          <name>type</name>
+          <type>java.lang.String</type>
+          <required>false</required>
+          <editable>true</editable>
+          <description>Type of provisioning to do cloudmix or embedded</description>
+        </parameter>
+      </parameters>
+      <configuration>
+        <action implementation="java.lang.String" default-value="deploy"/>
+        <type implementation="java.lang.String" default-value="embedded">${provision.provisioningType}</type>
+        <cloudmixUrl implementation="java.net.URL">${cloudmix.url</cloudmixUrl>
+      </configuration>
+    </mojo>
+  </mojos>
+  <dependencies/>
+</plugin>
