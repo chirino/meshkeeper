@@ -36,7 +36,7 @@ public interface Provisioner {
         }
 
         public MeshProvisioningException(String reason, Throwable cause) {
-            super(reason);
+            super(reason, cause);
         }
     }
 
