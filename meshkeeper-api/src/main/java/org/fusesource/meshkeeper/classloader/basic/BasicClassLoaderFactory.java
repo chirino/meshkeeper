@@ -111,7 +111,7 @@ public class BasicClassLoaderFactory implements ClassLoaderFactory {
                     }
                 }
 
-                // It may be in the cache dir allready...
+                // It may be in the cache dir already...
                 if (file.exists()) {
                     if ( !Arrays.equals(element.fingerprint, fingerprint(new FileInputStream(file)) )
                             || element.length != file.length()) {
@@ -127,6 +127,7 @@ public class BasicClassLoaderFactory implements ClassLoaderFactory {
 
         URL t[] = new URL[urls.size()];
         urls.toArray(t);
+        //System.out.println("Created URL class loader with: " + urls);
         return new URLClassLoader(t, parent);
     }
 

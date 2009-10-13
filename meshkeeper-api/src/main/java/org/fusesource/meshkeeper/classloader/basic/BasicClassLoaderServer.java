@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -47,19 +48,21 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
 
     public interface IServer extends Distributable {
         List<PathElement> getPathElements(long classLoaderId) throws Exception;
+
         byte[] download(long fileId, int pos, int length) throws IOException;
     }
 
     public class Server implements IServer {
-        
+
         public List<PathElement> getPathElements(long classLoaderId) throws Exception {
-            LOG.debug("Client is downloading the classpath list");
+            LOG.debug("Client is downloading the classpath list for " + classLoaderId);
             ArrayList<ExportedFile> files = exportedClassLoaders.get(classLoaderId);
-            if( files == null ) {
+            if (files == null) {
                 throw new IllegalArgumentException("Requested class loader not found.");
             }
             ArrayList<PathElement> rc = new ArrayList<PathElement>(files.size());
             for (ExportedFile file : files) {
+                //LOG.debug("CP [ " + classLoaderId + " ]" + file.file);
                 rc.add(file.element);
             }
             return rc;
@@ -67,11 +70,11 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
 
         public byte[] download(long fileId, int pos, int length) throws IOException {
             ExportedFile exportedFile = exportedFiles.get(fileId);
-            if( exportedFile == null ) {
-                throw new IllegalArgumentException("Requested file not found: "+fileId);
+            if (exportedFile == null) {
+                throw new IllegalArgumentException("Requested file not found: " + fileId);
             }
-            File file = exportedFile.jared==null ? exportedFile.file : exportedFile.jared;
-            LOG.debug("Client downloading from: "+file+" starting at "+pos);
+            File file = exportedFile.jared == null ? exportedFile.file : exportedFile.jared;
+            LOG.debug("Client downloading from: " + file + " starting at " + pos);
             return read(file, pos, length);
         }
     }
@@ -94,15 +97,15 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
     }
 
     synchronized public void start() throws Exception {
-        if( proxy==null ) {
+        if (proxy == null) {
             proxy = (IServer) meshKeeper.remoting().export(server);
         }
     }
 
     synchronized public void stop() throws Exception {
-        if( proxy!=null ) {
+        if (proxy != null) {
             meshKeeper.remoting().unexport(proxy);
-            proxy=null;
+            proxy = null;
         }
     }
 
@@ -119,10 +122,9 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         return new BasicClassLoaderFactory(proxy, id);
     }
 
-
     public ClassLoaderFactory export(ClassLoader classLoader, int maxExportDepth) throws IOException {
         ClassLoaderFactory factory = factories.get(classLoader);
-        if( factory == null ) {
+        if (factory == null) {
 
             ArrayList<ExportedFile> exports = new ArrayList<ExportedFile>();
             addExportedFiles(classLoader, maxExportDepth, exports);
@@ -133,15 +135,15 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
             }
             factory = new BasicClassLoaderFactory(proxy, id);
             factories.put(classLoader, factory);
-            
+
         }
         return factory;
     }
 
     private static void addExportedFiles(ClassLoader classLoader, int maxExportDepth, ArrayList<ExportedFile> elements) throws IOException {
-        if( maxExportDepth > 0 ) {
-            if( classLoader.getParent()!=null ) {
-                addExportedFiles(classLoader.getParent(), maxExportDepth-1, elements);
+        if (maxExportDepth > 0) {
+            if (classLoader.getParent() != null) {
+                addExportedFiles(classLoader.getParent(), maxExportDepth - 1, elements);
             }
         }
         addExportedFiles(classLoader, elements);
@@ -151,19 +153,30 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         if (!(classLoader instanceof URLClassLoader)) {
             throw new IOException("Encountered a non URLClassLoader classloader.");
         }
-        
+
         URLClassLoader ucl = (URLClassLoader) classLoader;
         URL[] urls = ucl.getURLs();
 
         for (URL url : urls) {
+
             if ("file".equals(url.getProtocol())) {
-                File file = new File(url.getFile());
+                File file;
+                try {
+                    file = new File(url.toURI());
+                } catch (URISyntaxException e) {
+                    IOException ioe = new IOException(e.getMessage());
+                    ioe.initCause(e);
+                    throw ioe;
+                }
                 addExportedFile(elements, file);
             } else {
                 ExportedFile exportedFile = new ExportedFile();
                 exportedFile.element.id = ids.incrementAndGet();
                 exportedFile.element.url = url;
                 elements.add(exportedFile);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Exporting: " + url.toString());
+                }
             }
         }
     }
@@ -178,8 +191,8 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         }
         // No need to add if it's in the list allready..
         for (ExportedFile element : elements) {
-            if( file.equals(element.file) ) {
-                LOG.debug("duplicate file :"+file+" on classpath");
+            if (file.equals(element.file)) {
+                LOG.debug("duplicate file :" + file + " on classpath");
                 return;
             }
         }
@@ -190,13 +203,13 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
                 return;
             }
             File jar = exportedFile.jared = jar(file);
-            LOG.debug("Jared: "+file+" as: "+jar);
+            LOG.debug("Jared: " + file + " as: " + jar);
             file = jar;
         } else {
             // if it's a file then it needs to be eaither a zip or jar file.
             String name = file.getName();
-            if( !(name.endsWith(".jar") || name.endsWith(".zip")) ) {
-                LOG.debug("Not a jar.. ommititng from the classpath: "+file);
+            if (!(name.endsWith(".jar") || name.endsWith(".zip"))) {
+                LOG.debug("Not a jar.. ommititng from the classpath: " + file);
                 return;
             }
         }
@@ -206,6 +219,5 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         exportedFile.element.fingerprint = BasicClassLoaderFactory.fingerprint(new FileInputStream(file));
         elements.add(exportedFile);
     }
-
 
 }
