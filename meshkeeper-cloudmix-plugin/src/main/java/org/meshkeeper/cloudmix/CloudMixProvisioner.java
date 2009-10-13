@@ -417,8 +417,6 @@ public class CloudMixProvisioner implements Provisioner {
 
         CloudMixProvisioner support = new CloudMixProvisioner();
         support.setDeploymentUri(CloudmixHelper.getDefaultRootUrl());
-        support.setDeploymentUri("http://vm-fuseubt1:8181");
-        support.setPreferredControlHost("vm-fuseubt1.bedford.progress.com");
 
         if (args.length > 1) {
             support.setDeploymentUri(args[1]);
