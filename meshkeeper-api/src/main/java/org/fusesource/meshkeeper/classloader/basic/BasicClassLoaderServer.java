@@ -7,12 +7,6 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.classloader.basic;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.Distributable;
-import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
-import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 import static org.fusesource.meshkeeper.util.internal.FileSupport.jar;
 import static org.fusesource.meshkeeper.util.internal.FileSupport.read;
 
@@ -27,6 +21,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.fusesource.meshkeeper.Distributable;
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
+import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 
 /**
  * @author chirino
@@ -41,6 +44,7 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
     public static class PathElement implements Serializable {
         private static final long serialVersionUID = 1L;
         public long id;
+        public String name;
         public byte[] fingerprint;
         public long length;
         public URL url;
@@ -63,6 +67,7 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
             ArrayList<PathElement> rc = new ArrayList<PathElement>(files.size());
             for (ExportedFile file : files) {
                 //LOG.debug("CP [ " + classLoaderId + " ]" + file.file);
+                file.setPathElementName();
                 rc.add(file.element);
             }
             return rc;
@@ -83,6 +88,16 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         final public PathElement element = new PathElement();;
         public File file;
         public File jared;
+
+        public void setPathElementName() {
+            if (element.name != null) {
+                return;
+            } else if (jared != null) {
+                element.name = jared.getName();
+            } else if (file != null) {
+                element.name = file.getName();
+            }
+        }
     }
 
     private final ConcurrentHashMap<ClassLoader, ClassLoaderFactory> factories = new ConcurrentHashMap<ClassLoader, ClassLoaderFactory>();
@@ -142,7 +157,7 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
 
     private static void addExportedFiles(ClassLoader classLoader, int maxExportDepth, ArrayList<ExportedFile> elements) throws IOException {
         if (maxExportDepth > 0) {
-            if (classLoader.getParent() != null) {
+            if (classLoader.getParent() != null && classLoader.getParent() != ClassLoader.getSystemClassLoader()) {
                 addExportedFiles(classLoader.getParent(), maxExportDepth - 1, elements);
             }
         }
@@ -192,7 +207,8 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         // No need to add if it's in the list allready..
         for (ExportedFile element : elements) {
             if (file.equals(element.file)) {
-                LOG.debug("duplicate file :" + file + " on classpath");
+                if(LOG.isDebugEnabled())
+                    LOG.debug("duplicate file :" + file + " on classpath");
                 return;
             }
         }
@@ -203,15 +219,31 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
                 return;
             }
             File jar = exportedFile.jared = jar(file);
-            LOG.debug("Jared: " + file + " as: " + jar);
+            if(LOG.isDebugEnabled())
+                LOG.debug("Jared: " + file + " as: " + jar);
             file = jar;
         } else {
             // if it's a file then it needs to be eaither a zip or jar file.
             String name = file.getName();
             if (!(name.endsWith(".jar") || name.endsWith(".zip"))) {
-                LOG.debug("Not a jar.. ommititng from the classpath: " + file);
+                if(LOG.isDebugEnabled())
+                    LOG.debug("Not a jar.. ommititng from the classpath: " + file);
                 return;
             }
+
+            try {
+                JarFile jar = new JarFile(file);
+                Manifest manifest = jar.getManifest();
+                if (manifest != null) {
+                    Object classpath = manifest.getMainAttributes().get(java.util.jar.Attributes.Name.CLASS_PATH);
+                    if (classpath != null) {
+                        LOG.warn("Classpath found in in jar manifest for " + file + " - " + classpath);
+                    }
+                }
+            } catch (Exception e) {
+                LOG.warn("Error reading jar manifest for: " + file);
+            }
+
         }
 
         exportedFile.element.id = ids.incrementAndGet();

@@ -24,7 +24,7 @@ public class ProcessSupport {
     static final private AtomicLong ID_GENERATOR = new AtomicLong(0);
 
     static private String getNextAnonymousId() {
-        return "anonymous:"+ID_GENERATOR.incrementAndGet();
+        return "anonymous:" + ID_GENERATOR.incrementAndGet();
     }
 
     static public String caputure(final Process process) throws InterruptedException {
@@ -37,9 +37,9 @@ public class ProcessSupport {
      * @return null if the process exits with a non zero return code
      * @throws InterruptedException
      */
-    static  public String caputure(String id, final Process process) throws InterruptedException {
+    static public String caputure(String id, final Process process) throws InterruptedException {
         ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
-        if( system(id, process, out, null) != 0 ) {
+        if (system(id, process, out, null) != 0) {
             return null;
         }
         return out.toString();
@@ -71,7 +71,7 @@ public class ProcessSupport {
         final StreamPump outputHandler = new StreamPump("Output Pump for Process: " + id, process.getInputStream(), out);
         outputHandler.start();
 
-        if( onExit!=null ) {
+        if (onExit != null) {
             new Thread("Exit Watcher for Process: " + id) {
                 @Override
                 public void run() {
@@ -104,10 +104,18 @@ public class ProcessSupport {
             try {
                 int count;
                 byte buffer[] = new byte[1204];
-                while ( (count=in.read(buffer,0,buffer.length)) >= 0) {
-                    if( out!=null ) {
+                while ((count = in.read(buffer, 0, buffer.length)) >= 0) {
+                    if (out != null) {
                         out.write(buffer, 0, count);
-                        if( count < buffer.length ) {
+                        if (count < buffer.length && in.available() == 0) {
+                            try {
+                                Thread.sleep(50);
+                                if (in.available() > 0) {
+                                    continue;
+                                }
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                            }
                             out.flush();
                         }
                     }

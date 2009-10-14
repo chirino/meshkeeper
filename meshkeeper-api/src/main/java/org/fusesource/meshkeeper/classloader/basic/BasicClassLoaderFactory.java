@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class BasicClassLoaderFactory implements ClassLoaderFactory {
     private static final long serialVersionUID = 1L;
-    private static final int CHUNK_SIZE = 1024*64;
+    private static final int CHUNK_SIZE = 1024 * 64;
     private static final Log LOG = LogFactory.getLog(BasicClassLoaderFactory.class);
 
     private BasicClassLoaderServer.IServer server;
@@ -38,30 +38,29 @@ public class BasicClassLoaderFactory implements ClassLoaderFactory {
         this.id = id;
     }
 
-//    TODO: We may need to implement a custom classloader to stream resources directly
-//    if we want to support non URLClassLoaders...
-//
-//    public class RemoteClassLoader extends ClassLoader {
-//
-//        @SuppressWarnings("unchecked")
-//        public Class findClass(String name) throws ClassNotFoundException {
-//            String path = name.replace('.', '/').concat(".class");
-//            try {
-//                byte data[] = server.findResource(path);
-//                if (data == null) {
-//                    throw new ClassNotFoundException(name);
-//                }
-//                return defineClass(name, data, 0, data.length);
-//            } catch (Exception e) {
-//                throw new ClassNotFoundException(name);
-//            }
-//        }
-//    }
-
+    //    TODO: We may need to implement a custom classloader to stream resources directly
+    //    if we want to support non URLClassLoaders...
+    //
+    //    public class RemoteClassLoader extends ClassLoader {
+    //
+    //        @SuppressWarnings("unchecked")
+    //        public Class findClass(String name) throws ClassNotFoundException {
+    //            String path = name.replace('.', '/').concat(".class");
+    //            try {
+    //                byte data[] = server.findResource(path);
+    //                if (data == null) {
+    //                    throw new ClassNotFoundException(name);
+    //                }
+    //                return defineClass(name, data, 0, data.length);
+    //            } catch (Exception e) {
+    //                throw new ClassNotFoundException(name);
+    //            }
+    //        }
+    //    }
 
     public ClassLoader createClassLoader(ClassLoader parent, File cacheDir) throws Exception {
 
-//        parent = createRemoteClassLoader(server.getParent(), cacheDir, depth - 1, parent);
+        //        parent = createRemoteClassLoader(server.getParent(), cacheDir, depth - 1, parent);
         List<BasicClassLoaderServer.PathElement> elements = server.getPathElements(id);
         if (elements == null) {
             // That classloader was not URL classloader based, so we could not import it
@@ -75,16 +74,27 @@ public class BasicClassLoaderFactory implements ClassLoaderFactory {
         ArrayList<URL> urls = new ArrayList<URL>();
         for (BasicClassLoaderServer.PathElement element : elements) {
 
-            if (element.url!=null) {
+            if (element.url != null) {
                 urls.add(element.url);
             } else {
 
                 cacheDir.mkdirs();
-                String name = HexSupport.toHexFromBytes(element.fingerprint)+".jar";
+                String name = "";
+                if (element.name != null) {
+                    if (element.name.indexOf(".") > 0) {
+                        String suffix = element.name.substring(element.name.lastIndexOf("."));
+                        String prefix = element.name.substring(0, element.name.lastIndexOf("."));
+                        name = prefix + "_" + HexSupport.toHexFromBytes(element.fingerprint) + suffix;
+                    } else {
+                        name = HexSupport.toHexFromBytes(element.fingerprint) + "_" + element.name;
+                    }
+                } else {
+                    name = HexSupport.toHexFromBytes(element.fingerprint) + ".jar";
+                }
                 File file = new File(cacheDir, name);
 
                 if (!file.exists()) {
-                    LOG.debug("Downloading: "+file);
+                    LOG.debug("Downloading: " + file);
                     // We need to download it...
                     File tmp = null;
                     FileOutputStream out = null;
@@ -92,10 +102,10 @@ public class BasicClassLoaderFactory implements ClassLoaderFactory {
                         tmp = File.createTempFile(name, ".part", cacheDir);
                         out = new FileOutputStream(tmp);
                         int pos = 0;
-                        while( true ) {
+                        while (true) {
                             byte[] data = server.download(element.id, pos, CHUNK_SIZE);
                             out.write(data);
-                            if( data.length < CHUNK_SIZE ) {
+                            if (data.length < CHUNK_SIZE) {
                                 break;
                             }
                             pos += CHUNK_SIZE;
@@ -113,8 +123,7 @@ public class BasicClassLoaderFactory implements ClassLoaderFactory {
 
                 // It may be in the cache dir already...
                 if (file.exists()) {
-                    if ( !Arrays.equals(element.fingerprint, fingerprint(new FileInputStream(file)) )
-                            || element.length != file.length()) {
+                    if (!Arrays.equals(element.fingerprint, fingerprint(new FileInputStream(file))) || element.length != file.length()) {
                         throw new IOException("fingerprint missmatch: " + name);
                     }
 
@@ -127,10 +136,32 @@ public class BasicClassLoaderFactory implements ClassLoaderFactory {
 
         URL t[] = new URL[urls.size()];
         urls.toArray(t);
-        //System.out.println("Created URL class loader with: " + urls);
-        return new URLClassLoader(t, parent);
-    }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Created URL class loader with: " + urls);
+        }
+        return new URLClassLoader(t, parent) {
 
+            protected Class<?> findClass(String name) throws ClassNotFoundException {
+                try {
+                    return super.findClass(name);
+                } catch (ClassNotFoundException e) {
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("Couldn't find class: " + name);
+                    }
+                    throw e;
+                }
+            }
+
+            protected Class<?> loadClass(String name, boolean resolveIt) throws ClassNotFoundException {
+                Class<?> c = super.loadClass(name, resolveIt);
+                if (c != null)
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("Loaded class: " + c.getName());
+                    }
+                return c;
+            }
+        };
+    }
 
     static byte[] fingerprint(InputStream is) throws IOException {
         try {

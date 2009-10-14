@@ -4,12 +4,17 @@
  * ---------------------------------------------------------------------------------- *
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
- **************************************************************************************/package org.fusesource.meshkeeper;
+ **************************************************************************************/
+package org.fusesource.meshkeeper;
 
 import org.fusesource.meshkeeper.Expression;
+import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.launcher.LocalProcess;
 
+import java.io.File;
 import java.io.Serializable;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +24,7 @@ import static org.fusesource.meshkeeper.Expression.*;
 
 /**
  * @author chirino
-*/
+ */
 public class LaunchDescription implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -27,7 +32,6 @@ public class LaunchDescription implements Serializable {
     HashMap<String, Expression> environment;
     Expression.FileExpression workingDirectory;
     ArrayList<LaunchTask> preLaunchTasks = new ArrayList<LaunchTask>();
-    
 
     public LaunchDescription add(String... values) {
         return add(string(values));
@@ -47,7 +51,7 @@ public class LaunchDescription implements Serializable {
     }
 
     public LaunchDescription setEnv(String key, Expression value) {
-        if( environment == null ) {
+        if (environment == null) {
             environment = new HashMap<String, Expression>();
         }
         environment.put(key, value);
@@ -56,8 +60,8 @@ public class LaunchDescription implements Serializable {
 
     public void propageSystemProperties(String... names) {
         for (String name : names) {
-            if( System.getProperty(name)!=null ) {
-                add("-D" + name + "=" +System.getProperty(name));
+            if (System.getProperty(name) != null) {
+                add("-D" + name + "=" + System.getProperty(name));
             }
         }
     }
@@ -76,6 +80,42 @@ public class LaunchDescription implements Serializable {
         }
     }
 
+    static class BootstrapClassPathTask implements Serializable, LaunchTask {
+        public static final String BOOTSTRAP_CP_PROPERTY = "bootstrap.classpath";
+        private static final long serialVersionUID = 1L;
+        private final String classLoaderPath;
+
+        public BootstrapClassPathTask(String classLoaderPath) {
+            this.classLoaderPath = classLoaderPath;
+        }
+
+        public void execute(LocalProcess process) throws Exception {
+            ClassLoaderFactory clf = process.getProcessLauncher().getMeshKeeper().registry().getRegistryObject(this.classLoaderPath);
+
+            process.getListener().onProcessInfo("Setting up bootstrap classpath from: " + classLoaderPath);
+            URLClassLoader classloader = (URLClassLoader) clf.createClassLoader(getClass().getClassLoader(), new File(process.getProcessLauncher().getHostProperties().getDirectory() + File.separator
+                    + "classloaer-cache"));
+            Expression classpath = null;
+            for (URL url : classloader.getURLs()) {
+                if ("file".equals(url.getProtocol())) {
+                    if (classpath == null) {
+                        classpath = file(new File(url.toURI()).getAbsolutePath());
+                    }
+                    classpath = path(file(classpath), file(new File(url.toURI()).getAbsolutePath()));
+                } else {
+                    throw new Exception("Can't bootstrap url classpath elements: " + url);
+                }
+            }
+
+            if (classpath != null) {
+                //process.getListener().onProcessInfo("Set up bootstrap classpath from: " + classpath.evaluate());
+                process.getProcessProperties().put(BOOTSTRAP_CP_PROPERTY, classpath.evaluate());
+            } else {
+                process.getListener().onProcessInfo("No urls found to bootstrap for: " + classLoaderPath);
+            }
+
+        }
+    }
 
     private static class SubLaunchTask implements Serializable, LaunchTask, MeshProcessListener {
 
@@ -95,43 +135,55 @@ public class LaunchDescription implements Serializable {
             this.process = process;
             process.getProcessLauncher().launch(launch, this);
             done.await();
-            if( error!=null ) {
+            if (error != null) {
                 throw error;
             }
         }
 
         public void onProcessExit(int exitCode) {
-            if( exitCode!=0 ) {
-                error = new Exception("Sub process failed. exit code:"+exitCode);
+            if (exitCode != 0) {
+                error = new Exception("Sub process failed. exit code:" + exitCode);
             }
             done.countDown();
         }
+
         public void onProcessError(Throwable thrown) {
             error = new Exception("Sub process failed", thrown);
         }
+
         public void onProcessInfo(String message) {
             MeshProcessListener listener = process.getListener();
-            if (listener!=null) {
+            if (listener != null) {
                 listener.onProcessInfo(message);
             }
 
         }
+
         public void onProcessOutput(int fd, byte[] output) {
             MeshProcessListener listener = process.getListener();
-            if (listener!=null) {
+            if (listener != null) {
                 listener.onProcessOutput(fd, output);
             }
         }
     }
 
+    /**
+     * Adds a prelaunch taks to the launch description:
+     * 
+     * @param task
+     *            The task to add.
+     */
+    void addPreLaunchTask(LaunchTask task) {
+        preLaunchTasks.add(task);
+    }
 
     /**
-     * Adds a resource to the launch description. The receiving
-     * agent will resolve it, copying it to it's local resource
-     * cache. 
+     * Adds a resource to the launch description. The receiving agent will
+     * resolve it, copying it to it's local resource cache.
      * 
-     * To refer to the Resource on the command line call {@link #add(Expression[])} )}
-     * with {@link Expression#resource(MeshArtifact)} e.g.
+     * To refer to the Resource on the command line call
+     * {@link #add(Expression[])} )} with
+     * {@link Expression#resource(MeshArtifact)} e.g.
      * 
      * <code>
      * LaunchDescription ld = new LaunchDescription();
@@ -139,7 +191,7 @@ public class LaunchDescription implements Serializable {
      * ... 
      * ld.addResource(lr);
      * ld.add(resource(lr);
-     * </code>
+       * </code>
      * 
      * 
      * @param resource
@@ -150,7 +202,8 @@ public class LaunchDescription implements Serializable {
     }
 
     /**
-     * Executes a process before launching this process.  Usually used to setup/
+     * Executes a process before launching this process. Usually used to setup/
+     * 
      * @param launch
      */
     public void setup(LaunchDescription launch) {
@@ -165,9 +218,8 @@ public class LaunchDescription implements Serializable {
         this.workingDirectory = workingDirectory;
     }
 
-
     public void setWorkingDirectory(String workingDirectory) {
-        this.workingDirectory =  file(workingDirectory);
+        this.workingDirectory = file(workingDirectory);
     }
 
     public ArrayList<Expression> getCommand() {

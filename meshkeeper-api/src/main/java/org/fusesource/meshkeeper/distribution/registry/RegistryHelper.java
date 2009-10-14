@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.RegistryWatcher;
 
 /**
@@ -28,6 +30,8 @@ import org.fusesource.meshkeeper.RegistryWatcher;
  */
 public class RegistryHelper {
 
+    private static final Log LOG = LogFactory.getLog(RegistryHelper.class);
+    
     /**
      * Waits for count objects to register at the specified node.
      * 
@@ -97,8 +101,8 @@ public class RegistryHelper {
                         //System.out.println("Loading: " + node);
                         Object o = registry.getRegistryObject(path + "/" + node);
                         map.put(node, (T) o);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    } catch (Throwable e) {
+                        LOG.error("Error retrieving registry object at " + path + "/" + node, e);
                     }
                 }
             }

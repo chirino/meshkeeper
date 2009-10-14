@@ -51,8 +51,7 @@ public class MeshKeeperProvisioningMojo extends AbstractMojo {
     /**
      * The control-url for the provisioner
      * 
-     * @parameter expression="${cloudmix.url"}
-     *            default-value="http://localhost:8181/"
+     * @parameter expression="${cloudmix.url}"
      */
     private URL provisionerUrl;
 
@@ -61,11 +60,14 @@ public class MeshKeeperProvisioningMojo extends AbstractMojo {
         try {
             provisioner = new ProvisionerFactory().create(provider);
         } catch (Throwable thrown) {
+            thrown.printStackTrace();
             throw new MojoExecutionException("Failure instantiating provisioner", thrown);
         }
 
-        provisioner.setDeploymentUri(provisionerUrl.toString());
-
+        if (provisionerUrl != null) {
+            provisioner.setDeploymentUri(provisionerUrl.toString());
+        }
+        
         if (action.equals("deploy")) {
             try {
                 provisioner.reDeploy(true);

@@ -18,6 +18,7 @@ import org.fusesource.meshkeeper.util.internal.ProcessSupport;
 
 import java.io.*;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -40,12 +41,18 @@ public class LocalProcess implements MeshProcess {
 
     AtomicBoolean running = new AtomicBoolean();
     private LaunchAgent processLauncher;
+    Properties processProperties;
 
     public LocalProcess(LaunchAgent processLauncher, LaunchDescription ld, MeshProcessListener listener, int pid) {
         this.processLauncher = processLauncher;
         this.ld = ld;
         this.listener = listener;
         this.pid = pid;
+        this.processProperties = new Properties(processLauncher.getHostProperties().getSystemProperties());
+    }
+
+    public Properties getProcessProperties() {
+        return processProperties;
     }
 
     public LaunchAgent getProcessLauncher() {
@@ -69,6 +76,10 @@ public class LocalProcess implements MeshProcess {
             task.execute(this);
         }
 
+        if (log.isDebugEnabled()) {
+            log.debug("Evaluating launch command with properties: " + processProperties);
+        }
+
         // Evaluate the command...
         String[] cmd = new String[ld.getCommand().size()];
         StringBuilder command_line = new StringBuilder();
@@ -80,7 +91,7 @@ public class LocalProcess implements MeshProcess {
             }
             first = false;
 
-            String arg = expression.evaluate(processLauncher.getHostProperties().getSystemProperties());
+            String arg = expression.evaluate(processProperties);
             cmd[i++] = arg;
 
             command_line.append('\'');
@@ -109,7 +120,7 @@ public class LocalProcess implements MeshProcess {
         //Generate the launch string
         String msg = "Launching as: " + command_line + " [pid = " + pid + "] [workDir = " + workingDirectory + "]";
         log.info(msg);
-        if( listener!=null ) {
+        if (listener != null) {
             listener.onProcessInfo(msg);
         }
 
@@ -122,20 +133,20 @@ public class LocalProcess implements MeshProcess {
 
             running.set(true);
             os = process.getOutputStream();
-            ProcessSupport.watch(""+pid, process, new OutputHandler(FD_STD_OUT), new OutputHandler(FD_STD_ERR), new Runnable() {
+            ProcessSupport.watch("" + pid, process, new OutputHandler(FD_STD_OUT), new OutputHandler(FD_STD_ERR), new Runnable() {
                 public void run() {
                     int exitValue = process.exitValue();
                     onExit(exitValue);
                 }
             });
-            
+
         }
 
     }
 
     protected void onExit(int exitValue) {
         running.set(false);
-        if( listener!=null ) {
+        if (listener != null) {
             listener.onProcessExit(exitValue);
         }
         try {
@@ -158,7 +169,7 @@ public class LocalProcess implements MeshProcess {
                 process.destroy();
                 process.waitFor();
                 log.info("Killed process " + process + " [pid = " + pid + "]");
-                
+
             } catch (Exception e) {
                 log.error("ERROR: destroying process " + process + " [pid = " + pid + "]");
                 throw e;
@@ -204,15 +215,15 @@ public class LocalProcess implements MeshProcess {
         @Override
         public void write(int b) throws IOException {
             buffer.write(b);
-            if( buffer.size() >= MAX_CHUNK_SIZE) {
+            if (buffer.size() >= MAX_CHUNK_SIZE) {
                 flush();
             }
         }
 
         @Override
         public void flush() throws IOException {
-            if( buffer.size() > 0 ) {
-                if( listener!=null ) {
+            if (buffer.size() > 0) {
+                if (listener != null) {
                     listener.onProcessOutput(fd, buffer.toByteArray());
                 }
                 buffer.reset();

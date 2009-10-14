@@ -65,6 +65,7 @@ public class PluginClassLoader extends URLClassLoader {
         PARENT_FIRST.add(LogFactory.class.getPackage().getName());
         PARENT_FIRST.add("org.apache.log4j");
         PARENT_FIRST.add("org.apache.maven");
+        PARENT_FIRST.add("org.springframework");
         PARENT_FIRST.add("javax.jms");
     }
 

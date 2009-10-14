@@ -125,7 +125,7 @@ abstract public class Expression implements Serializable {
         }
 
         public String evaluate(Properties p) {
-            String rc = System.getProperty(name);
+            String rc = p.getProperty(name);
             if (rc == null && defaultExpression != null) {
                 rc = defaultExpression.evaluate(p);
             }
@@ -220,7 +220,7 @@ abstract public class Expression implements Serializable {
             }
         }
     }
-
+    
     public static class AppendExpression extends Expression {
         private static final long serialVersionUID = 1L;
         final ArrayList<Expression> parts = new ArrayList<Expression>();

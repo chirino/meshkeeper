@@ -5,7 +5,7 @@
  * The software in this package is published under the terms of the AGPL license      *
  * a copy of which has been included with this distribution in the license.txt file.  *
  **************************************************************************************/
-package org.meshkeeper.cloudmix;
+package org.fusesource.meshkeeper.cloudmix;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -187,13 +187,25 @@ public class CloudMixProvisioner implements Provisioner {
         cachedRegistryConnectUri = "zk:tcp://" + controlHost + ":4040";
 
         long timeout = 60000;
+        LOG.info("Waiting " + timeout / 1000 + "s for MeshKeeper control server to come on line.");
+
+        RegistryClient registry = null;
         try {
-            RegistryClient reg = new RegistryFactory().create(cachedRegistryConnectUri + "?connectTimeout=" + timeout);
-            reg.destroy();
+            registry = new RegistryFactory().create(cachedRegistryConnectUri + "?connectTimeout=" + timeout);
+
         } catch (Exception e) {
             unDeploy(true);
             throw new MeshProvisioningException("Unable to connect to deployed MeshKeeper controller", e);
+        } finally {
+            try {
+                if (registry != null) {
+                    registry.destroy();
+                }
+            } catch (Exception e) {
+            }
         }
+
+        LOG.info("MeshKeeper controller is online, deploying MeshKeeper agent profile");
 
         ProfileDetails agentProfile = new ProfileDetails();
         agentProfile.setId(MESH_KEEPER_AGENT_PROFILE_ID);
@@ -218,6 +230,8 @@ public class CloudMixProvisioner implements Provisioner {
         controller.addProfile(agentProfile);
 
         assertProvisioned(agentProfile.getId());
+        
+        //TODO: should perhaps use our Registry created above to watch for launch agents:
 
     }
 

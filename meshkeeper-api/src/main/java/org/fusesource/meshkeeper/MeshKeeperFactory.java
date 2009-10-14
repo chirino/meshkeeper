@@ -25,7 +25,7 @@ import org.fusesource.meshkeeper.util.internal.MeshKeeperWrapper;
  */
 public class MeshKeeperFactory {
 
-    public static final String MESHKEEPER_PROVISIONER_PROPERTY = "meshkeeper.provisioning.uri";
+    public static final String MESHKEEPER_PROVISIONER_PROPERTY = "meshkeeper.provisioner.uri";
     public static final String MESHKEEPER_REGISTRY_PROPERTY = "meshkeeper.registry.uri";
     public static final String MESHKEEPER_BASE_PROPERTY = "meshkeeper.base";
     private static final ProvisioningTracker PROVISIONING_TRACKER = new ProvisioningTracker();
@@ -57,8 +57,12 @@ public class MeshKeeperFactory {
     public static MeshKeeper createMeshKeeper() throws Exception {
 
         String url = System.getProperty(MESHKEEPER_REGISTRY_PROPERTY, "embedded");
-        if ("embedded".equals(url)) {
-
+        
+        if ("provisioned".equals(url)) {
+            url = PROVISIONING_TRACKER.getProvisioner().findMeshRegistryUri();
+        }
+        else if("provision".equals(url) || "embedded".equals(url))
+        {
             // We wrap it so we know when we can stop the embedded registiry.
             return new MeshKeeperWrapper(createMeshKeeper(PROVISIONING_TRACKER.acquireProvisioned())) {
                 AtomicBoolean destroyed = new AtomicBoolean(false);
@@ -70,11 +74,6 @@ public class MeshKeeperFactory {
                     }
                 }
             };
-        }
-        //If meshkeeper was pre-provisioned using a provisioner, we can use the provisioner
-        //to look up the registry url:
-        else if ("provisioned".equals(url)) {
-            url = PROVISIONING_TRACKER.getProvisioner().findMeshRegistryUri();
         }
         return createMeshKeeper(url);
     }
