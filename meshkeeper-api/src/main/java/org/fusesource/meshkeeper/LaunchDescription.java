@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import static org.fusesource.meshkeeper.Expression.*;
 
@@ -58,10 +59,10 @@ public class LaunchDescription implements Serializable {
         return this;
     }
 
-    public void propageSystemProperties(String... names) {
+    public void propagateSystemProperties(Properties sourceProps, String... names) {
         for (String name : names) {
-            if (System.getProperty(name) != null) {
-                add("-D" + name + "=" + System.getProperty(name));
+            if (sourceProps.getProperty(name) != null) {
+                add("-D" + name + "=" + sourceProps.getProperty(name));
             }
         }
     }

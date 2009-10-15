@@ -7,9 +7,6 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution;
 
-import static org.fusesource.meshkeeper.Expression.file;
-import static org.fusesource.meshkeeper.Expression.mop;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,9 +26,11 @@ import org.fusesource.meshkeeper.JavaLaunch;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.MeshContainer;
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.RegistryWatcher;
+import org.fusesource.meshkeeper.MeshKeeper.Launcher;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServerFactory;
@@ -39,8 +38,9 @@ import org.fusesource.meshkeeper.classloader.Marshalled;
 import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import org.fusesource.meshkeeper.launcher.LaunchAgentService;
 import org.fusesource.meshkeeper.launcher.MeshContainerService;
-import org.fusesource.meshkeeper.launcher.RemoteBootstrap;
 import org.fusesource.meshkeeper.util.DefaultProcessListener;
+
+import sun.reflect.generics.tree.BottomSignature;
 
 /**
  * LaunchClient
@@ -69,7 +69,10 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
     private final HashMap<String, LaunchAgentService> boundAgents = new HashMap<String, LaunchAgentService>();
     private final HashMap<String, HashSet<Integer>> reservedPorts = new HashMap<String, HashSet<Integer>>();
     private String name;
+
     private ClassLoaderServer classLoaderServer;
+    private ClassLoaderFactory bootStrapClassLoaderFactory;
+    private ClassLoader bootStrapClassLoader;
     private int meshContainerCounter;
 
     public void start() throws Exception {
@@ -307,27 +310,9 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
 
     public JavaLaunch createMeshContainerLaunch() throws Exception {
         MeshContainerLaunch launch = new MeshContainerLaunch();
-        launch.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
-        launch.setClasspath(mop(PluginResolver.PROJECT_GROUP_ID + ":meshkeeper-api:" + PluginClassLoader.getModuleVersion()));
-        launch.setMainClass(RemoteBootstrap.class.getName());
-        launch.addArgs("--cache");
-        launch.addArgs(file("./classloader-cache"));
-        launch.addArgs("--distributor");
-        launch.addArgs(meshKeeper.getDistributorUri());
-
-        ClassLoaderServer cls = getClassLoaderServer();
-        ClassLoader userCl = meshKeeper.getUserClassLoader();
-        if (userCl == null) {
-            userCl = this.getClass().getClassLoader();
-        }
-        ClassLoaderFactory stub = cls.export(userCl, 100);
-        String clf = meshKeeper.registry().addRegistryObject("/launchclient-clf/" + System.getProperty("user.name"), true, stub);
-
-        launch.addArgs("--classloader");
-        launch.addArgs(clf);
-
+        launch.setBootstrapClassLoaderFactory(getBootstrapClassLoaderFactory().getRegistryPath());
+        launch.setMainClass(org.fusesource.meshkeeper.launcher.MeshContainer.class.getName());
         // Add the MeshContainer class to be launched:
-        launch.addArgs(org.fusesource.meshkeeper.launcher.MeshContainer.class.getName());
         launch.regPath = MESHCONTAINER_REGISTRY_PATH + name + "/" + ++meshContainerCounter;
         launch.addArgs(launch.regPath);
 
@@ -348,6 +333,9 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
         }
 
         String regPath = ((MeshContainerLaunch) launch).regPath;
+        HostProperties props = agentProps.get(agentId);
+        launch.propagateSystemProperties(props.getSystemProperties(), LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
+        launch.addSystemProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, meshKeeper.getDistributorUri());
 
         MeshProcess proc = launchProcess(agentId, launch.toLaunchDescription(), listener);
         MeshContainerService proxy = meshKeeper.registry().waitForRegistration(regPath, launchTimeout);
@@ -386,24 +374,101 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
 
     private MeshProcess launch(LaunchAgentService agent, Runnable runnable, MeshProcessListener handler) throws Exception {
         checkNotClosed();
-        ClassLoaderFactory factory = getClassLoaderServer().export(runnable.getClass().getClassLoader(), 100);
-        Marshalled<Runnable> marshalled = new Marshalled<Runnable>(factory, runnable);
+        Marshalled<Runnable> marshalled = new Marshalled<Runnable>(getBootstrapClassLoaderFactory(), runnable);
         return agent.launch(marshalled, handler);
     }
 
-    public synchronized ClassLoaderServer getClassLoaderServer() throws Exception {
-        if (classLoaderServer == null) {
-            if (meshKeeper == null) {
-                throw new IllegalArgumentException("distributor or classLoaderServer property must be set");
-            }
-            classLoaderServer = ClassLoaderServerFactory.create("basic:", meshKeeper);
-            classLoaderServer.start();
+    /**
+     * Sets the classloader that will be used to bootstrap java launches. This
+     * classloader will be used for launched {@link MeshContainer}s and launched
+     * {@link Runnable}s.
+     * 
+     * The launcher will internally create {@link ClassLoaderServer} and
+     * {@link ClassLoaderFactory} to host the specified classloader. the
+     * {@link ClassLoaderServer}'s lifecycle will be tied to that of this
+     * {@link Launcher}
+     * 
+     * If the user explicitly sets a {@link ClassLoaderFactory} via
+     * {@link #setBootstrapClassLoaderFactory(ClassLoaderFactory)} that factory
+     * will be used instead. Otherwise calls to
+     * {@link #getBootstrapClassLoaderFactory()} will return the
+     * {@link ClassLoaderFactory} associated witht the specified
+     * {@link ClassLoader}.
+     * 
+     * @param classLoader
+     *            The classloader to be used for bootstrapping.
+     * @throws Exception
+     *             if the classloader can't be used for bootstrapping.
+     */
+    public synchronized void setBootstrapClassLoader(ClassLoader classLoader) throws Exception {
+
+        if (bootStrapClassLoader != classLoader) {
+            bootStrapClassLoader = classLoader;
+            bootStrapClassLoaderFactory = null;
         }
-        return classLoaderServer;
     }
 
-    public void setClassLoaderServer(ClassLoaderServer classLoaderServer) {
-        this.classLoaderServer = classLoaderServer;
+    /**
+     * Gets the classloader that will be used to bootstrap java launches. This
+     * classloader will be used for launched {@link MeshContainer}s and launched
+     * {@link Runnable}s.
+     * 
+     * @return the current bootstrap {@link ClassLoader}.
+     */
+    public synchronized ClassLoader getBootstrapClassLoader() {
+        if (bootStrapClassLoader == null) {
+            bootStrapClassLoader = getClass().getClassLoader();
+        }
+        return bootStrapClassLoader;
+    }
+
+    /**
+     * Sets the {@link ClassLoaderFactory} that will be used to bootstrap java
+     * launches. This classloader will be used for launched
+     * {@link MeshContainer}s and launched {@link Runnable}s.
+     * 
+     * The caller is responsible for managing the lifecycle of the associated
+     * {@link ClassLoaderServer}
+     * 
+     * @param bootStrapClassLoaderFactory
+     *            The factory stub to use for bootstrapping java launches.
+     */
+    public synchronized void setBootstrapClassLoaderFactory(ClassLoaderFactory bootStrapClassLoaderFactory) {
+        this.bootStrapClassLoaderFactory = bootStrapClassLoaderFactory;
+    }
+
+    /**
+     * Gets the {@link ClassLoaderFactory} that will be used to bootstrap java
+     * launches. This classloader will be used for launched
+     * {@link MeshContainer}s and launched {@link Runnable}s. If one hasn't yet
+     * been created it will be created on demand using the {@link ClassLoader}
+     * returned by {@link #getBootstrapClassLoader()}
+     * 
+     * @param factory
+     *            The factory stub to use for bootstrapping java launches.
+     */
+    public synchronized ClassLoaderFactory getBootstrapClassLoaderFactory() {
+        if (bootStrapClassLoaderFactory == null) {
+            ClassLoader loader = getBootstrapClassLoader();
+
+            if (classLoaderServer == null) {
+                try {
+                    classLoaderServer = ClassLoaderServerFactory.create("basic:", getMeshKeeper());
+                    classLoaderServer.start();
+                } catch (Exception e) {
+                    throw new RuntimeException("Error creating classloader server", e);
+                }
+
+            }
+
+            try {
+                bootStrapClassLoaderFactory = classLoaderServer.export(loader, "/classloader/" + name, 100);
+            } catch (Exception e) {
+                throw new RuntimeException("Error creating classloader factory", e);
+            }
+
+        }
+        return bootStrapClassLoaderFactory;
     }
 
     public long getBindTimeout() {

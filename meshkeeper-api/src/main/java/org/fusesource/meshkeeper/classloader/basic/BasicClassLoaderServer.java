@@ -119,12 +119,17 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
 
     synchronized public void stop() throws Exception {
         if (proxy != null) {
+
+            for (ClassLoaderFactory exported : factories.values()) {
+                meshKeeper.registry().removeRegistryData(exported.getRegistryPath(), true);
+            }
+
             meshKeeper.remoting().unexport(proxy);
             proxy = null;
         }
     }
 
-    public ClassLoaderFactory export(List<File> classPath) throws IOException {
+    public ClassLoaderFactory export(List<File> classPath, String registryPath) throws Exception {
         ArrayList<ExportedFile> exports = new ArrayList<ExportedFile>();
         for (File file : classPath) {
             addExportedFile(exports, file);
@@ -134,10 +139,12 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         for (ExportedFile export : exports) {
             exportedFiles.put(export.element.id, export);
         }
-        return new BasicClassLoaderFactory(proxy, id);
+        BasicClassLoaderFactory factory = new BasicClassLoaderFactory(proxy, id);
+        factory.setRegistryPath(meshKeeper.registry().addRegistryObject(registryPath, true, factory));
+        return factory;
     }
 
-    public ClassLoaderFactory export(ClassLoader classLoader, int maxExportDepth) throws IOException {
+    public ClassLoaderFactory export(ClassLoader classLoader, String registryPath, int maxExportDepth) throws Exception {
         ClassLoaderFactory factory = factories.get(classLoader);
         if (factory == null) {
 
@@ -148,7 +155,9 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
             for (ExportedFile export : exports) {
                 exportedFiles.put(export.element.id, export);
             }
-            factory = new BasicClassLoaderFactory(proxy, id);
+            BasicClassLoaderFactory ret = new BasicClassLoaderFactory(proxy, id);
+            ret.setRegistryPath(meshKeeper.registry().addRegistryObject(registryPath, true, ret));
+            factory = ret;
             factories.put(classLoader, factory);
 
         }
@@ -207,7 +216,7 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         // No need to add if it's in the list allready..
         for (ExportedFile element : elements) {
             if (file.equals(element.file)) {
-                if(LOG.isDebugEnabled())
+                if (LOG.isDebugEnabled())
                     LOG.debug("duplicate file :" + file + " on classpath");
                 return;
             }
@@ -219,14 +228,14 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
                 return;
             }
             File jar = exportedFile.jared = jar(file);
-            if(LOG.isDebugEnabled())
+            if (LOG.isDebugEnabled())
                 LOG.debug("Jared: " + file + " as: " + jar);
             file = jar;
         } else {
             // if it's a file then it needs to be eaither a zip or jar file.
             String name = file.getName();
             if (!(name.endsWith(".jar") || name.endsWith(".zip"))) {
-                if(LOG.isDebugEnabled())
+                if (LOG.isDebugEnabled())
                     LOG.debug("Not a jar.. ommititng from the classpath: " + file);
                 return;
             }

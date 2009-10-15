@@ -10,6 +10,7 @@ package org.fusesource.meshkeeper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Properties;
 
 import static org.fusesource.meshkeeper.Expression.*;
 
@@ -31,7 +32,7 @@ public class JavaLaunch {
     ArrayList<Expression> jvmArgs = new ArrayList<Expression>();
     ArrayList<Expression> args = new ArrayList<Expression>();
     ArrayList<Expression> systemProperties = new ArrayList<Expression>();
-    String classLoaderFactoryBootstrap;
+    String bootStrapClassLoaderFactoryPath;
 
     public Expression getJvm() {
         return jvm;
@@ -72,10 +73,10 @@ public class JavaLaunch {
         return this;
     }
 
-    public JavaLaunch propageSystemProperties(String... names) {
+    public JavaLaunch propagateSystemProperties(Properties sourceProps, String... names) {
         for (String name : names) {
-            if (System.getProperty(name) != null) {
-                addSystemProperty(name, System.getProperty(name));
+            if (sourceProps.getProperty(name) != null) {
+                addSystemProperty(name, sourceProps.getProperty(name));
             }
         }
         return this;
@@ -85,8 +86,8 @@ public class JavaLaunch {
         return classpath;
     }
 
-    public void setClassLoaderFactoryBootstrap(String classLoaderFactoryPath) {
-        classLoaderFactoryBootstrap = classLoaderFactoryPath;
+    public void setBootstrapClassLoaderFactory(String bootStrapClassLoaderFactoryPath) {
+        this.bootStrapClassLoaderFactoryPath = bootStrapClassLoaderFactoryPath;
     }
 
     public void setClasspath(Expression classpath) {
@@ -147,11 +148,11 @@ public class JavaLaunch {
         ld.setWorkingDirectory(workingDir);
         ld.add(jvm);
         ld.add(jvmArgs);
-        if (classpath != null || classLoaderFactoryBootstrap != null) {
+        if (classpath != null || bootStrapClassLoaderFactoryPath != null) {
             ld.add(string("-cp"));
             Expression launchClasspath = null;
-            if (classLoaderFactoryBootstrap != null) {
-                ld.addPreLaunchTask(new LaunchDescription.BootstrapClassPathTask(classLoaderFactoryBootstrap));
+            if (bootStrapClassLoaderFactoryPath != null) {
+                ld.addPreLaunchTask(new LaunchDescription.BootstrapClassPathTask(bootStrapClassLoaderFactoryPath));
                 launchClasspath = file(property(LaunchDescription.BootstrapClassPathTask.BOOTSTRAP_CP_PROPERTY, string("")));
             }
             if (classpath != null) {

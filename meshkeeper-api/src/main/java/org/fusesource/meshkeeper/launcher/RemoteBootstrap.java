@@ -26,6 +26,8 @@ import java.util.LinkedList;
  */
 public class RemoteBootstrap {
 
+    public static final String BOOTSTRAP_PROPERTY = "meshkeeper.bootstrap";
+    
     private static MeshKeeper mesh;
     private static ClassLoader classLoader;
 
@@ -135,7 +137,8 @@ public class RemoteBootstrap {
 
         // Store our options in the System properties.. they might be usefull
         // to the booted application.
-        System.setProperty("meshkeeper.bootstrap.meshkeeper", this.meshKeeperUri);
+        System.setProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, this.meshKeeperUri);
+        System.setProperty(BOOTSTRAP_PROPERTY, "true");
         System.setProperty("meshkeeper.bootstrap.cache", cache.getPath());
         if (runnable != null) {
             System.setProperty("meshkeeper.bootstrap.runnable", runnable);

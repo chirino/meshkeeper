@@ -25,19 +25,21 @@ public interface ClassLoaderServer extends Distributable {
      * Exposes the specified classloader so it can be downloaded remotely.
      *
      * @param classLoader
+     * @param registryPath the path at which to register the factory.
      * @param maxExportDepth controls how many parent class loaders are also exported.
      * @return
      */
-    ClassLoaderFactory export(ClassLoader classLoader, int maxExportDepth) throws IOException;
+    ClassLoaderFactory export(ClassLoader classLoader, String registryPath, int maxExportDepth) throws Exception;
 
     /**
      * Exports the file list as the classpath used by a ClassLoaderFactory.
      *
-     *
+     * 
      * @param classPath
+     * @param registryPath the path at which to register the factory.
      * @return
      */
-    ClassLoaderFactory export(List<File> classPath) throws IOException;
+    ClassLoaderFactory export(List<File> classPath, String registryPath) throws Exception;
 
     /**
      * Must be called before remote clients can access remotely exposed

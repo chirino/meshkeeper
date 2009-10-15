@@ -17,6 +17,7 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.MeshKeeper.DistributionRef;
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
 
@@ -90,10 +91,18 @@ public class MeshContainer implements MeshContainerService {
         }
         String path = args[0];
 
-        MeshContainer.mesh = RemoteBootstrap.getMeshKeeper();
-        mesh.setUserClassLoader(new MeshContainerClassLoader());
         MeshContainer container = new MeshContainer(path);
+
         try {
+            //Running from RemoteBootstrapper?
+            if (Boolean.getBoolean(RemoteBootstrap.BOOTSTRAP_PROPERTY)) {
+                //If we're running from the bootstrapper set the classloader
+                //to the bootstrap classloader:
+                MeshContainer.mesh = RemoteBootstrap.getMeshKeeper();
+                mesh.setUserClassLoader(new MeshContainerClassLoader());
+            } else {
+                MeshContainer.mesh = MeshKeeperFactory.createMeshKeeper();
+            }
             DistributionRef<MeshContainerService> ref = MeshContainer.getMeshKeeper().distribute(path, false, (MeshContainerService) container, MeshContainerService.class);
             System.out.println("Started MeshContainer: " + ref.getRegistryPath() + " cl: " + container.getClass().getClassLoader());
             container.closeLatch.await();
@@ -101,9 +110,11 @@ public class MeshContainer implements MeshContainerService {
             LOG.error("MeshContainer error: ", e);
         } finally {
             try {
-                mesh.destroy();
+                if (mesh != null) {
+                    mesh.destroy();
+                }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("MeshContainer error: ", e);
             }
         }
     }

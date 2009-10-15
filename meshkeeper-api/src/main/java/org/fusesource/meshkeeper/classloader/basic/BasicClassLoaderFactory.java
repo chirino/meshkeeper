@@ -26,16 +26,25 @@ import java.util.List;
  * @author chirino
  */
 public class BasicClassLoaderFactory implements ClassLoaderFactory {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 3L;
     private static final int CHUNK_SIZE = 1024 * 64;
     private static final Log LOG = LogFactory.getLog(BasicClassLoaderFactory.class);
 
     private BasicClassLoaderServer.IServer server;
+    private String registryPath;
     private final long id;
 
     public BasicClassLoaderFactory(BasicClassLoaderServer.IServer proxy, long id) {
         this.server = proxy;
         this.id = id;
+    }
+
+    void setRegistryPath(String registryPath) {
+        this.registryPath = registryPath;
+    }
+
+    public String getRegistryPath() {
+        return registryPath;
     }
 
     //    TODO: We may need to implement a custom classloader to stream resources directly

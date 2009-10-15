@@ -165,7 +165,7 @@ public class CloudMixProvisioner implements Provisioner {
         if (preferredControlControlHost != null) {
             controlFeature.preferredMachine(preferredControlControlHost);
         }
-        controlFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.control.Main.class.getName()
+        controlFeature.setResource("mop:update run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.control.Main.class.getName()
                 + " --jms activemq:tcp://0.0.0.0:4041" + " --registry zk:tcp://0.0.0.0:4040");
         controlFeature.setOwnedByProfileId(controlProfile.getId());
         controlFeature.setOwnsMachine(false);
@@ -214,7 +214,7 @@ public class CloudMixProvisioner implements Provisioner {
         //agentFeature.addProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, registyConnect);
         agentFeature.setId(MESH_KEEPER_AGENT_FEATURE_ID);
         agentFeature.depends(controlFeature);
-        agentFeature.setResource("mop:run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName() + " --registry "
+        agentFeature.setResource("mop:update run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName() + " --registry "
                 + cachedRegistryConnectUri);
 
         if (requestedAgentHosts != null && requestedAgentHosts.length > 0) {

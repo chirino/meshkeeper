@@ -27,6 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.fusesource.meshkeeper.Expression;
 import static org.fusesource.meshkeeper.Expression.*;
+
+import org.fusesource.meshkeeper.HostProperties;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.MavenTestSupport;
 import org.fusesource.meshkeeper.MeshKeeper;
@@ -58,10 +60,10 @@ public class RemoteClassLoaderTest extends TestCase {
         }
     }
 
-    private String getAgent() throws InterruptedException, TimeoutException
+    private HostProperties getAgent() throws InterruptedException, TimeoutException
     {
         meshKeeper.launcher().waitForAvailableAgents(5000);
-        return meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
+        return meshKeeper.launcher().getAvailableAgents()[0];
     }
 
     /**
@@ -71,29 +73,31 @@ public class RemoteClassLoaderTest extends TestCase {
      * @throws Exception
      */
     public void testClassNotFound() throws Exception {
+        HostProperties hostProps = getAgent();
         LaunchDescription ld = new LaunchDescription();
         ld.add("java");
         ld.add("-cp");
         setClassPath(ld);
-        ld.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
+        ld.propagateSystemProperties(hostProps.getSystemProperties(), LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
+        meshKeeper.launcher().launchProcess(hostProps.getAgentId(), ld, exitListener);
         exitListener.assertExitCode(1);
     }
 
     public void testInvalidSyntax() throws Exception {
+        HostProperties hostProps = getAgent();
         LaunchDescription ld = new LaunchDescription();
         ld.add("java");
         ld.add("-cp");
         setClassPath(ld);
-        ld.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
+        ld.propagateSystemProperties(hostProps.getSystemProperties(), LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
         ld.add(RemoteBootstrap.class.getName());
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
+        meshKeeper.launcher().launchProcess(hostProps.getAgentId(), ld, exitListener);
         exitListener.assertExitCode(2);
         try
         {
@@ -111,25 +115,26 @@ public class RemoteClassLoaderTest extends TestCase {
         ClassLoaderServer server = ClassLoaderServerFactory.create("basic:", meshKeeper);
         server.start();
 
-        ClassLoaderFactory stub = server.export(DataInputTestApplication.class.getClassLoader(), 1);
-        String path = meshKeeper.registry().addRegistryObject("/test/classloader", true, stub);
-
+        ClassLoaderFactory stub = server.export(DataInputTestApplication.class.getClassLoader(), "/test/classloader", 1);
+        
+        HostProperties hostProps = getAgent();
+        
         LaunchDescription ld = new LaunchDescription();
         ld.add("java");
         ld.add("-cp");
         setClassPath(ld);
-        ld.propageSystemProperties(LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
+        ld.propagateSystemProperties(hostProps.getSystemProperties(), LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
         ld.add(RemoteBootstrap.class.getName());
         ld.add("--cache");
         ld.add(file("./classloader-cache"));
         ld.add("--distributor");
         ld.add(meshKeeper.getDistributorUri());
         ld.add("--classloader");
-        ld.add(path);
+        ld.add(stub.getRegistryPath());
         ld.add(DataInputTestApplication.class.getName());
 
         ExitProcessListener exitListener = new ExitProcessListener();
-        MeshProcess process = meshKeeper.launcher().launchProcess(getAgent(), ld, exitListener);
+        MeshProcess process = meshKeeper.launcher().launchProcess(hostProps.getAgentId(), ld, exitListener);
         process.write(MeshProcess.FD_STD_IN, "exit: 5\n".getBytes());
         try {
             exitListener.assertExitCode(5);

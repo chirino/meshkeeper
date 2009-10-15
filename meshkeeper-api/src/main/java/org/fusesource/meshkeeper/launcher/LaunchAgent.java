@@ -88,9 +88,9 @@ public class LaunchAgent implements LaunchAgentService {
         ld.add("java");
         ld.add("-cp");
         ld.add(classpath);
-
+        
         // Pass on some of our system properties to the launched process
-        ld.propageSystemProperties(PROPAGATED_SYSTEM_PROPERTIES);
+        ld.propagateSystemProperties(System.getProperties(), PROPAGATED_SYSTEM_PROPERTIES);
 
         ld.add(RemoteBootstrap.class.getName());
         ld.add("--cache");

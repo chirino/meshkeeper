@@ -32,4 +32,10 @@ public interface ClassLoaderFactory extends Serializable {
      */
     public ClassLoader createClassLoader(ClassLoader parent, File cacheDir) throws IOException, Exception;
     
+    /**
+     * Returns the path at which this {@link ClassLoaderFactory} is registered.
+     * @return the path at which this {@link ClassLoaderFactory} is registered.
+     */
+    public String getRegistryPath();
+    
 }
