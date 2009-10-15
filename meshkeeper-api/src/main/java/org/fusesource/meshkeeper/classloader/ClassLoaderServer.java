@@ -7,7 +7,6 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.classloader;
 
-import java.io.IOException;
 import java.io.File;
 import java.util.List;
 

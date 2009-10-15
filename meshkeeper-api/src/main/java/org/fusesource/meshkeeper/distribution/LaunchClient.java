@@ -40,7 +40,6 @@ import org.fusesource.meshkeeper.launcher.LaunchAgentService;
 import org.fusesource.meshkeeper.launcher.MeshContainerService;
 import org.fusesource.meshkeeper.util.DefaultProcessListener;
 
-import sun.reflect.generics.tree.BottomSignature;
 
 /**
  * LaunchClient
