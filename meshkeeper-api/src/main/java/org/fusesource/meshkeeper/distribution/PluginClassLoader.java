@@ -284,6 +284,8 @@ public class PluginClassLoader extends URLClassLoader {
                 resolved = getPluginResolver().resolvePlugin(artifactId);
                 RESOLVED_PLUGINS.put(artifactId, resolved);
                 LOG.info("Resolved plugin: " + artifactId);
+            } else {
+                resolved = RESOLVED_PLUGINS.get(artifactId);
             }
         }
 

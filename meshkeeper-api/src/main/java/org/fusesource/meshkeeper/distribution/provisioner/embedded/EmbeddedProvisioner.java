@@ -7,13 +7,27 @@
  **************************************************************************************/
 package org.fusesource.meshkeeper.distribution.provisioner.embedded;
 
+import static org.fusesource.meshkeeper.control.ControlServer.ControlEvent.SHUTDOWN;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.Properties;
+
+import org.fusesource.meshkeeper.MeshEvent;
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
+import org.fusesource.meshkeeper.control.ControlServer;
 import org.fusesource.meshkeeper.distribution.provisioner.Provisioner;
 
 /**
  * EmbeddedProvisioner
  * <p>
- * Description:
- * </p>
+ * The embedded provisioner provisions local MeshKeeper controller. It supports
+ * in process provisioning and shutdown of a controller running in another
+ * process
  * 
  * @author cmacnaug
  * @version 1.0
@@ -22,6 +36,9 @@ public class EmbeddedProvisioner implements Provisioner {
 
     private static EmbeddedServer EMBEDDED_SERVER;
     private static final Object SYNC = new Object();
+    private boolean machineOwnerShip;
+    private int maxAgents;
+    private String deploymentUri;
 
     /*
      * (non-Javadoc)
@@ -33,6 +50,7 @@ public class EmbeddedProvisioner implements Provisioner {
             if (EMBEDDED_SERVER == null) {
                 EMBEDDED_SERVER = new EmbeddedServer();
                 try {
+                    EMBEDDED_SERVER.setDataDirectory(getControlServerDirectory());
                     EMBEDDED_SERVER.start();
                 } catch (Exception e) {
                     throw new MeshProvisioningException("Error starting embedded server", e);
@@ -56,8 +74,27 @@ public class EmbeddedProvisioner implements Provisioner {
                     throw new MeshProvisioningException("Error starting embedded server", e);
                 }
             }
-        }
+            //Might be running elsewhere:
+            else {
+                MeshKeeper mesh = null;
+                try {
+                    mesh = MeshKeeperFactory.createMeshKeeper(findMeshRegistryUri());
+                    mesh.eventing().sendEvent(new MeshEvent(SHUTDOWN.ordinal(), this.getClass().getSimpleName(), null), ControlServer.CONTROL_TOPIC);
 
+                    File f = new File(MeshKeeperFactory.getDefaultServerDirectory(), ControlServer.CONTROLLER_PROP_FILE_NAME);
+                    long timeout = System.currentTimeMillis() + 5000;
+                    while (System.currentTimeMillis() < timeout && f.exists()) {
+                        Thread.sleep(500);
+                    }
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new MeshProvisioningException("interrupted", ie);
+                } catch (Exception e) {
+
+                }
+
+            }
+        }
     }
 
     /*
@@ -69,6 +106,15 @@ public class EmbeddedProvisioner implements Provisioner {
         if (EMBEDDED_SERVER != null) {
             return EMBEDDED_SERVER.getRegistryUri();
         } else {
+            try {
+                Properties p = getFileProps();
+                String registryUri = p.getProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY);
+                if (registryUri != null) {
+                    return registryUri;
+                }
+
+            } catch (Exception e) {
+            }
             throw new MeshProvisioningException("Embedded Server not started");
         }
     }
@@ -89,8 +135,11 @@ public class EmbeddedProvisioner implements Provisioner {
      * @see org.fusesource.meshkeeper.MeshProvisioner#getPreferredControlHost()
      */
     public String getPreferredControlHost() {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            return InetAddress.getLocalHost().getCanonicalHostName();
+        } catch (UnknownHostException e) {
+            return "localhost";
+        }
     }
 
     /*
@@ -99,8 +148,11 @@ public class EmbeddedProvisioner implements Provisioner {
      * @see org.fusesource.meshkeeper.MeshProvisioner#getRequestedAgentHosts()
      */
     public String[] getRequestedAgentHosts() {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            return new String[] { InetAddress.getLocalHost().getCanonicalHostName() };
+        } catch (UnknownHostException e) {
+            return new String[] { "localhost" };
+        }
     }
 
     /*
@@ -129,9 +181,62 @@ public class EmbeddedProvisioner implements Provisioner {
      * 
      * @see org.fusesource.meshkeeper.MeshProvisioner#isDeployed()
      */
-    public boolean isDeployed() throws MeshProvisioningException {
-        // TODO Auto-generated method stub
+    public synchronized boolean isDeployed() throws MeshProvisioningException {
+        if (EMBEDDED_SERVER != null) {
+            return true;
+        }
+        //Possible that this is deployed locally in another process.
+        else if (deploymentUri != null) {
+
+            MeshKeeper mesh = null;
+            try {
+                //See if we can connect:
+                mesh = MeshKeeperFactory.createMeshKeeper(findMeshRegistryUri());
+                return true;
+            } catch (Exception e) {
+                return false;
+            } finally {
+                if (mesh != null) {
+                    try {
+                        mesh.destroy();
+                    } catch (Exception e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
         return false;
+    }
+    
+    private File getControlServerDirectory() throws Exception
+    {
+        if (deploymentUri != null) {
+            return new File(deploymentUri);
+        }
+        else {
+            return MeshKeeperFactory.getDefaultServerDirectory();
+        }
+    }
+
+    private Properties getFileProps() throws Exception {
+        File propFile = new File(getControlServerDirectory(), ControlServer.CONTROLLER_PROP_FILE_NAME);
+     
+        if (propFile.exists()) {
+            Properties props = new Properties();
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(propFile);
+                props.load(fis);
+            } finally {
+                if (fis != null) {
+                    fis.close();
+                }
+            }
+            return props;
+        }
+
+        return null;
     }
 
     /*
@@ -140,8 +245,8 @@ public class EmbeddedProvisioner implements Provisioner {
      * @see org.fusesource.meshkeeper.MeshProvisioner#reDeploy(boolean)
      */
     public void reDeploy(boolean force) throws MeshProvisioningException {
-        // TODO Auto-generated method stub
-
+        unDeploy(true);
+        deploy();
     }
 
     /*
@@ -149,9 +254,8 @@ public class EmbeddedProvisioner implements Provisioner {
      * 
      * @see org.fusesource.meshkeeper.MeshProvisioner#setDeploymentUri()
      */
-    public void setDeploymentUri(String uri) {
-        // No-Op 
-
+    public void setDeploymentUri(String deploymentUri) {
+        this.deploymentUri = deploymentUri;
     }
 
     /*
@@ -171,8 +275,49 @@ public class EmbeddedProvisioner implements Provisioner {
      * .lang.String[])
      */
     public void setRequestedAgentHosts(String[] agentHosts) {
-        // TODO Auto-generated method stub
+        // No-Op we'll always go local
+    }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @seeorg.fusesource.meshkeeper.distribution.provisioner.Provisioner#
+     * getAgentMachineOwnership()
+     */
+    public boolean getAgentMachineOwnership() {
+        return machineOwnerShip;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.fusesource.meshkeeper.distribution.provisioner.Provisioner#getMaxAgents
+     * ()
+     */
+    public int getMaxAgents() {
+        return -1;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @seeorg.fusesource.meshkeeper.distribution.provisioner.Provisioner#
+     * setAgentMachineOwnership(boolean)
+     */
+    public void setAgentMachineOwnership(boolean machineOwnerShip) {
+        this.machineOwnerShip = machineOwnerShip;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.fusesource.meshkeeper.distribution.provisioner.Provisioner#setMaxAgents
+     * (int)
+     */
+    public void setMaxAgents(int maxAgents) {
+        this.maxAgents = maxAgents;
     }
 
 }

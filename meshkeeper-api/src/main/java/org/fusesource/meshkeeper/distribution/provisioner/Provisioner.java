@@ -44,7 +44,8 @@ public interface Provisioner {
      * Sets the deployment uri. This is implementation specific, and and may be
      * used to connect to a remote provisioning agent.
      * 
-     * @param agentHosts The deployment uri.
+     * @param agentHosts
+     *            The deployment uri.
      */
     public void setDeploymentUri(String uri);
 
@@ -55,7 +56,9 @@ public interface Provisioner {
 
     /**
      * Set the preferred hostname on which to deploy the MeshKeeper controller.
-     * @param the preferred control agent hostname
+     * 
+     * @param the
+     *            preferred control agent hostname
      */
     public void setPreferredControlHost(String preferredControlHost);
 
@@ -83,6 +86,38 @@ public interface Provisioner {
      *            agent
      */
     public String[] getRequestedAgentHosts();
+
+    /**
+     * Sets the maximum number of agents to deploy. If set to -1 no limit is
+     * enforced and as many agents will be deployed as possible, unless hosts
+     * are specified by {@link #setRequestedAgentHosts(String[])}
+     * 
+     * @param maxAgents
+     *            Max agents to deploy.
+     */
+    public void setMaxAgents(int maxAgents);
+
+    /**
+     * Gets the maximum number of agents to deploy.
+     * 
+     * @param maxAgents
+     */
+    public int getMaxAgents();
+
+    /**
+     * Sets whether or not the agent should have exlusive access to the machine
+     * where it is being deployed (if applicable to the deployment scheme).
+     * 
+     * @param val
+     *            True if the agent should have exclusive ownership of the
+     *            machine to which it is deployed
+     */
+    public void setAgentMachineOwnership(boolean machineOwnerShip);
+    
+    /**
+     * @return Whether or not deployed agents will own their machines
+     */
+    public boolean getAgentMachineOwnership();
 
     /**
      * Find the registry connect uri which can be used to connect to the

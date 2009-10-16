@@ -53,6 +53,10 @@ public class CloudMixProvisioner implements Provisioner {
     private RestGridClient gridClient;
     private String cachedRegistryConnectUri = null;
 
+    private boolean machineOwnerShip;
+
+    private int maxAgents;
+
     public void dumpStatus() throws MeshProvisioningException {
         StringBuffer buf = new StringBuffer(1024);
         getStatus(buf);
@@ -230,7 +234,7 @@ public class CloudMixProvisioner implements Provisioner {
         controller.addProfile(agentProfile);
 
         assertProvisioned(agentProfile.getId());
-        
+
         //TODO: should perhaps use our Registry created above to watch for launch agents:
 
     }
@@ -245,10 +249,14 @@ public class CloudMixProvisioner implements Provisioner {
         if (cachedRegistryConnectUri == null) {
             GridClient controller = getGridClient();
             List<String> agents = controller.getAgentsAssignedToFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
-            AgentDetails details = controller.getAgentDetails(agents.get(0));
-            details.getHostname();
-            String controlHost = details.getHostname();
-            cachedRegistryConnectUri = "zk:tcp://" + controlHost + ":4040";
+            if (agents != null) {
+                AgentDetails details = controller.getAgentDetails(agents.get(0));
+                details.getHostname();
+                String controlHost = details.getHostname();
+                cachedRegistryConnectUri = "zk:tcp://" + controlHost + ":4040";
+            } else {
+                throw new MeshProvisioningException("MeshKeeper is not deployed");
+            }
         }
 
         return cachedRegistryConnectUri;
@@ -390,6 +398,36 @@ public class CloudMixProvisioner implements Provisioner {
         this.requestedAgentHosts = requestedAgentHosts;
     }
 
+
+    /* (non-Javadoc)
+     * @see org.fusesource.meshkeeper.distribution.provisioner.Provisioner#getAgentMachineOwnership()
+     */
+    public boolean getAgentMachineOwnership() {
+        return machineOwnerShip;
+    }
+
+    /* (non-Javadoc)
+     * @see org.fusesource.meshkeeper.distribution.provisioner.Provisioner#getMaxAgents()
+     */
+    public int getMaxAgents() {
+        return -1;
+    }
+
+    /* (non-Javadoc)
+     * @see org.fusesource.meshkeeper.distribution.provisioner.Provisioner#setAgentMachineOwnership(boolean)
+     */
+    public void setAgentMachineOwnership(boolean machineOwnerShip) {
+        this.machineOwnerShip = machineOwnerShip;
+    }
+
+    /* (non-Javadoc)
+     * @see org.fusesource.meshkeeper.distribution.provisioner.Provisioner#setMaxAgents(int)
+     */
+    public void setMaxAgents(int maxAgents) {
+        this.maxAgents = maxAgents;
+    }
+
+    
     /*
      * (non-Javadoc)
      * 

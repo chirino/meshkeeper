@@ -8,29 +8,23 @@
 package org.fusesource.meshkeeper.distribution;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.MeshEvent;
-import org.fusesource.meshkeeper.MeshEventListener;
-import org.fusesource.meshkeeper.RegistryWatcher;
-import org.fusesource.meshkeeper.MeshKeeper.Remoting;
-import org.fusesource.meshkeeper.MeshKeeper.Eventing;
-import org.fusesource.meshkeeper.MeshKeeper.Registry;
-import org.fusesource.meshkeeper.MeshKeeper.Repository;
-import org.fusesource.meshkeeper.MeshArtifact;
+import org.fusesource.meshkeeper.control.ControlServer;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
+import org.fusesource.meshkeeper.distribution.event.EventClientFactory;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
+import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
 import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
+import org.fusesource.meshkeeper.distribution.remoting.RemotingFactory;
 import org.fusesource.meshkeeper.distribution.repository.RepositoryClient;
+import org.fusesource.meshkeeper.distribution.repository.RepositoryManagerFactory;
 
 /**
  * Distributor
@@ -41,18 +35,23 @@ import org.fusesource.meshkeeper.distribution.repository.RepositoryClient;
  * @author cmacnaug
  * @version 1.0
  */
-class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, Registry {
+class DefaultDistributor implements MeshKeeper {
 
     private Log log = LogFactory.getLog(this.getClass());
 
-    private RemotingClient remoting;
+    private String registryUri;
+    private String remotingUri;
+    private String eventingUri;
+    private String repositoryUri;
+    private String workingDirectory;
+
+    private RemotingWrapper remoting;
     private RegistryClient registry;
-    private EventClient eventClient;
-    private RepositoryClient resourceManager;
+    private EventClient eventing;
+    private RepositoryClient repository;
     private LaunchClient launchClient;
     private ClassLoader userClassLoader;
 
-    private String registryUri;
     private final HashMap<Object, DistributionRef<?>> distributed = new HashMap<Object, DistributionRef<?>>();
 
     private AtomicBoolean started = new AtomicBoolean(false);
@@ -74,9 +73,15 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
     public void setUserClassLoader(ClassLoader classLoader) {
         if (userClassLoader != classLoader) {
             userClassLoader = classLoader;
-            remoting.setUserClassLoader(classLoader);
-            eventClient.setUserClassLoader(classLoader);
-            registry.setUserClassLoader(classLoader);
+            if (registry != null) {
+                registry.setUserClassLoader(classLoader);
+            }
+            if (remoting != null) {
+                remoting.setUserClassLoader(classLoader);
+            }
+            if (eventing != null) {
+                eventing.setUserClassLoader(classLoader);
+            }
             if (launchClient != null) {
                 launchClient.setUserClassLoader(classLoader);
             }
@@ -97,13 +102,60 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
         return registryUri;
     }
 
+    private synchronized <T extends PluginClient> T createPluginClient(String uri, AbstractPluginFactory<T> factory, String lookupPath, String defaultUri) {
+        try {
+            //Create Remoting client:
+            if (uri == null) {
+                if (lookupPath != null) {
+                    uri = registry().getRegistryObject(lookupPath);
+                }
+                if (uri == null) {
+                    uri = defaultUri;
+                }
+            }
+            T ret = factory.create(uri);
+            if (userClassLoader != null) {
+                ret.setUserClassLoader(userClassLoader);
+            }
+            ret.start();
+            return ret;
+        } catch (Exception e) {
+            RuntimeException re = new RuntimeException("Unable to create plugin client from " + factory.getClass().getSimpleName(), e);
+            log.error(re.getMessage(), re);
+            throw re;
+        }
+    }
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.fusesource.meshkeeper.MeshKeeper#getRegistry()
+     */
+    public synchronized Registry registry() {
+        if (registry == null) {
+            synchronized (this) {
+                if (registry == null) {
+                    registry = createPluginClient(registryUri, new RegistryFactory(), null, ControlServer.DEFAULT_REGISTRY_URI);
+                }
+            }
+        }
+        return registry;
+    }
+    
     /*
      * (non-Javadoc)
      * 
      * @see org.fusesource.meshkeeper.MeshKeeper#getEventing()
      */
     public Eventing eventing() {
-        return this;
+        if (eventing == null) {
+            synchronized (this) {
+                if (eventing == null) {
+                    eventing = createPluginClient(eventingUri, new EventClientFactory(), ControlServer.EVENTING_URI_PATH, ControlServer.DEFAULT_EVENT_URI);
+                }
+            }
+        }
+        return eventing;
     }
 
     /*
@@ -112,7 +164,15 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @see org.fusesource.meshkeeper.MeshKeeper#getRemoting()
      */
     public Remoting remoting() {
-        return this;
+        if (remoting == null) {
+            synchronized (this) {
+                if (remoting == null) {
+                    remoting = new RemotingWrapper(createPluginClient(remotingUri, new RemotingFactory(), ControlServer.REMOTING_URI_PATH, ControlServer.DEFAULT_REMOTING_URI));
+
+                }
+            }
+        }
+        return remoting;
     }
 
     /*
@@ -121,41 +181,65 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      * @see org.fusesource.meshkeeper.MeshKeeper#getRepository()
      */
     public Repository repository() {
-        return this;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.fusesource.meshkeeper.MeshKeeper#getRegistry()
-     */
-    public Registry registry() {
-        return this;
-    }
-
-    public synchronized Launcher launcher() {
-
-        if (launchClient == null)
-        {
-            launchClient = new LaunchClient();
-            launchClient.setMeshKeeper(this);
-            try {
-                launchClient.start();
-            } catch (Exception e) {
-                log.warn("Error starting launch client", e);
+        if (repository == null) {
+            synchronized (this) {
+                //TODO make this work like the other plugins:
+                try {
+                    //Create ResourceManager:
+                    RepositoryClient resourceManager = new RepositoryManagerFactory().create(repositoryUri);
+                    String commonRepoUrl = registry.getRegistryObject(ControlServer.REPOSITORY_URI_PATH);
+                    if (commonRepoUrl != null) {
+                        resourceManager.setCentralRepoUri(commonRepoUrl, null);
+                    }
+                    resourceManager.setLocalRepoDir(workingDirectory + File.separator + "local-repo");
+                    resourceManager.start();
+                    repository = resourceManager;
+                } catch (Exception e) {
+                    RuntimeException re = new RuntimeException("Error creating repository client", e);
+                    log.error(re);
+                    throw re;
+                }
             }
+        }
 
-            if (userClassLoader != null) {
-                launchClient.setUserClassLoader(userClassLoader);
+        return repository;
+    }
+
+    public Launcher launcher() {
+
+        if (launchClient == null) {
+            synchronized (this) {
+                if (launchClient == null) {
+                    launchClient = new LaunchClient();
+                    launchClient.setMeshKeeper(this);
+                    try {
+                        launchClient.start();
+                    } catch (Exception e) {
+                        log.warn("Error starting launch client", e);
+                    }
+
+                    if (userClassLoader != null) {
+                        launchClient.setUserClassLoader(userClassLoader);
+                    }
+                }
             }
         }
         return launchClient;
     }
 
-    public void start() {
+    public synchronized void start() throws Exception {
         if (destroyed.get()) {
             throw new IllegalStateException("Can't start destoyed MeshKeeper");
         }
+
+        //Start up the registry client:
+        registry();
+        
+        //TODO Consider deferring startup of these?
+        remoting();
+        eventing();
+        repository();
+
         started.set(true);
     }
 
@@ -166,42 +250,25 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
                 launchClient.destroy();
             }
 
-            eventClient.destroy();
+            if (eventing != null) {
+                eventing.destroy();
+            }
+
             for (DistributionRef<?> ref : distributed.values()) {
                 ref.unregister();
             }
 
-            remoting.destroy();
+            if (remoting != null) {
+                remoting.destroy();
+            }
 
-            registry.destroy();
+            if (registry != null) {
+                registry.destroy();
+            }
 
             log.info("Shut down");
 
         }
-    }
-
-    synchronized void setRemotingClient(RemotingClient remoting) {
-        if (this.remoting == null) {
-            this.remoting = remoting;
-        }
-    }
-
-    void setRegistry(RegistryClient registry) {
-        if (this.registry == null) {
-            this.registry = registry;
-        }
-    }
-
-    /**
-     * @param resourceManager
-     *            the resourceManager to set
-     */
-    void setResourceManager(RepositoryClient resourceManager) {
-        this.resourceManager = resourceManager;
-    }
-
-    void setEventClient(EventClient eventClient) {
-        this.eventClient = eventClient;
     }
 
     public String toString() {
@@ -214,6 +281,37 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
      */
     void setRegistryUri(String registryUri) {
         this.registryUri = registryUri;
+    }
+
+    /**
+     * @param remotingUri
+     *            Set the uri to used to create a remoting client
+     */
+    void setRemotingUri(String remotingUri) {
+        this.remotingUri = remotingUri;
+    }
+
+    /**
+     * @param eventingUri
+     *            Set the uri used to create an eventing client
+     */
+    public void setEventingUri(String eventingUri) {
+        this.eventingUri = eventingUri;
+    }
+
+    /**
+     * @param repositoryProvider
+     *            Set the uri used to create a repository client
+     */
+    public void setRepositoryUri(String repositoryUri) {
+        this.repositoryUri = repositoryUri;
+    }
+
+    /**
+     * @param directory
+     */
+    public void setWorkingDirectory(String workingDirectory) {
+        this.workingDirectory = workingDirectory;
     }
 
     /**
@@ -278,324 +376,134 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    //Registry Related Operations
-    ////////////////////////////////////////////////////////////////////////////////////////////
     /**
-     * Adds an object to the registry at the given path. If sequential is true
-     * then the object will be added at the given location with a unique name.
-     * Otherwise the object will be added at the location given by path.
+     * RemotingWrapper
+     * <p>
+     * Description: The remoting wrapper intercepts export calls looking for
+     * distribution refs.
+     * </p>
      * 
-     * @param path
-     *            The path to add to.
-     * @param sequential
-     *            When true a unique child node is created at the given path
-     * @param o
-     *            The object to add.
-     * @return The path at which the element was added.
-     * @throws Exception
-     *             If there is an error adding the node.
+     * @author cmacnaug
+     * @version 1.0
      */
-    public String addRegistryObject(String path, boolean sequential, Serializable o) throws Exception {
-        return registry.addRegistryObject(path, sequential, o);
-    }
+    private final class RemotingWrapper implements RemotingClient {
 
-    /**
-     * Gets the data at the specified node as an object.
-     * 
-     * @param <T>
-     *            The type of the object expected.
-     * @param path
-     *            The path of the object.
-     * @return The object at the given node.
-     * @throws Exception
-     *             If the object couldn't be retrieved.
-     */
-    @SuppressWarnings("unchecked")
-    public <T> T getRegistryObject(String path) throws Exception {
-        return (T) registry.getRegistryObject(path);
-    }
+        private final RemotingClient delegate;
 
-    /**
-     * Gets the data at the specified node.
-     * 
-     * @param path
-     *            The path of the data.
-     * @return The data at the given node.
-     * @throws Exception
-     *             If the object couldn't be retrieved.
-     */
-    public byte[] getRegistryData(String path) throws Exception {
-        return registry.getRegistryData(path);
-    }
+        RemotingWrapper(RemotingClient delegate) {
+            this.delegate = delegate;
+        }
 
-    /**
-     * Removes a node from the registry.
-     * 
-     * @param path
-     *            The path to remove.
-     * @param recursive
-     *            If true then any children will also be removed.
-     * @throws Exception
-     *             If the path couldn't be removed.
-     */
-    public void removeRegistryData(String path, boolean recursive) throws Exception {
-        registry.removeRegistryData(path, recursive);
-    }
+        /**
+         * Exports an object, returning a proxy that can be used to perform
+         * remote method invocation for the object.
+         * 
+         * @param <T>
+         * @param object
+         *            The object to export.
+         * @return A reference to the distributed object.
+         * @throws Exception
+         *             If there is an error distributing the object.
+         */
+        public final <T> T export(T object, Class<?>... serviceInterfaces) throws Exception {
+            DistributionRef<T> ref = getRef(object, true, serviceInterfaces);
+            ref.export();
+            return ref.stub;
+        }
 
-    /**
-     * Adds data to the registry at the given path. If sequential is true then
-     * the data will be added at the given location with a unique name.
-     * Otherwise the data will be added at the location given by path.
-     * 
-     * @param path
-     *            The path to add to.
-     * @param sequential
-     *            When true a unique child node is created at the given path
-     * @param data
-     *            The data. If null then a 0 byte array will be stored in the
-     *            registry
-     * @return The path at which the element was added.
-     * @throws Exception
-     *             If there is an error adding the node.
-     */
-    public String addRegistryData(String path, boolean sequential, byte[] data) throws Exception {
-        return registry.addRegistryData(path, sequential, data);
-    }
+        /**
+         * Exports a object returning an RMI proxy to it, but to a specific
+         * address. This allows users to register multiple objects sharing the
+         * same interfaces to a single location thus allowing multicast method
+         * call to all objects registered at the adress The proxy can then be
+         * passed to other applications in the mesh to use via RMI. It is best
+         * practice to unexport the object when it is no longer used.
+         * 
+         * @param <T>
+         *            The type to which to cast the returned stub
+         * @param obj
+         *            The object to export
+         * @param address
+         *            The address (e.g. ServiceInterfaceFoo
+         * @param interfaces
+         *            The interfaces to which to limit the export.
+         * @return The proxy that can be used to invoke method calls on the
+         *         exported object.
+         * @throws Exception
+         *             If there is an error exporting
+         */
+        public <T> T exportMulticast(T obj, String address, Class<?>... interfaces) throws Exception {
+            DistributionRef<T> ref = getRef(obj, true, interfaces);
+            ref.setMultiCastPrefix(address);
+            ref.export();
+            return ref.stub;
+        }
 
-    /**
-     * Adds a listener for changes in a path's child elements.
-     * 
-     * @param path
-     * @param watcher
-     */
-    public void addRegistryWatcher(String path, RegistryWatcher watcher) throws Exception {
-        registry.addRegistryWatcher(path, watcher);
-    }
+        /**
+         * Gets a proxy object for a multicast export.
+         * 
+         * @param <T>
+         * @param address
+         *            The address to which multicast objects are exported.
+         * @param interfaces
+         *            The interfaces for the proxy.
+         * @return The proxy for the multicast address.
+         * @throws Exception
+         *             If there is an error
+         */
+        @SuppressWarnings("unchecked")
+        public <T> T getMulticastProxy(String address, Class<?> mainInterface, Class<?>... extraInterfaces) throws Exception {
+            return (T) delegate.getMulticastProxy(address, mainInterface, extraInterfaces);
+        }
 
-    /**
-     * Removes a previously registered
-     * 
-     * @param path
-     *            The path on which the listener was listening.
-     * @param watcher
-     *            The watcher
-     */
-    public void removeRegistryWatcher(String path, RegistryWatcher watcher) throws Exception {
-        registry.removeRegistryWatcher(path, watcher);
-    }
-
-    /**
-     * Convenience method that waits for a minimum number of objects to be
-     * registered at the given registry path.
-     * 
-     * @param <T>
-     * @param path
-     *            The path
-     * @param min
-     *            The minimum number of objects to wait for.
-     * @param timeout
-     *            The maximum amount of time to wait.
-     * @return The objects that were registered.
-     * @throws Exception
-     */
-    public <T> Collection<T> waitForRegistrations(String path, int min, long timeout) throws TimeoutException, Exception {
-        return registry.waitForRegistrations(path, min, timeout);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.fusesource.meshkeeper.MeshKeeper.Registry#waitForRegistration(java
-     * .lang.String, long)
-     */
-    @SuppressWarnings("unchecked")
-    public <T> T waitForRegistration(String path, long timeout) throws TimeoutException, Exception {
-        return (T) registry.waitForRegistration(path, timeout);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    //RMI Related Operations
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     * Exports an object, returning a proxy that can be used to perform remote
-     * method invocation for the object.
-     * 
-     * @param <T>
-     * @param object
-     *            The object to export.
-     * @return A reference to the distributed object.
-     * @throws Exception
-     *             If there is an error distributing the object.
-     */
-    public final <T> T export(T object, Class<?>... serviceInterfaces) throws Exception {
-        DistributionRef<T> ref = getRef(object, true, serviceInterfaces);
-        ref.export();
-        return ref.stub;
-    }
-
-    /**
-     * Exports a object returning an RMI proxy to it, but to a specific address.
-     * This allows users to register multiple objects sharing the same
-     * interfaces to a single location thus allowing multicast method call to
-     * all objects registered at the adress The proxy can then be passed to
-     * other applications in the mesh to use via RMI. It is best practice to
-     * unexport the object when it is no longer used.
-     * 
-     * @param <T>
-     *            The type to which to cast the returned stub
-     * @param obj
-     *            The object to export
-     * @param address
-     *            The address (e.g. ServiceInterfaceFoo
-     * @param interfaces
-     *            The interfaces to which to limit the export.
-     * @return The proxy that can be used to invoke method calls on the exported
-     *         object.
-     * @throws Exception
-     *             If there is an error exporting
-     */
-    public <T> T exportMulticast(T obj, String address, Class<?>... interfaces) throws Exception {
-        DistributionRef<T> ref = getRef(obj, true, interfaces);
-        ref.setMultiCastPrefix(address);
-        ref.export();
-        return ref.stub;
-    }
-
-    /**
-     * Gets a proxy object for a multicast export.
-     * 
-     * @param <T>
-     * @param address
-     *            The address to which multicast objects are exported.
-     * @param interfaces
-     *            The interfaces for the proxy.
-     * @return The proxy for the multicast address.
-     * @throws Exception
-     *             If there is an error
-     */
-    @SuppressWarnings("unchecked")
-    public <T> T getMulticastProxy(String address, Class<?> mainInterface, Class <?> ... extraInterfaces) throws Exception {
-        return (T) remoting.getMulticastProxy(address, mainInterface, extraInterfaces);
-    }
-
-    /**
-     * Unexports an object. If the object's stub was registered it will be
-     * unregistered as well.
-     * 
-     * @param <T>
-     * @param object
-     *            The object to unexport.
-     * @throws Exception
-     *             If there is an error unexporting the object.
-     */
-    public final void unexport(Object object) throws Exception {
-        DistributionRef<?> ref = getRef(object, false);
-        if (ref != null) {
-            ref.unregister();
-            synchronized (distributed) {
-                distributed.remove(object);
+        /**
+         * Unexports an object. If the object's stub was registered it will be
+         * unregistered as well.
+         * 
+         * @param <T>
+         * @param object
+         *            The object to unexport.
+         * @throws Exception
+         *             If there is an error unexporting the object.
+         */
+        public final void unexport(Object object) throws Exception {
+            DistributionRef<?> ref = getRef(object, false);
+            if (ref != null) {
+                ref.unregister();
+                synchronized (distributed) {
+                    distributed.remove(object);
+                }
             }
+        }
+
+        public void destroy() throws Exception {
+            delegate.destroy();
+        }
+
+        public ClassLoader getUserClassLoader() {
+            return delegate.getUserClassLoader();
+        }
+
+        public void setUserClassLoader(ClassLoader classLoader) {
+            delegate.setUserClassLoader(classLoader);
+        }
+
+        public void start() throws Exception {
+            delegate.start();
+        }
+
+        public Remoting delegate() {
+            return delegate;
+        }
+
+        public String toString() {
+            return delegate.toString();
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    //Event Related Operations
-    ////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Sends an event on the given topic.
-     */
-    public void sendEvent(MeshEvent event, String topic) throws Exception {
-        eventClient.sendEvent(event, topic);
-    }
-
-    /**
-     * Opens a listener on the given event topic.
-     * 
-     * @param listener
-     *            The listener
-     * @param topic
-     *            The topic
-     * @throws Exception
-     *             If there is an error opening the listener
-     */
-    public void openEventListener(MeshEventListener listener, String topic) throws Exception {
-        eventClient.openEventListener(listener, topic);
-    }
-
-    /**
-     * Stops listening to events on the given topic.
-     * 
-     * @param listener
-     *            The listener The listener
-     * @param topic
-     *            The topic
-     * @throws Exception
-     *             If there is an error closing the listener
-     */
-    public void closeEventListener(MeshEventListener listener, String topic) throws Exception {
-        eventClient.closeEventListener(listener, topic);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    //Resource Related Operations
-    ////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Factory method for creating a resource.
-     * 
-     * @return An empty resource.
-     */
-    public MeshArtifact createResource() {
-        return resourceManager.createResource();
-    }
-
-    /**
-     * Called to locate the given resource.
-     * 
-     * @param resource
-     *            The resource to locate.
-     * @throws Exception
-     *             If there is an error locating the resource.
-     */
-    public void resolveResource(MeshArtifact resource) throws Exception {
-        resourceManager.resolveResource(resource);
-    }
-
-    /**
-     * @param resource
-     * @param data
-     * @throws IOException
-     */
-    public void deployFile(MeshArtifact resource, byte[] data) throws Exception {
-        resourceManager.deployFile(resource, data);
-    }
-
-    /**
-     * 
-     * @param resource
-     * @param d
-     * @throws Exception
-     */
-    public void deployDirectory(MeshArtifact resource, File d) throws Exception {
-        resourceManager.deployDirectory(resource, d);
-    }
-
-    /**
-     * @return The path to the local resource directory.
-     */
-    public File getLocalRepoDirectory() {
-        return resourceManager.getLocalRepoDirectory();
-    }
-
-    /**
-     * 
-     * @throws IOException
-     */
-    public void purgeLocalRepo() throws IOException {
-        resourceManager.purgeLocalRepo();
+    private final Remoting remotingDelegate() {
+        remoting();
+        return remoting.delegate();
     }
 
     private class DistributionRef<D> implements MeshKeeper.DistributionRef<D> {
@@ -629,9 +537,9 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
         private synchronized D export() throws Exception {
             if (stub == null) {
                 if (multiCastPrefix != null) {
-                    stub = (D) remoting.exportMulticast(object, multiCastPrefix, serviceInterfaces);
+                    stub = (D) remotingDelegate().exportMulticast(object, multiCastPrefix, serviceInterfaces);
                 } else {
-                    stub = (D) remoting.export(object, serviceInterfaces);
+                    stub = (D) remotingDelegate().export(object, serviceInterfaces);
                 }
                 if (log.isDebugEnabled())
                     log.debug("Exported: " + object + " to " + stub);
@@ -644,14 +552,14 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
                 if (stub == null) {
                     export();
                 }
-                this.path = registry.addRegistryObject(path, sequential, (Serializable) stub);
+                this.path = registry().addRegistryObject(path, sequential, (Serializable) stub);
             }
             return this.path;
         }
 
         private synchronized void unexport() throws Exception {
             if (stub != null) {
-                remoting.unexport(stub);
+                remotingDelegate().unexport(stub);
                 stub = null;
             }
 
@@ -664,4 +572,5 @@ class DefaultDistributor implements MeshKeeper, Eventing, Remoting, Repository, 
             unexport();
         }
     }
+
 }

@@ -148,6 +148,7 @@ public class JavaLaunch {
         ld.setWorkingDirectory(workingDir);
         ld.add(jvm);
         ld.add(jvmArgs);
+        ld.add(systemProperties);
         if (classpath != null || bootStrapClassLoaderFactoryPath != null) {
             ld.add(string("-cp"));
             Expression launchClasspath = null;
@@ -164,7 +165,7 @@ public class JavaLaunch {
             }
             ld.add(launchClasspath);
         }
-        ld.add(systemProperties);
+        
         ld.add(mainClass);
         ld.add(args);
         return ld;

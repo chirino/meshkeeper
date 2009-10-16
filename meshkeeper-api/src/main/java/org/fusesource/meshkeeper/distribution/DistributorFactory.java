@@ -80,47 +80,22 @@ public class DistributorFactory {
 
     public DefaultDistributor create() throws Exception {
 
-        //Create Registry:
-        RegistryClient registry = new RegistryFactory().create(registryUri);
-        registry.start();
-
-        //Create Exporter:
-        if (remotingUri == null) {
-            remotingUri = registry.getRegistryObject(ControlServer.REMOTING_URI_PATH);
-            if (remotingUri == null) {
-                remotingUri = ControlServer.DEFAULT_REMOTING_URI;
-            }
-        }
-        RemotingClient exporter = new RemotingFactory().create(remotingUri);
-
-        //Create Event Client:
-        if (eventingUri == null) {
-            eventingUri = registry.getRegistryObject(ControlServer.EVENTING_URI_PATH);
-            if (eventingUri == null) {
-                eventingUri = ControlServer.DEFAULT_EVENT_URI;
-            }
-        }
-        EventClient eventClient = new EventClientFactory().create(eventingUri);
-
-        //Create ResourceManager:
-        RepositoryClient resourceManager = new RepositoryManagerFactory().create(repositoryProvider);
-        String commonRepoUrl = registry.getRegistryObject(ControlServer.REPOSITORY_URI_PATH);
-        if (commonRepoUrl != null) {
-            resourceManager.setCentralRepoUri(commonRepoUrl, null);
-        }
-        resourceManager.setLocalRepoDir(directory + File.separator + "local-repo");
-
         DefaultDistributor ret = new DefaultDistributor();
-        ret.setRemotingClient(exporter);
-        ret.setRegistry(registry);
-        ret.setEventClient(eventClient);
-        ret.setResourceManager(resourceManager);
+        if(registryUri == null)
+        {
+            throw new Exception("Registry URI must be set");
+        }
         ret.setRegistryUri(registryUri);
-
+        ret.setRemotingUri(remotingUri);
+        ret.setEventingUri(eventingUri);
+        ret.setRepositoryUri(repositoryProvider);
+        ret.setWorkingDirectory(getDirectory());
         ret.start();
         if (log.isTraceEnabled()) {
             log.trace("Created: " + ret);
         }
+        
+       
         return ret;
 
     }

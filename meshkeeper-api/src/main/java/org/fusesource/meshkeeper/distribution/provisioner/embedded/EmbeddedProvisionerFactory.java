@@ -10,22 +10,30 @@ package org.fusesource.meshkeeper.distribution.provisioner.embedded;
 import org.fusesource.meshkeeper.distribution.provisioner.Provisioner;
 import org.fusesource.meshkeeper.distribution.provisioner.ProvisionerFactory;
 
-/** 
+/**
  * EmbeddedProvisionerFactory
  * <p>
  * Description:
  * </p>
+ * 
  * @author cmacnaug
  * @version 1.0
  */
 public class EmbeddedProvisionerFactory extends ProvisionerFactory {
 
-    
-    /* (non-Javadoc)
-     * @see org.fusesource.meshkeeper.distribution.registry.RegistryFactory#createRegistry(java.lang.String)
+    /*
+     * (non-Javadoc)
+     * 
+     * @seeorg.fusesource.meshkeeper.distribution.registry.RegistryFactory#
+     * createRegistry(java.lang.String)
      */
     @Override
     protected Provisioner createPlugin(String uri) throws Exception {
-        return new EmbeddedProvisioner();
+        EmbeddedProvisioner provisioner = new EmbeddedProvisioner();
+        if (uri != null && uri.trim().length() > 0) {
+            provisioner.setDeploymentUri(uri.trim());
+        }
+        
+        return provisioner;
     }
 }

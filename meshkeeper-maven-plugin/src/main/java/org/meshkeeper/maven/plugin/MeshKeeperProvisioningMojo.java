@@ -31,14 +31,6 @@ import org.fusesource.meshkeeper.distribution.provisioner.ProvisionerFactory;
  * @phase process-sources
  */
 public class MeshKeeperProvisioningMojo extends AbstractMojo {
-    /**
-     * Type of provisioning to do. The default options are cloudmix or embedded.
-     * 
-     * @parameter expression="${provision.provisioningType}"
-     *            default-value="embedded"
-     * 
-     */
-    private String provider;
 
     /**
      * Type of provisioning to do deploy or undeploy
@@ -49,23 +41,57 @@ public class MeshKeeperProvisioningMojo extends AbstractMojo {
     private String action;
 
     /**
-     * The control-url for the provisioner
+     * The uri used to specify the provisioning class. An example would
+     * be: cloudmix:http://localhost:8181
      * 
-     * @parameter expression="${cloudmix.url}"
+     * @parameter expression="${meshkeeper.provisionerUri}" default-value="embedded"
      */
-    private URL provisionerUrl;
+    private String provisionerUri;
+    
+    /**
+     * The control-url for the provisioner. This can be used to set a value used
+     * to connect to a provisioner (this may be set in cases where such a url is
+     * not encoded in the provisionerUri
+     * 
+     * @parameter expression="${meshkeeper.provisioner.deploymentUrl}"
+     */
+    private URL deploymentUrl;
+    
+    /**
+     * The preferred control host
+     * 
+     * @parameter expression="${meshkeeper.provisioner.preferredControlHost}"
+     */
+    private String controlHost;
+    
+    /**
+     * The preferred list of agent hosts
+     * 
+     * @parameter 
+     */
+    private String [] agentHosts;
 
     public void execute() throws MojoExecutionException {
         Provisioner provisioner = null;
         try {
-            provisioner = new ProvisionerFactory().create(provider);
+            provisioner = new ProvisionerFactory().create(provisionerUri);
         } catch (Throwable thrown) {
             thrown.printStackTrace();
             throw new MojoExecutionException("Failure instantiating provisioner", thrown);
         }
 
-        if (provisionerUrl != null) {
-            provisioner.setDeploymentUri(provisionerUrl.toString());
+        if (deploymentUrl != null) {
+            provisioner.setDeploymentUri(deploymentUrl.toString());
+        }
+        
+        if(agentHosts != null)
+        {
+            provisioner.setRequestedAgentHosts(agentHosts);
+        }
+        
+        if(controlHost != null)
+        {
+            provisioner.setPreferredControlHost(controlHost);
         }
         
         if (action.equals("deploy")) {

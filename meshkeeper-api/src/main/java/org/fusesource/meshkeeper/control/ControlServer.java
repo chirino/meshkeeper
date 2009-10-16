@@ -8,12 +8,18 @@
 package org.fusesource.meshkeeper.control;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
-import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
+import org.fusesource.meshkeeper.MeshEvent;
+import org.fusesource.meshkeeper.MeshEventListener;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
+import org.fusesource.meshkeeper.distribution.DistributorFactory;
+import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 /**
  * ControlServer
@@ -27,6 +33,8 @@ import org.fusesource.meshkeeper.MeshKeeperFactory;
  * @version 1.0
  */
 public class ControlServer {
+
+    public static final String CONTROLLER_PROP_FILE_NAME = "controller.properties";
 
     Log log = LogFactory.getLog(ControlServer.class);
     private static final ControlServiceFactory SERVICE_FACTORY = new ControlServiceFactory();
@@ -42,7 +50,7 @@ public class ControlServer {
 
     ControlService rmiServer;
     ControlService registryServer;
-    RegistryClient registry;
+    MeshKeeper meshKeeper;
 
     private String jmsUri = DEFAULT_JMS_URI;
     private String registryUri = DEFAULT_REGISTRY_URI;
@@ -50,6 +58,30 @@ public class ControlServer {
 
     private String directory = MeshKeeperFactory.getDefaultServerDirectory().getPath();
     private Thread shutdownHook;
+
+    private Runnable preShutdownHook;
+
+    public static final String CONTROL_TOPIC = "meshkeeper.control";
+
+    public enum ControlEvent {
+        SHUTDOWN; //When received shuts down the control server:
+
+        public MeshEvent createEvent(String source, Object attachment) {
+            return new MeshEvent(ordinal(), source, attachment);
+        }
+
+        public static ControlEvent getControlEvent(MeshEvent e) {
+            if (e == null) {
+                return null;
+            }
+
+            try {
+                return ControlEvent.values()[e.getType()];
+            } catch (Throwable thrown) {
+                return null;
+            }
+        }
+    }
 
     public void start() throws Exception {
 
@@ -102,24 +134,61 @@ public class ControlServer {
         try {
 
             log.info("Connecting to registry server at " + registryServer.getServiceUri());
-            registry = new RegistryFactory().create(registryServer.getServiceUri());
+            //registry = new RegistryFactory().create(registryServer.getServiceUri());
+
+            String eventingUri = "eventviajms:" + rmiServer.getServiceUri();
+            String remotingUri = "rmiviajms:" + rmiServer.getServiceUri();
+            DistributorFactory factory = new DistributorFactory();
+            factory.setRegistryUri(registryServer.getServiceUri());
+            factory.setEventingUri(eventingUri);
+            factory.setRemotingUri(remotingUri);
+            factory.setDirectory(getDirectory());
+            MeshKeeper meshKeeper = factory.create();
 
             //Register the control services:
 
             //(note that we delete these first since
             //in some instances zoo-keeper doesn't shutdown cleanly and hangs
             //on to file handles so that the registry isn't purged:
-            registry.removeRegistryData(REMOTING_URI_PATH, true);
-            registry.addRegistryObject(REMOTING_URI_PATH, false, new String("rmiviajms:" + rmiServer.getServiceUri()));
-            log.info("Registered RMI control server at " + REMOTING_URI_PATH + "=rmiviajms:" + rmiServer.getServiceUri());
+            meshKeeper.registry().removeRegistryData(REMOTING_URI_PATH, true);
+            meshKeeper.registry().addRegistryObject(REMOTING_URI_PATH, false, remotingUri);
+            log.info("Registered RMI control server at " + REMOTING_URI_PATH + "=" + remotingUri);
 
-            registry.removeRegistryData(EVENTING_URI_PATH, true);
-            registry.addRegistryObject(EVENTING_URI_PATH, false, new String("eventviajms:" + rmiServer.getServiceUri()));
-            log.info("Registered event server at " + EVENTING_URI_PATH + "=eventviajms:" + rmiServer.getServiceUri());
+            meshKeeper.registry().removeRegistryData(EVENTING_URI_PATH, true);
+            meshKeeper.registry().addRegistryObject(EVENTING_URI_PATH, false, eventingUri);
+            log.info("Registered event server at " + EVENTING_URI_PATH + "=" + eventingUri);
 
-            registry.removeRegistryData(REPOSITORY_URI_PATH, true);
-            registry.addRegistryObject(REPOSITORY_URI_PATH, false, repositoryUri);
+            meshKeeper.registry().removeRegistryData(REPOSITORY_URI_PATH, true);
+            meshKeeper.registry().addRegistryObject(REPOSITORY_URI_PATH, false, repositoryUri);
             log.info("Registered repository uri at " + REPOSITORY_URI_PATH + "=" + repositoryUri);
+
+            //Let's save our controller properties to an output file
+            //useful for discovering our registry connect url:
+            saveControllerProps();
+
+            //Let's open an event listener to handle service commands:
+            meshKeeper.eventing().openEventListener(new MeshEventListener() {
+
+                public void onEvent(MeshEvent e) {
+                    switch (ControlEvent.getControlEvent(e)) {
+                    case SHUTDOWN:
+                        log.info("Got shutdown request: " + e);
+                        //Fire off in a new thread (not the eventing thread):
+                        new Thread("Controller Shutdown") {
+                            public void run() {
+                                try {
+                                    ControlServer.this.destroy();
+                                } catch (Exception e) {
+                                    log.warn("Error during control server shutdown", e);
+                                }
+                            }
+                        }.start();
+                        break;
+                    default:
+                        log.warn("Got unknown control event: " + e);
+                    }
+                }
+            }, CONTROL_TOPIC);
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -128,21 +197,55 @@ public class ControlServer {
         }
     }
 
+    public void setPreShutdownHook(Runnable runnable) {
+        this.preShutdownHook = runnable;
+    }
+
+    private final void saveControllerProps() throws IOException {
+        //Let's dump some controller properties to our working directory:
+        Properties props = new Properties();
+        props.put(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, registryServer.getServiceUri());
+
+        File f = new File(getDirectory(), CONTROLLER_PROP_FILE_NAME);
+        if (f.exists()) {
+            f.delete();
+        }
+        f.getParentFile().mkdirs();
+        PrintStream fout = new PrintStream(f);
+        props.store(fout, null);
+        fout.flush();
+        fout.close();
+    }
+
     public void destroy() throws Exception {
 
         if (Thread.currentThread() != shutdownHook) {
             Runtime.getRuntime().removeShutdownHook(shutdownHook);
         }
 
-        if (registry != null) {
-            registry.destroy();
-            registry = null;
+        if (preShutdownHook != null) {
+            preShutdownHook.run();
+            preShutdownHook = null;
+        }
+
+        Exception first = null;
+
+        if (meshKeeper != null) {
+            try {
+                meshKeeper.destroy();
+            } catch (Exception e) {
+                first = first == null ? e : first;
+            } finally {
+                meshKeeper = null;
+            }
         }
 
         log.info("Shutting down registry server");
         if (registryServer != null) {
             try {
                 registryServer.destroy();
+            } catch (Exception e) {
+                first = first == null ? e : first;
             } finally {
                 registryServer = null;
             }
@@ -152,15 +255,23 @@ public class ControlServer {
         if (rmiServer != null) {
             try {
                 rmiServer.destroy();
+            } catch (Exception e) {
+                first = first == null ? e : first;
             } finally {
                 rmiServer = null;
             }
         }
 
+        File f = new File(getDirectory(), CONTROLLER_PROP_FILE_NAME);
+        FileSupport.recursiveDelete(f);
+
         synchronized (this) {
             notifyAll();
         }
 
+        if (first != null) {
+            throw first;
+        }
     }
 
     public void join() throws InterruptedException {
@@ -186,6 +297,9 @@ public class ControlServer {
     }
 
     public String getRegistryUri() {
+        if (registryServer != null) {
+            return registryServer.getServiceUri();
+        }
         return registryUri;
     }
 
