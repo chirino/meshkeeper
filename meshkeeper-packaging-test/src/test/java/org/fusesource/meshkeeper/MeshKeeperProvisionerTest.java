@@ -36,7 +36,8 @@ public class MeshKeeperProvisionerTest extends TestCase {
         File dataDir = MavenTestSupport.getDataDirectory(this.getClass().getSimpleName());
         ControlServer server = MeshKeeperFactory.createControlServer(ControlServer.DEFAULT_REGISTRY_URI, dataDir.getCanonicalFile());
         
-        Provisioner provisioner = new ProvisionerFactory().create("embedded:" + dataDir.toURI());
+        Provisioner provisioner = new ProvisionerFactory().create("embedded");
+        provisioner.setDeploymentUri(dataDir.getPath());
         try {
             assertEquals(server.getRegistryUri(), provisioner.findMeshRegistryUri());
         } finally {

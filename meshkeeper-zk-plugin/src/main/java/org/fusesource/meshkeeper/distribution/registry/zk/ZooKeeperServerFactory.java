@@ -8,12 +8,9 @@
 package org.fusesource.meshkeeper.distribution.registry.zk;
 
 import java.net.URI;
-import java.util.Map;
 
 import org.fusesource.meshkeeper.control.ControlService;
 import org.fusesource.meshkeeper.control.ControlServiceFactory;
-import org.fusesource.meshkeeper.util.internal.IntrospectionSupport;
-import org.fusesource.meshkeeper.util.internal.URISupport;
 
 /** 
  * ZooKeeperServerFactory
@@ -26,19 +23,13 @@ import org.fusesource.meshkeeper.util.internal.URISupport;
 public class ZooKeeperServerFactory extends ControlServiceFactory {
 
     @Override
-    protected ControlService createPlugin(String connectUri) throws Exception {
+    protected ControlService createPlugin(String uri) throws Exception {
 
-        URI cUri = new URI(connectUri);
+        URI connectUri = new URI(uri);
         ZooKeeperServer server = new ZooKeeperServer();
-        server.setPort(cUri.getPort());
+        server.setPort(connectUri.getPort());
         server.setPurge(true);
-        //Use query params to initialize the server:
-        Map<String, String> props = URISupport.parseParamters(cUri);
-        if (!props.isEmpty()) {
-            IntrospectionSupport.setProperties(server, props);
-            cUri = URISupport.removeQuery(cUri);
-            cUri = URISupport.createRemainingURI(cUri, props);
-        }
+        applyQueryParameters(server, connectUri);
         return server;
     }    
 }

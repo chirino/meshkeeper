@@ -8,6 +8,11 @@
 package org.fusesource.meshkeeper.distribution;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Map;
+
+import org.fusesource.meshkeeper.util.internal.IntrospectionSupport;
+import org.fusesource.meshkeeper.util.internal.URISupport;
 
 /**
  * AbstractPluginFactory
@@ -47,5 +52,25 @@ public abstract class AbstractPluginFactory<P> {
 
     protected P createPlugin(String uri) throws Exception {
         throw new UnsupportedOperationException("Factory class must override createPlugin to return the plugin");
+    }
+    
+    /**
+     * Parses query parameters and attempts to apply them to specified object. Applied
+     * parameters are removed from the returned uri.
+     * 
+     * @param target The target object to apply parameters to.
+     * @param connectUri The connect uris from which to parse parameters.
+     * @return The original uri with paratemeters removed.
+     * @throws URISyntaxException 
+     */
+    protected static URI applyQueryParameters(Object target, URI connectUri) throws URISyntaxException
+    {
+        Map<String, String> props = URISupport.parseParamters(connectUri);
+        if (!props.isEmpty()) {
+            IntrospectionSupport.setProperties(target, props);
+            connectUri = URISupport.removeQuery(connectUri);
+            connectUri = URISupport.createRemainingURI(connectUri, props);
+        }
+        return connectUri;
     }
 }

@@ -42,7 +42,7 @@ import org.fusesource.meshkeeper.distribution.registry.AbstractRegistryClient;
  * @author cmacnaug
  * @version 1.0
  */
-class ZooKeeperRegistry extends AbstractRegistryClient {
+public class ZooKeeperRegistry extends AbstractRegistryClient {
 
     Log log = LogFactory.getLog(this.getClass());
     HashMap<String, ZooKeeperChildWatcher> watcherMap = new HashMap<String, ZooKeeperChildWatcher>();

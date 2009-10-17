@@ -39,14 +39,7 @@ public class RmiViaJmsExporterFactory extends RemotingFactory {
         URI connectUri = new URI(URISupport.stripPrefix(uri, "rmiviajms:"));
 
         RmiViaJmsExporter exporter = new RmiViaJmsExporter();
-
-        Map<String, String> props = URISupport.parseParamters(connectUri);
-        if (!props.isEmpty()) {
-            IntrospectionSupport.setProperties(exporter, URISupport.parseQuery(uri));
-            connectUri = URISupport.removeQuery(new URI(uri));
-            //Add back unused query props:
-            connectUri = URISupport.createRemainingURI(connectUri, props);
-        }
+        applyQueryParameters(exporter, connectUri);
         exporter.setProviderUri(connectUri.toString());
         exporter.start();
         return exporter;

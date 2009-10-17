@@ -102,7 +102,7 @@ class DefaultDistributor implements MeshKeeper {
         return registryUri;
     }
 
-    private synchronized <T extends PluginClient> T createPluginClient(String uri, AbstractPluginFactory<T> factory, String lookupPath, String defaultUri) {
+    private synchronized <T extends PluginClient> T createPluginClient(String uri, AbstractPluginFactory<T> factory, String lookupPath, String defaultUri) throws PluginCreationException {
         try {
             //Create Remoting client:
             if (uri == null) {
@@ -120,18 +120,18 @@ class DefaultDistributor implements MeshKeeper {
             ret.start();
             return ret;
         } catch (Exception e) {
-            RuntimeException re = new RuntimeException("Unable to create plugin client from " + factory.getClass().getSimpleName(), e);
+            PluginCreationException re = new PluginCreationException("Unable to create plugin client from " + factory.getClass().getSimpleName(), e);
             log.error(re.getMessage(), re);
             throw re;
         }
     }
-    
+
     /*
      * (non-Javadoc)
      * 
      * @see org.fusesource.meshkeeper.MeshKeeper#getRegistry()
      */
-    public synchronized Registry registry() {
+    public synchronized Registry registry() throws PluginCreationException {
         if (registry == null) {
             synchronized (this) {
                 if (registry == null) {
@@ -141,13 +141,13 @@ class DefaultDistributor implements MeshKeeper {
         }
         return registry;
     }
-    
+
     /*
      * (non-Javadoc)
      * 
      * @see org.fusesource.meshkeeper.MeshKeeper#getEventing()
      */
-    public Eventing eventing() {
+    public Eventing eventing() throws PluginCreationException {
         if (eventing == null) {
             synchronized (this) {
                 if (eventing == null) {
@@ -163,7 +163,7 @@ class DefaultDistributor implements MeshKeeper {
      * 
      * @see org.fusesource.meshkeeper.MeshKeeper#getRemoting()
      */
-    public Remoting remoting() {
+    public Remoting remoting() throws PluginCreationException {
         if (remoting == null) {
             synchronized (this) {
                 if (remoting == null) {
@@ -216,6 +216,7 @@ class DefaultDistributor implements MeshKeeper {
                         launchClient.start();
                     } catch (Exception e) {
                         log.warn("Error starting launch client", e);
+                        throw new PluginCreationException("Error starting launch client", e);
                     }
 
                     if (userClassLoader != null) {
@@ -232,13 +233,20 @@ class DefaultDistributor implements MeshKeeper {
             throw new IllegalStateException("Can't start destoyed MeshKeeper");
         }
 
-        //Start up the registry client:
-        registry();
-        
-        //TODO Consider deferring startup of these?
-        remoting();
-        eventing();
-        repository();
+        try {
+            //Start up the registry client:
+            registry();
+
+            //TODO Consider deferring startup of these?
+            remoting();
+            eventing();
+            repository();
+        } catch (PluginCreationException re) {
+            if (re.getCause() != null && re.getCause() instanceof Exception) {
+                throw (Exception) re.getCause();
+            }
+            throw re;
+        }
 
         started.set(true);
     }
@@ -504,6 +512,27 @@ class DefaultDistributor implements MeshKeeper {
     private final Remoting remotingDelegate() {
         remoting();
         return remoting.delegate();
+    }
+
+    /**
+     * PluginCreationException
+     * <p>
+     * Description: Thrown when there is an error creating a meshkeeper plugin.
+     * </p>
+     * 
+     * @author cmacnaug
+     * @version 1.0
+     */
+    public static class PluginCreationException extends RuntimeException {
+        /**
+         * @param string
+         * @param e
+         */
+        public PluginCreationException(String string, Exception e) {
+            super(string, e);
+        }
+
+        private static final long serialVersionUID = 1L;
     }
 
     private class DistributionRef<D> implements MeshKeeper.DistributionRef<D> {

@@ -101,18 +101,13 @@ public class MopPluginResolver implements PluginResolver {
                 Thread.currentThread().setContextClassLoader(original);
             }
 
-            //If mop.base or a mop repo config is specified use mop's repo configuration, for locating plugins:
-            if (System.getProperty(MOPRepository.MOP_BASE) == null && System.getProperty(MOPRepository.MOP_REPO_CONFIG_PROP) == null) {
-                // Setup the repos so that folks can download our plugins dynamically.
-                LinkedHashMap<String, String> repositories = MOP_REPO.getRemoteRepositories();
-                repositories.clear();
-                repositories.put(RepositorySystem.DEFAULT_REMOTE_REPO_ID, RepositorySystem.DEFAULT_REMOTE_REPO_URL);
-                repositories.put("fusesource.m2", "http://repo.fusesource.com/maven2");
-
-                //              We could add our meshkeeper repos.. but they require authorization.. so there is no point.
-                //              repositories.put("meshkeeper.release", "http://meshkeeper.fusesource.org/repo/release");
-                //              repositories.put("meshkeeper.snapshot", "http://meshkeeper.fusesource.org/repo/snapshot");
-            }
+            LinkedHashMap<String, String> repositories = MOP_REPO.getRemoteRepositories();
+            repositories.clear();
+            //Add in configured repos (which may have auth to get to meshkeeper:
+            repositories.putAll(MOP_REPO.getConfiguredRepositories());
+            //We could add our meshkeeper repos.. but they require authorization.. so there is no point.
+            //repositories.put("meshkeeper.release", "http://meshkeeper.fusesource.org/repo/release");
+            //repositories.put("meshkeeper.snapshot", "http://meshkeeper.fusesource.org/repo/snapshot");
 
         }
         return MOP_REPO;

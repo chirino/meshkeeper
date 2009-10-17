@@ -28,13 +28,13 @@ import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 public class RegistryTest extends TestCase {
 
     Log LOG = LogFactory.getLog(RegistryTest.class);
-    
+
     RegistryClient client;
     ZooKeeperServer server;
 
     protected void setUp() throws Exception {
         String testDir = MavenTestSupport.getDataDirectory(RegistryTest.class.getSimpleName()).getCanonicalPath();
-        
+
         server = (ZooKeeperServer) new ZooKeeperServerFactory().createPlugin("tcp://localhost:2000");
         server.setDirectory(testDir);
         server.start();
@@ -42,79 +42,84 @@ public class RegistryTest extends TestCase {
         client = new ZooKeeperFactory().createPlugin(server.getServiceUri());
         client.start();
     }
-    
+
     protected void tearDown() throws Exception {
         client.destroy();
         server.destroy();
     }
 
-    public void testPurgeOnRestart() throws Exception
-    {
-        LOG.info("Running: testPurgeOnRestart");
-        client.addRegistryObject("/add/foo/1", true, new TestObject());    
+    public void testConnectParams() throws Exception {
+        LOG.info("Running: testConnectParams");
+        client.destroy();
         
+        long timeout = 1000L;
+        //Try creating registry with a connect timeout.
+        try {
+            client = new ZooKeeperFactory().createPlugin(server.getServiceUri() + "?connectTimeout=" + timeout);
+        } catch (Exception e) {
+            
+        }
+        assertEquals(timeout, ((ZooKeeperRegistry) client).getConnectTimeout());
+    }
+
+    public void testPurgeOnRestart() throws Exception {
+        LOG.info("Running: testPurgeOnRestart");
+        client.addRegistryObject("/add/foo/1", true, new TestObject());
+
         client.destroy();
         server.destroy();
-        
+
         setUp();
-        
+
         assertNull(client.getRegistryObject("/add/foo/1"));
     }
-    
-    public void testAddData() throws Exception
-    {
+
+    public void testAddData() throws Exception {
         LOG.info("Running: testAddData");
-        
-        client.addRegistryObject("/add/foo/1", false, new TestObject());    
+
+        client.addRegistryObject("/add/foo/1", false, new TestObject());
         TestObject o = client.getRegistryObject("/add/foo/1");
         assertNotNull(o);
     }
-    
-    public void testRegistryWatcher() throws Exception
-    {
+
+    public void testRegistryWatcher() throws Exception {
         LOG.info("Running: testRegistryWatcher");
-        
-        Runnable r = new Runnable()
-        {
-            public void run()
-            {
-                try
-                {
+
+        Runnable r = new Runnable() {
+            public void run() {
+                try {
                     Thread.sleep(5000);
                     client.addRegistryObject("/temp/foo/1", false, new TestObject());
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         };
-        
+
         Thread t = new Thread(r);
         t.start();
-        
-        assertNotNull(client.waitForRegistration("/temp/foo/1", 20000));        
+
+        assertNotNull(client.waitForRegistration("/temp/foo/1", 20000));
     }
-    
-    public void testRecursiveDelete() throws Exception
-    {
+
+    public void testRecursiveDelete() throws Exception {
         LOG.info("Running: testRecursiveDelete");
-        
-        client.addRegistryData("/delete/a/b", true, new byte [100]);
-        client.addRegistryData("/delete/d/e", false, new byte [100]);
-        client.addRegistryData("/delete/c", true, new byte [100]);
-        client.addRegistryData("/delete/f", false, new byte [100]);
-        
+
+        client.addRegistryData("/delete/a/b", true, new byte[100]);
+        client.addRegistryData("/delete/d/e", false, new byte[100]);
+        client.addRegistryData("/delete/c", true, new byte[100]);
+        client.addRegistryData("/delete/f", false, new byte[100]);
+
         client.removeRegistryData("/delete", false);
         assertNull(client.getRegistryData("/delete"));
         client.removeRegistryData("/delete", true);
-        
+
         assertNull(client.getRegistryData("/delete/d/e"));
     }
 
     public static class TestObject implements Serializable {
 
         private static final long serialVersionUID = 1L;
-       
+
     }
 }
