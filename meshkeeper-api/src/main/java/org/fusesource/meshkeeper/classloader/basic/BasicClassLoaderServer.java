@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import sun.misc.URLClassPath;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -166,7 +167,9 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
 
     private static void addExportedFiles(ClassLoader classLoader, int maxExportDepth, ArrayList<ExportedFile> elements) throws IOException {
         if (maxExportDepth > 0) {
-            if (classLoader.getParent() != null && classLoader.getParent() != ClassLoader.getSystemClassLoader()) {
+            if (classLoader.getParent() != null) {
+                //TODO wonder if it is appropriate to include the extension classloader ...
+                //perhaps jdk specific extensions should be excluded?
                 addExportedFiles(classLoader.getParent(), maxExportDepth - 1, elements);
             }
         }
@@ -177,10 +180,12 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         if (!(classLoader instanceof URLClassLoader)) {
             throw new IOException("Encountered a non URLClassLoader classloader.");
         }
-
-        URLClassLoader ucl = (URLClassLoader) classLoader;
-        URL[] urls = ucl.getURLs();
-
+        addExportedURLs(((URLClassLoader) classLoader).getURLs(), elements);
+    }
+        
+    private static void addExportedURLs( URL[] urls, ArrayList<ExportedFile> elements) throws IOException
+    {
+        
         for (URL url : urls) {
 
             if ("file".equals(url.getProtocol())) {
@@ -222,6 +227,8 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
             }
         }
 
+        ArrayList<URL> manifestClasspath = null;
+
         // if it's a directory, then jar it up..
         if (file.isDirectory()) {
             if (file.list().length <= 0) {
@@ -240,13 +247,19 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
                 return;
             }
 
+            //Parse the manifest, and include entries in the exported
+            //classpath:
             try {
                 JarFile jar = new JarFile(file);
                 Manifest manifest = jar.getManifest();
                 if (manifest != null) {
-                    Object classpath = manifest.getMainAttributes().get(java.util.jar.Attributes.Name.CLASS_PATH);
+                    String classpath = (String) manifest.getMainAttributes().get(java.util.jar.Attributes.Name.CLASS_PATH);
                     if (classpath != null) {
-                        LOG.warn("Classpath found in in jar manifest for " + file + " - " + classpath);
+                        String[] entries = classpath.split(" ");
+                        manifestClasspath = new ArrayList<URL>(entries.length);
+                        for (String entry : classpath.split(" ")) {
+                            manifestClasspath.add(new URL(file.getParentFile().toURI().toURL(),entry));
+                        }                        
                     }
                 }
             } catch (Exception e) {
@@ -259,6 +272,11 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
         exportedFile.element.length = file.length();
         exportedFile.element.fingerprint = BasicClassLoaderFactory.fingerprint(new FileInputStream(file));
         elements.add(exportedFile);
+
+        //Add in any manifest entries:
+        if (manifestClasspath != null) {
+            addExportedURLs(manifestClasspath.toArray(new URL[]{}), elements);
+        }
     }
 
 }
