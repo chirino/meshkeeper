@@ -1,16 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project>
+
   <parent>
     <artifactId>meshkeeper</artifactId>
     <groupId>org.fusesource.meshkeeper</groupId>
     <version>1.0-SNAPSHOT</version>
   </parent>
+
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.fusesource.meshkeeper</groupId>
   <artifactId>meshkeeper-cloudmix-plugin</artifactId>
   <name>MeshKeeper :: Cloudmix Provisioning Plugin</name>
   <version>1.0-SNAPSHOT</version>
   <url>http://maven.apache.org</url>
+
+  <licenses>
+    <license>
+      <name>GNU AFFERO GENERAL PUBLIC LICENSE (AGPL) Version 3.0</name>
+      <url>http://www.fsf.org/licensing/licenses/agpl.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -50,4 +61,66 @@
       </exclusions>
     </dependency>
   </dependencies>
+
+  <build>
+    <testResources>
+      <testResource>
+        <filtering>false</filtering>
+        <directory>${basedir}</directory>
+        <includes>
+          <include>NOTICE.txt</include>
+          <include>README.txt</include>
+          <include>LICENSE.txt</include>
+        </includes>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources</directory>
+      </testResource>
+    </testResources>
+    <resources>
+      <resource>
+        <filtering>false</filtering>
+        <directory>${basedir}</directory>
+        <includes>
+          <include>NOTICE.txt</include>
+          <include>README.txt</include>
+          <include>LICENSE.txt</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <groupId>com.google.code.maven-license-plugin</groupId>
+        <artifactId>maven-license-plugin</artifactId>
+        <configuration>
+          <!--
+            <basedir>${basedir}</basedir>
+            <header>${basedir}/etc/header.txt</header>
+          -->
+          <header>etc/header.txt</header>
+          <quiet>false</quiet>
+          <failIfMissing>false</failIfMissing>
+          <aggregate>false</aggregate>
+          <includes>
+            <include>pom.xml</include>
+            <include>*/pom.xml</include>
+            <include>**/pom.xml</include>
+            <include>**/src/**</include>
+            <include>*/src/**</include>
+          </includes>
+          <excludes>
+            <exclude>target/**</exclude>
+            <exclude>etc/**</exclude>
+          </excludes>
+          <useDefaultExcludes>true</useDefaultExcludes>
+          <useDefaultMapping>true</useDefaultMapping>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  
 </project>
