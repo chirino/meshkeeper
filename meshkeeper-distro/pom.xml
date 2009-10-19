@@ -75,34 +75,6 @@
 
   <build>
     <defaultGoal>install</defaultGoal>
-    <testResources>
-      <testResource>
-        <filtering>false</filtering>
-        <directory>${basedir}/..</directory>
-        <includes>
-          <include>NOTICE.txt</include>
-          <include>README.txt</include>
-          <include>LICENSE.txt</include>
-        </includes>
-      </testResource>
-      <testResource>
-        <directory>src/test/resources</directory>
-      </testResource>
-    </testResources>
-    <resources>
-      <resource>
-        <filtering>false</filtering>
-        <directory>${basedir}/..</directory>
-        <includes>
-          <include>NOTICE.txt</include>
-          <include>README.txt</include>
-          <include>LICENSE.txt</include>
-        </includes>
-      </resource>
-      <resource>
-        <directory>src/main/resources</directory>
-      </resource>
-    </resources>
     <plugins>
       
       <!-- Create a mop repository that we can include in the distribution -->

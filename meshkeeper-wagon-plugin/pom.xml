@@ -85,34 +85,58 @@
   </dependencies>
 
   <build>
-    <testResources>
-      <testResource>
-        <filtering>false</filtering>
-        <directory>${basedir}/..</directory>
-        <includes>
-          <include>NOTICE.txt</include>
-          <include>README.txt</include>
-          <include>LICENSE.txt</include>
-        </includes>
-      </testResource>
-      <testResource>
-        <directory>src/test/resources</directory>
-      </testResource>
-    </testResources>
-    <resources>
-      <resource>
-        <filtering>false</filtering>
-        <directory>${basedir}/..</directory>
-        <includes>
-          <include>NOTICE.txt</include>
-          <include>README.txt</include>
-          <include>LICENSE.txt</include>
-        </includes>
-      </resource>
-      <resource>
-        <directory>src/main/resources</directory>
-      </resource>
-    </resources>
+        <plugins>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.4.1</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <!-- here the phase you need -->
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/..</directory>
+                  <filtering>false</filtering>
+                  <includes>
+                    <include>LICENSE.txt</include>
+                    <include>README.txt</include>
+                    <include>NOTICE.txt</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-test-resources</id>
+            <!-- here the phase you need -->
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/..</directory>
+                  <filtering>false</filtering>
+                  <includes>
+                    <include>LICENSE.txt</include>
+                    <include>README.txt</include>
+                    <include>NOTICE.txt</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 
 </project>
