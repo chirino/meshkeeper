@@ -70,56 +70,7 @@
   <build>
     <defaultGoal>install</defaultGoal>
      <plugins>
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.4.1</version>
-        <executions>
-          <execution>
-            <id>copy-resources</id>
-            <!-- here the phase you need -->
-            <phase>process-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${basedir}/..</directory>
-                  <filtering>false</filtering>
-                  <includes>
-                    <include>LICENSE.txt</include>
-                    <include>README.txt</include>
-                    <include>NOTICE.txt</include>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-          <execution>
-            <id>copy-test-resources</id>
-            <!-- here the phase you need -->
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${basedir}/..</directory>
-                  <filtering>false</filtering>
-                  <includes>
-                    <include>LICENSE.txt</include>
-                    <include>README.txt</include>
-                    <include>NOTICE.txt</include>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+
       <!-- Copy the meshkeeper-mop-resolver jar as a resource -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -149,29 +100,6 @@
           </execution>
         </executions>
       </plugin>
-      
-      <!--
-        this is to relocate the commons logging into MeshKeeper package
-        ... <plugin> <groupId>org.fusesource.mvnplugins</groupId>
-        <artifactId>maven-uberize-plugin</artifactId>
-        <version>1.2</version> <executions> <execution>
-        <phase>package</phase> <goals><goal>uberize</goal></goals>
-        <configuration> <transformers> <transformer
-        implementation="org.fusesource.mvnplugins.uberize.transformer.ManifestEditor"/>
-        <transformer
-        implementation="org.fusesource.mvnplugins.uberize.transformer.TextAggregator">
-        <includes> <include>META-INF/LICENSE</include>
-        <include>META-INF/LICENSE.txt</include>
-        <include>META-INF/NOTICE</include>
-        <include>META-INF/NOTICE.txt</include> </includes>
-        </transformer> <transformer
-        implementation="org.fusesource.mvnplugins.uberize.transformer.ClassShader">
-        <relocations> <relocation>
-        <pattern>org.apache.commons.logging</pattern>
-        <shadedPattern>org.fusesource.meshkeeper.logging</shadedPattern>
-        </relocation> </relocations> </transformer> </transformers>
-        </configuration> </execution> </executions> </plugin>
-      -->
 
     </plugins>
   </build>

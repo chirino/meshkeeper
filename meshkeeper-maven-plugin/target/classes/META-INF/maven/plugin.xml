@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <plugin>
   <description>MeshKeeper is a platform for launching, coordinating and controlling arbitrary scripts,
     executables, java processes and objects within a mesh of computers.</description>
@@ -31,26 +32,63 @@
           <description>Type of provisioning to do deploy or undeploy</description>
         </parameter>
         <parameter>
-          <name>cloudmixUrl</name>
-          <type>java.net.URL</type>
+          <name>agentHosts</name>
+          <type>java.lang.String[]</type>
           <required>false</required>
           <editable>true</editable>
-          <description>The control-url for cloudmix</description>
+          <description>The preferred list of agent hosts</description>
         </parameter>
         <parameter>
-          <name>type</name>
+          <name>controlHost</name>
           <type>java.lang.String</type>
           <required>false</required>
           <editable>true</editable>
-          <description>Type of provisioning to do cloudmix or embedded</description>
+          <description>The preferred control host</description>
+        </parameter>
+        <parameter>
+          <name>deploymentUrl</name>
+          <type>java.net.URL</type>
+          <required>false</required>
+          <editable>true</editable>
+          <description>The control-url for the provisioner. This can be used to set a value used
+to connect to a provisioner (this may be set in cases where such a url is
+not encoded in the provisionerUri</description>
+        </parameter>
+        <parameter>
+          <name>provisionerUri</name>
+          <type>java.lang.String</type>
+          <required>false</required>
+          <editable>true</editable>
+          <description>The uri used to specify the provisioning class. An example would
+be: cloudmix:http://localhost:8181</description>
         </parameter>
       </parameters>
       <configuration>
+        <provisionerUri implementation="java.lang.String" default-value="embedded">${meshkeeper.provisionerUri}</provisionerUri>
+        <controlHost implementation="java.lang.String">${meshkeeper.provisioner.preferredControlHost}</controlHost>
         <action implementation="java.lang.String" default-value="deploy"/>
-        <type implementation="java.lang.String" default-value="embedded">${provision.provisioningType}</type>
-        <cloudmixUrl implementation="java.net.URL">${cloudmix.url</cloudmixUrl>
+        <deploymentUrl implementation="java.net.URL">${meshkeeper.provisioner.deploymentUrl}</deploymentUrl>
       </configuration>
     </mojo>
   </mojos>
-  <dependencies/>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <type>jar</type>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.meshkeeper</groupId>
+      <artifactId>meshkeeper-api</artifactId>
+      <type>jar</type>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <type>jar</type>
+      <version>1.1.1</version>
+    </dependency>
+  </dependencies>
 </plugin>

@@ -21,13 +21,16 @@
     <groupId>org.fusesource.meshkeeper</groupId>
     <version>1.0-SNAPSHOT</version>
   </parent>
+  
   <modelVersion>4.0.0</modelVersion>
+  
   <groupId>org.fusesource.meshkeeper</groupId>
   <artifactId>meshkeeper-maven-plugin</artifactId>
-  <packaging>maven-plugin</packaging>
-  <name>MeshKeeper :: Maven Plugin</name>
   <version>1.0-SNAPSHOT</version>
-  <url>http://maven.apache.org</url>
+  <packaging>maven-plugin</packaging>
+  
+  <name>MeshKeeper :: Maven Plugin</name>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>
@@ -48,57 +51,6 @@
   </dependencies>
   
   <build>
-        <plugins>
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.4.1</version>
-        <executions>
-          <execution>
-            <id>copy-resources</id>
-            <!-- here the phase you need -->
-            <phase>process-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${basedir}/..</directory>
-                  <filtering>false</filtering>
-                  <includes>
-                    <include>LICENSE.txt</include>
-                    <include>README.txt</include>
-                    <include>NOTICE.txt</include>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-          <execution>
-            <id>copy-test-resources</id>
-            <!-- here the phase you need -->
-            <phase>process-test-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${basedir}/..</directory>
-                  <filtering>false</filtering>
-                  <includes>
-                    <include>LICENSE.txt</include>
-                    <include>README.txt</include>
-                    <include>NOTICE.txt</include>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
+    <defaultGoal>install</defaultGoal>
   </build>  
 </project>
