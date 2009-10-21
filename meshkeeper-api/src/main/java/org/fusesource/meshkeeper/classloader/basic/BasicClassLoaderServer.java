@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import sun.misc.URLClassPath;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
