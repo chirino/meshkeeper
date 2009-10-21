@@ -17,6 +17,7 @@
 package org.fusesource.meshkeeper.distribution;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -528,7 +529,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
          * org.fusesource.meshkeeper.MeshContainer#host(org.fusesource.meshkeeper
          * .Distributable)
          */
-        public <T> T host(String name, T object, Class<?>... serviceInterfaces) throws Exception {
+        public <T extends Serializable> T host(String name, T object, Class<?>... serviceInterfaces) throws Exception {
             return container.host(name, object);
 
         }
@@ -562,7 +563,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
          * 
          * @see org.fusesource.meshkeeper.MeshContainer#run(java.lang.Runnable)
          */
-        public <T> T call(Callable<T> c) throws Exception {
+        public <T extends Serializable> T call(Callable<T> c) throws Exception {
             return container.call(c);
         }
 
@@ -621,7 +622,6 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
         public void write(int fd, byte[] data) throws IOException {
             process.write(fd, data);
         }
-
     }
 
     private synchronized void addWatchedProcess(MeshProcessWatcher watched) {

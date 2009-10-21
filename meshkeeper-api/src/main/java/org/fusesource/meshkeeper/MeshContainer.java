@@ -21,7 +21,8 @@ import org.fusesource.meshkeeper.launcher.MeshContainerService;
 /** 
  * MeshContainer
  * <p>
- * Description:
+ * A MeshContainer is launched on a remote machine and is a convenient
+ * way to distribute objects on a remote machine. 
  * </p>
  * @author cmacnaug
  * @version 1.0

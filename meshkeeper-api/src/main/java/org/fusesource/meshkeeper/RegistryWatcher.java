@@ -18,10 +18,13 @@ package org.fusesource.meshkeeper;
 
 import java.util.List;
 
+import org.fusesource.meshkeeper.MeshKeeper.Registry;
+
 /** 
  * RegsitryWatcher
  * <p>
- * Description:
+ * A registry watcher is used to watch for newly registered nodes 
+ * in a {@link Registry}
  * </p>
  * @author cmacnaug
  * @version 1.0

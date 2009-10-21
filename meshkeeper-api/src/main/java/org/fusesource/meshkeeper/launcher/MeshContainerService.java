@@ -39,10 +39,10 @@ public interface MeshContainerService extends Distributable {
      * 
      * @author cmacnaug
      * @version 1.0
-     * @param <T>
+     * @param <R>
      *            The return type of the {@link Callable}
      */
-    public interface Callable<T> extends java.util.concurrent.Callable<T>, Serializable{};
+    public interface Callable<R extends Serializable> extends java.util.concurrent.Callable<R>, Serializable{};
 
     /**
      * 
@@ -71,7 +71,7 @@ public interface MeshContainerService extends Distributable {
      * @throws Exception
      *             If there is an error exporting the object to the container.
      */
-    public <T> T host(String name, T object, Class<?>... interfaces) throws Exception;
+    public <T extends Serializable> T host(String name, T object, Class<?>... interfaces) throws Exception;
 
     /**
      * Unhosts an object previously exported to the container with the given
@@ -100,7 +100,7 @@ public interface MeshContainerService extends Distributable {
      * @throws Exception
      *             If there is an exception
      */
-    public <T> T call(Callable<T> c) throws Exception;
+    public <T extends Serializable> T call(Callable<T> c) throws Exception;
 
     /**
      * Closes the container.

@@ -22,14 +22,19 @@ import java.util.Properties;
 /** 
  * HostProperties
  * <p>
- * Description:
+ * Properties related to a launch agent running on a remote machine. 
+ * A launch agent handles the launching of {@link MeshProcess}s described
+ * by {@link LaunchDescription}s 
  * </p>
  * @author cmacnaug
  * @version 1.0
  */
 public interface HostProperties extends Serializable {
 
-    
+    /**
+     * Gets the agentId used to represent this agent. 
+     * @return The id used to indetify the agent. 
+     */
     public String getAgentId();
 
     /**
@@ -63,5 +68,8 @@ public interface HostProperties extends Serializable {
      */
     public String getDirectory();
     
+    /**
+     * @return The agent's system properties. 
+     */
     public Properties getSystemProperties();
 }

@@ -17,6 +17,7 @@
 package org.fusesource.meshkeeper.launcher;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -53,7 +54,7 @@ public class MeshContainer implements MeshContainerService {
         this.name = name;
     }
 
-    public synchronized <T> T host(String name, T object, Class<?>... interfaces) throws Exception {
+    public synchronized <T extends Serializable> T host(String name, T object, Class<?>... interfaces) throws Exception {
 
         T proxy = null;
         if (!hosted.containsKey(name)) {
@@ -80,7 +81,7 @@ public class MeshContainer implements MeshContainerService {
         mesh.getExecutorService().execute(r);
     }
 
-    public <T> T call(Callable<T> c) throws Exception {
+    public <T extends Serializable> T call(Callable<T> c) throws Exception {
         return c.call();
     }
 
