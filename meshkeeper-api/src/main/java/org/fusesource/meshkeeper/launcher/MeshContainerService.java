@@ -16,24 +16,95 @@
  */
 package org.fusesource.meshkeeper.launcher;
 
+import java.io.Serializable;
+
 import org.fusesource.meshkeeper.Distributable;
 
-/** 
+/**
  * MeshContainerService
  * <p>
  * Description:
  * </p>
+ * 
  * @author cmacnaug
  * @version 1.0
  */
 public interface MeshContainerService extends Distributable {
 
-    public <T> T host(String name, T object, Class<?> ... interfaces) throws Exception ;
+    /**
+     * Callable
+     * <p>
+     * Extends {@link java.util.concurrent.Callable} and {@link Serializable}
+     * </p>
+     * 
+     * @author cmacnaug
+     * @version 1.0
+     * @param <T>
+     *            The return type of the {@link Callable}
+     */
+    public interface Callable<T> extends java.util.concurrent.Callable<T>, Serializable{};
 
-    public void unhost(String name) throws Exception ;
+    /**
+     * 
+     * Runnable
+     * <p>
+     * Extends {@link java.lang.Runnable} and {@link Serializable}
+     * </p>
+     * 
+     * @author cmacnaug
+     * @version 1.0
+     */
+    public interface Runnable extends java.lang.Runnable, Serializable {}
 
-    public void run(Runnable r) throws Exception ;
+    /**
+     * Hosts the given object in the specified container using the given name as
+     * an id.
+     * 
+     * @param <T>
+     * @param name
+     *            The name at which to host the object.
+     * @param object
+     *            The object
+     * @param interfaces
+     *            The interfaces that should be exposed by the object.
+     * @return A proxy to the object exported by the container.
+     * @throws Exception
+     *             If there is an error exporting the object to the container.
+     */
+    public <T> T host(String name, T object, Class<?>... interfaces) throws Exception;
 
-    public void close() ;
-    
+    /**
+     * Unhosts an object previously exported to the container with the given
+     * name.
+     */
+    public void unhost(String name) throws Exception;
+
+    /**
+     * Runs the {@link Runnable} in the container. The {@link Runnable} must
+     * also implement {@link Serializable}.
+     * 
+     * @param r
+     *            The {@link Runnable}
+     * @throws Exception
+     */
+    public void run(Runnable r) throws Exception;
+
+    /**
+     * Invokes the {@link Callable} in the container. The {@link Callable} must
+     * also implement {@link Serializable}.
+     * 
+     * @param <T>
+     * @param c
+     *            The {@link Callable}
+     * @return The result
+     * @throws Exception
+     *             If there is an exception
+     */
+    public <T> T call(Callable<T> c) throws Exception;
+
+    /**
+     * Closes the container.
+     */
+    public void close();
+
 }

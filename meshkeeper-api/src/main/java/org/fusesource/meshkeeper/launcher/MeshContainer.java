@@ -21,6 +21,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.logging.Log;
@@ -77,8 +78,11 @@ public class MeshContainer implements MeshContainerService {
 
     public void run(Runnable r) {
         //TODO a thread pool perhaps:
-        Thread thread = new Thread(r);
-        thread.start();
+        mesh.getExecutorService().execute(r);
+    }
+
+    public <T> T call(Callable<T> c) throws Exception {
+        return c.call();
     }
 
     public void close() {

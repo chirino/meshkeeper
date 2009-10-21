@@ -26,6 +26,8 @@ import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MavenTestSupport;
 import org.fusesource.meshkeeper.MeshContainer;
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.launcher.MeshContainerService.Callable;
+import org.fusesource.meshkeeper.launcher.MeshContainerService.Runnable;
 import org.fusesource.meshkeeper.util.DefaultProcessListener;
 
 /**
@@ -83,7 +85,7 @@ public class MeshContainerTest extends TestCase {
         }
     }
 
-    static class RemoteTask implements Serializable, Runnable {
+    static class RemoteTask implements Runnable {
         private static final long serialVersionUID = 1L;
         private final ICallBack callback;
 
@@ -94,6 +96,16 @@ public class MeshContainerTest extends TestCase {
         public void run() {
             System.out.println("Doing callback...");
             callback.done();
+        }
+    }
+    
+    static class RemoteCallable implements Callable<String> {
+        private static final long serialVersionUID = 1L;
+        private static final String RET = "CALLED";
+        
+        public String call() {
+            System.out.println("Returning: " + RET);
+            return RET;
         }
     }
 
@@ -145,6 +157,21 @@ public class MeshContainerTest extends TestCase {
             container.run(new RemoteTask(cbp));
 
             assertTrue(cb.latch.await(30, TimeUnit.SECONDS));
+        } finally {
+            container.close();
+        }
+    }
+    
+    public void testRemoteCallable() throws Exception {
+
+        meshKeeper.launcher().waitForAvailableAgents(5000);
+        String agentId = meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
+        MeshContainer container = meshKeeper.launcher().launchMeshContainer(agentId, new DefaultProcessListener("TestContainer"));
+
+        try {
+            // Note: the launched JVM will use the class path of this test case.
+            assertEquals(container.call(new RemoteCallable()), RemoteCallable.RET);
+
         } finally {
             container.close();
         }

@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -555,6 +556,15 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
          */
         public void run(Runnable r) throws Exception {
             container.run(r);
+        }
+        
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.fusesource.meshkeeper.MeshContainer#run(java.lang.Runnable)
+         */
+        public <T> T call(Callable<T> c) throws Exception {
+            return container.call(c);
         }
 
         /*
