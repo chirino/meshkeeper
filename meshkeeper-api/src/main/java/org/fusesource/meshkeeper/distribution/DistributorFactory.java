@@ -16,25 +16,15 @@
  */
 package org.fusesource.meshkeeper.distribution;
 
-import java.io.File;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.control.ControlServer;
-import org.fusesource.meshkeeper.distribution.event.EventClient;
-import org.fusesource.meshkeeper.distribution.event.EventClientFactory;
-import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
-import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
-import org.fusesource.meshkeeper.distribution.remoting.RemotingFactory;
-import org.fusesource.meshkeeper.distribution.remoting.RemotingClient;
-import org.fusesource.meshkeeper.distribution.repository.RepositoryClient;
-import org.fusesource.meshkeeper.distribution.repository.RepositoryManagerFactory;
-import org.fusesource.meshkeeper.MeshKeeperFactory;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
+import org.fusesource.meshkeeper.control.ControlServer;
 
 /**
  * DistributorFactory

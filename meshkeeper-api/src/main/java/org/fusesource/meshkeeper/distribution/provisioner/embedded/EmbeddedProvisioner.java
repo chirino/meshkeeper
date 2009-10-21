@@ -21,7 +21,6 @@ import static org.fusesource.meshkeeper.control.ControlServer.ControlEvent.SHUTD
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.InetAddress;
-import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Properties;
 
@@ -46,7 +45,6 @@ public class EmbeddedProvisioner implements Provisioner {
     private static EmbeddedServer EMBEDDED_SERVER;
     private static final Object SYNC = new Object();
     private boolean machineOwnerShip;
-    private int maxAgents;
     private String deploymentUri;
 
     /*
@@ -326,7 +324,7 @@ public class EmbeddedProvisioner implements Provisioner {
      * (int)
      */
     public void setMaxAgents(int maxAgents) {
-        this.maxAgents = maxAgents;
+        //No-Op for now only one locally.
     }
 
 }
