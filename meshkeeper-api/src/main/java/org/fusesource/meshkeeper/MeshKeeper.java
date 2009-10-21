@@ -29,9 +29,10 @@ import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 
 /**
- * Distributor
+ * MeshKeeper
  * <p>
- * A distributor provides access to meshkeeper distribution services.
+ * {@link MeshKeeper} provides a collection of facilities that assist Java applications to 
+ * discover, launch, coordinate, and control remote processes across a grid of computers. 
  * </p>
  * 
  * @author cmacnaug
@@ -39,18 +40,43 @@ import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
  */
 public interface MeshKeeper {
 
+    /**
+     * DistributionRef
+     * <p>
+     * The distribution ref holds information about objects that 
+     * have been exported via the {@link Remoting} and {@link Registry}
+     * interfaces as well as the {@link MeshKeeper#distribute(String, boolean, Object, Class...)}
+     * helper method.
+     * </p>
+     * @author cmacnaug
+     * @version 1.0
+     * @param <D>
+     */
     public interface DistributionRef<D> {
+        /**
+         * @return The path in the {@link Registry} at which the object's proxy is registered (when it has been)
+         */
         public String getRegistryPath();
 
+        /**
+         * @return The proxy for the distributed object, this proxy can be passed to other objects for rmi.
+         */
         public D getProxy();
 
+        /**
+         * A pointer to the original object that has been exported. It is possible that the {@link MeshKeeper}
+         * or null if the {@link MeshKeeper} implementation has released the reference. 
+         * @return The original object that has been remoted. 
+         */
         public D getTarget();
     }
 
     /**
      * Eventing
      * <p>
-     * Description:
+     * This interface provides access to {@link MeshKeeper}'s eventing facilities. In the highly 
+     * distributed environment which {@link MeshKeeper} makes easy to achieve, {@link Eventing} can
+     * be quite useful in terms of coordinating activities of distributed objects.  
      * </p>
      * 
      * @author cmacnaug
@@ -91,7 +117,7 @@ public interface MeshKeeper {
     /**
      * Launcher
      * <p>
-     * Description:
+     * This interface provides access to {@link MeshKeeper}'s process launching facilities.
      * </p>
      * 
      * @author cmacnaug
@@ -242,12 +268,49 @@ public interface MeshKeeper {
          */
         public MeshProcess launch(String agentId, Runnable runnable, MeshProcessListener listener) throws Exception;
 
+        /**
+         * Creates a JavaLaunch for a {@link MeshContainer}. This can be used in conjunction with
+         * {@link #launchMeshContainer(String, JavaLaunch, MeshProcessListener)} in cases where the 
+         * caller wishes to add additional classpath elements or arguments to the container launch. 
+         * 
+         * Callers should not attempt to clear any arguments or overwrite application args or the main class and 
+         * an attempt to do so may result in a {@link UnsupportedOperationException}
+         * 
+         * @return A {@link JavaLaunch} for a MeshContainer. 
+         * @throws Exception
+         */
         public JavaLaunch createMeshContainerLaunch() throws Exception;
 
+        /**
+         * Launches a {@link MeshContainer} on the specified agent.
+         *  
+         * @param agentId The agent. 
+         * @return The newly launched container
+         * @throws Exception If there is an error launching the container. 
+         */
         public MeshContainer launchMeshContainer(String agentId) throws Exception;
 
+        /**
+         * Launches a {@link MeshContainer} on the specified agent.
+         *  
+         * @param agentId The agent. 
+         * @param listener The listener for container output. 
+         * @return The newly launched container
+         * @throws Exception If there is an error launching the container. 
+         */
         public MeshContainer launchMeshContainer(String agentId, MeshProcessListener listener) throws Exception;
 
+        /**
+         * Launches a {@link MeshContainer} on the specified agent. The provided java launch when non null,
+         * is used to take additional jvm args, or classpath elements for the launched container. Usage
+         * of a provided java launch is an advanced feature, and is recommended only when needed.  
+         *  
+         * @param agentId The agent. 
+         * @param listener The listener for container output. 
+         * @param launch The launch description. 
+         * @return The newly launched container
+         * @throws Exception If there is an error launching the container. 
+         */
         public MeshContainer launchMeshContainer(String agentId, JavaLaunch launch, MeshProcessListener listener) throws Exception;
 
         /**
@@ -341,7 +404,7 @@ public interface MeshKeeper {
     /**
      * Registry
      * <p>
-     * Description:
+     * This interface provides access to {@link MeshKeeper}'s data/object registry facilities. 
      * </p>
      * 
      * @author cmacnaug
@@ -469,6 +532,17 @@ public interface MeshKeeper {
         public <T> T waitForRegistration(String path, long timeout) throws TimeoutException, Exception;
     }
 
+    /**
+     * Remoting
+     * <p>
+     * This interface provides access to {@link MeshKeeper}'s rmi facilities. Remoting allows 
+     * you to expose a proxy to an object which can be distributed throughout {@link MeshKeeper} objects
+     * for remote method invocation. Remoting is frequently used in conjuction with {@link MeshKeeper}'s
+     * {@link Registry} facilities to allow discovery of Remoted objects.
+     * </p>
+     * @author cmacnaug
+     * @version 1.0
+     */
     public interface Remoting {
 
         /**
@@ -540,7 +614,8 @@ public interface MeshKeeper {
     /**
      * Repository
      * <p>
-     * Description:
+     * This interface provides access to {@link MeshKeeper}'s file / artificat distribution facilities. 
+     * This interface is still a work in progress. 
      * </p>
      * 
      * @author cmacnaug

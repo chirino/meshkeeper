@@ -113,17 +113,15 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.6</version>
+            <configuration>
+              <encoding>${project.build.sourceEncoding}</encoding>
+            </configuration>
             <executions>
               <execution>
-                <id>javadoc</id>
-                <phase>process-classes</phase>
+                <id>attach-javadocs</id>
                 <goals>
-                  <goal>aggregate-jar</goal>
+                  <goal>jar</goal>
                 </goals>
-                <configuration>
-                  <excludePackageNames>org.fusesource.meshkeeper.distribution</excludePackageNames>
-                </configuration>
               </execution>
             </executions>
           </plugin>
