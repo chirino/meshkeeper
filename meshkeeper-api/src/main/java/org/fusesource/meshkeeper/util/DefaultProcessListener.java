@@ -25,6 +25,7 @@ import org.fusesource.meshkeeper.MeshProcessListener;
 
 import java.io.Serializable;
 import java.io.ObjectStreamException;
+import java.util.LinkedList;
 
 /**
  * DefaultProcessListener
@@ -42,6 +43,8 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
     protected String name = "";
     private Distributable proxy;
 
+    protected LinkedList<MeshProcessListener> delegates;
+
     public DefaultProcessListener(MeshKeeper meshKeeper) throws Exception {
         proxy = meshKeeper.remoting().export(this);
     }
@@ -55,6 +58,39 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
         this.name = name;
     }
 
+    /**
+     * Adds a delegate listener which will be called by this listener when
+     * output is received.
+     * 
+     * @param listener
+     *            The delegate listener:
+     */
+    public synchronized void addDelegate(MeshProcessListener listener) {
+        if (delegates == null) {
+            delegates = new LinkedList<MeshProcessListener>();
+        }
+
+        if (!delegates.contains(listener)) {
+            delegates.add(listener);
+        }
+    }
+
+    /**
+     * Removes a delegate listener from this listener.
+     * 
+     * @param listener
+     *            The delegate listener:
+     * 
+     * @return true if the listener was in the list
+     */
+    public synchronized boolean removeDelegate(MeshProcessListener listener) {
+        if (delegates == null) {
+            return false;
+        }
+
+        return delegates.remove(listener);
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -64,6 +100,11 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
      */
     public void onProcessError(Throwable thrown) {
         LOG.error(format("ERROR: " + thrown));
+        if (delegates != null) {
+            for (MeshProcessListener listener : delegates) {
+                listener.onProcessError(thrown);
+            }
+        }
     }
 
     /*
@@ -73,6 +114,11 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
      */
     public void onProcessExit(int exitCode) {
         LOG.info(format("exited with " + exitCode));
+        if (delegates != null) {
+            for (MeshProcessListener listener : delegates) {
+                listener.onProcessExit(exitCode);
+            }
+        }
     }
 
     /*
@@ -84,6 +130,11 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
      */
     public void onProcessInfo(String message) {
         LOG.info(format(message));
+        if (delegates != null) {
+            for (MeshProcessListener listener : delegates) {
+                listener.onProcessInfo(message);
+            }
+        }
     }
 
     /*
@@ -97,6 +148,12 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
             LOG.error(format(new String(output)));
         } else {
             LOG.info(format(new String(output)));
+        }
+
+        if (delegates != null) {
+            for (MeshProcessListener listener : delegates) {
+                listener.onProcessOutput(fd, output);
+            }
         }
     }
 
