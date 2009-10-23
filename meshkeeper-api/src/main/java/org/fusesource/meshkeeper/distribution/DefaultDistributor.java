@@ -17,7 +17,11 @@
 package org.fusesource.meshkeeper.distribution;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -60,6 +64,7 @@ class DefaultDistributor implements MeshKeeper {
     private RepositoryClient repository;
     private LaunchClient launchClient;
     private ClassLoader userClassLoader;
+    private UserFirstClassLoader pluginUserClassLoader;
 
     private final HashMap<Object, DistributionRef<?>> distributed = new HashMap<Object, DistributionRef<?>>();
 
@@ -82,17 +87,23 @@ class DefaultDistributor implements MeshKeeper {
     public void setUserClassLoader(ClassLoader classLoader) {
         if (userClassLoader != classLoader) {
             userClassLoader = classLoader;
+            if (userClassLoader == null) {
+                pluginUserClassLoader = null;
+            } else {
+                pluginUserClassLoader = new UserFirstClassLoader(userClassLoader);
+            }
+
             if (registry != null) {
-                registry.setUserClassLoader(classLoader);
+                registry.setUserClassLoader(pluginUserClassLoader);
             }
             if (remoting != null) {
-                remoting.setUserClassLoader(classLoader);
+                remoting.setUserClassLoader(pluginUserClassLoader);
             }
             if (eventing != null) {
-                eventing.setUserClassLoader(classLoader);
+                eventing.setUserClassLoader(pluginUserClassLoader);
             }
             if (launchClient != null) {
-                launchClient.setUserClassLoader(classLoader);
+                launchClient.setUserClassLoader(pluginUserClassLoader);
             }
         }
 
@@ -124,7 +135,7 @@ class DefaultDistributor implements MeshKeeper {
             }
             T ret = factory.create(uri);
             if (userClassLoader != null) {
-                ret.setUserClassLoader(userClassLoader);
+                ret.setUserClassLoader(pluginUserClassLoader);
             }
             ret.start();
             return ret;
@@ -229,7 +240,7 @@ class DefaultDistributor implements MeshKeeper {
                     }
 
                     if (userClassLoader != null) {
-                        launchClient.setUserClassLoader(userClassLoader);
+                        launchClient.setUserClassLoader(pluginUserClassLoader);
                     }
                 }
             }
@@ -241,6 +252,9 @@ class DefaultDistributor implements MeshKeeper {
         if (destroyed.get()) {
             throw new IllegalStateException("Can't start destoyed MeshKeeper");
         }
+
+        //Default the user class loader to this class loader:
+        setUserClassLoader(getClass().getClassLoader());
 
         try {
             //Start up the registry client:
@@ -608,6 +622,85 @@ class DefaultDistributor implements MeshKeeper {
 
         private synchronized void unregister() throws Exception {
             unexport();
+        }
+    }
+
+    /**
+     * UserFirstClassLoader
+     * <p>
+     * This class loader is passed to Plugins allowing them to resolve user classes
+     * first when necessary, while still including the PluginClassLoader itself. This
+     * is typically useful for Remoting and Registry interfaces that operate in the
+     * plugin classloader, but deserialize and load user classes. 
+     * </p>
+     * @author cmacnaug
+     * @version 1.0
+     */
+    private static class UserFirstClassLoader extends ClassLoader {
+        ArrayList<ClassLoader> delegates = new ArrayList<ClassLoader>(2);
+
+        UserFirstClassLoader(ClassLoader userLoader) {
+            super(userLoader.getParent());
+
+            //Search first in bootstrap class loader:
+            delegates.add(userLoader);
+            //Then try the plugin class loader:
+            delegates.add(PluginClassLoader.getDefaultPluginLoader());
+        }
+
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            //System.out.println("Finding class: " + name);
+            //Look for an already loaded class:
+            try {
+                return super.findClass(name);
+            } catch (ClassNotFoundException cnfe) {
+            }
+
+            for (ClassLoader delegate : delegates) {
+                //Try the delegates
+                try {
+                    return delegate.loadClass(name);
+                } catch (ClassNotFoundException cnfe) {
+                }
+            }
+
+            throw new ClassNotFoundException(name);
+
+        }
+
+        protected URL findResource(String name) {
+            //Look for an already loaded class:
+            URL url = super.findResource(name);
+
+            for (ClassLoader delegate : delegates) {
+                if (url == null) {
+                    url = delegate.getResource(name);
+                } else {
+                    break;
+                }
+            }
+            return url;
+        }
+
+        protected Enumeration<URL> findResources(String name) throws IOException {
+            Enumeration<URL> urls = null;
+            try {
+                urls = super.findResources(name);
+            } catch (IOException ioe) {
+            }
+
+            for (ClassLoader delegate : delegates) {
+                if (urls == null) {
+                    //Try the plugin classloader:
+                    try {
+                        urls = delegate.getResources(name);
+                    } catch (IOException ioe) {
+                    }
+                } else {
+                    break;
+                }
+            }
+            return urls;
         }
     }
 
