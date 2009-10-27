@@ -7,27 +7,41 @@
  */
 package org.fusesource.meshkeeper.cloudmix;
 
+import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.cloudmix.agent.RestGridClient;
 import org.fusesource.cloudmix.common.CloudmixHelper;
 import org.fusesource.cloudmix.common.GridClient;
+import org.fusesource.cloudmix.common.ProcessClient;
 import org.fusesource.cloudmix.common.dto.AgentDetails;
 import org.fusesource.cloudmix.common.dto.Dependency;
 import org.fusesource.cloudmix.common.dto.DependencyStatus;
 import org.fusesource.cloudmix.common.dto.FeatureDetails;
 import org.fusesource.cloudmix.common.dto.ProfileDetails;
 import org.fusesource.cloudmix.common.dto.ProfileStatus;
+import org.fusesource.cloudmix.common.dto.PropertyDefinition;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
+import org.fusesource.meshkeeper.RegistryWatcher;
+import org.fusesource.meshkeeper.control.ControlServer;
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
 import org.fusesource.meshkeeper.distribution.provisioner.Provisioner;
 import org.fusesource.meshkeeper.distribution.registry.RegistryClient;
 import org.fusesource.meshkeeper.distribution.registry.RegistryFactory;
+import org.fusesource.meshkeeper.launcher.LaunchAgent;
+
+import com.sun.jersey.api.client.UniformInterfaceException;
 
 /**
  * CloudMixSupport
@@ -53,9 +67,12 @@ public class CloudMixProvisioner implements Provisioner {
     private RestGridClient gridClient;
     private String cachedRegistryConnectUri = null;
 
-    private boolean machineOwnerShip;
+    private boolean machineOwnerShip = false;
 
-    private int maxAgents;
+    private int maxAgents = 100;
+
+    private int registryPort = 0;
+    private int provisioningTimeout = 60000;
 
     public void dumpStatus() throws MeshProvisioningException {
         StringBuffer buf = new StringBuffer(1024);
@@ -152,7 +169,7 @@ public class CloudMixProvisioner implements Provisioner {
      */
     public void deploy() throws MeshProvisioningException {
 
-        GridClient controller = getGridClient();
+        RestGridClient controller = getGridClient();
 
         if (isDeployed()) {
             return;
@@ -169,11 +186,13 @@ public class CloudMixProvisioner implements Provisioner {
         if (preferredControlControlHost != null) {
             controlFeature.preferredMachine(preferredControlControlHost);
         }
+        String provisionerId = UUID.randomUUID().toString();
         controlFeature.setResource("mop:update run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.control.Main.class.getName()
-                + " --jms activemq:tcp://0.0.0.0:4041" + " --registry zk:tcp://0.0.0.0:4040");
+                + " --jms activemq:tcp://0.0.0.0:0" + " --registry zk:tcp://0.0.0.0:" + registryPort + " --provisionerId " + provisionerId);
         controlFeature.setOwnedByProfileId(controlProfile.getId());
         controlFeature.setOwnsMachine(false);
         controlFeature.validContainerType("mop");
+        controlFeature.addProperty(MESHKEEPER_PROVISIONER_ID_PROPERTY, provisionerId);
         controller.addFeature(controlFeature);
         controlProfile.getFeatures().add(new Dependency(controlFeature.getId()));
         controller.addProfile(controlProfile);
@@ -181,59 +200,96 @@ public class CloudMixProvisioner implements Provisioner {
         //Wait for the control profile to be provisioned:
         assertProvisioned(controlProfile.getId());
 
-        //Get the control host:
-        List<String> agents = controller.getAgentsAssignedToFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
-        AgentDetails details = controller.getAgentDetails(agents.get(0));
-        details.getHostname();
-        String controlHost = details.getHostname();
+        LOG.info("Waiting " + provisioningTimeout / 1000 + "s for MeshKeeper control server to come on line.");
 
-        LOG.info("MeshKeeper controller provisioned to: " + controlHost);
-        cachedRegistryConnectUri = "zk:tcp://" + controlHost + ":4040";
+        //Find the registry connect uri:
+        //If an explicit port was specified simply construct the registry connect uri from 
+        //from the agent's host id:
+        if (registryPort != 0) {
+            List<String> agents = controller.getAgentsAssignedToFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
+            AgentDetails details = controller.getAgentDetails(agents.get(0));
+            details.getHostname();
+            String controlHost = details.getHostname();
+            cachedRegistryConnectUri = "zk:tcp://" + controlHost + ":" + registryPort;
+        } else {
+            cachedRegistryConnectUri = findMeshRegistryUri();
+        }
 
-        long timeout = 60000;
-        LOG.info("Waiting " + timeout / 1000 + "s for MeshKeeper control server to come on line.");
+        LOG.info("MeshKeeper controller deployed at: " + cachedRegistryConnectUri);
 
         RegistryClient registry = null;
         try {
-            registry = new RegistryFactory().create(cachedRegistryConnectUri + "?connectTimeout=" + timeout);
+            registry = new RegistryFactory().create(cachedRegistryConnectUri + "?connectTimeout=" + provisioningTimeout);
 
         } catch (Exception e) {
-            unDeploy(true);
-            throw new MeshProvisioningException("Unable to connect to deployed MeshKeeper controller", e);
-        } finally {
             try {
                 if (registry != null) {
                     registry.destroy();
                 }
-            } catch (Exception e) {
+            } catch (Exception e2) {
+                LOG.warn("Error closing regisry", e);
             }
+            unDeploy(true);
+            throw new MeshProvisioningException("Unable to connect to deployed MeshKeeper controller", e);
         }
 
         LOG.info("MeshKeeper controller is online, deploying MeshKeeper agent profile");
+        try {
+            ProfileDetails agentProfile = new ProfileDetails();
+            agentProfile.setId(MESH_KEEPER_AGENT_PROFILE_ID);
+            agentProfile.setDescription("MeshKeeper launch agent");
+            FeatureDetails agentFeature = new FeatureDetails();
+            //agentFeature.addProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, registyConnect);
+            agentFeature.setId(MESH_KEEPER_AGENT_FEATURE_ID);
+            agentFeature.depends(controlFeature);
+            agentFeature.setOwnsMachine(machineOwnerShip);
+            agentFeature.setResource("mop:update run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName()
+                    + " --registry " + cachedRegistryConnectUri);
 
-        ProfileDetails agentProfile = new ProfileDetails();
-        agentProfile.setId(MESH_KEEPER_AGENT_PROFILE_ID);
-        agentProfile.setDescription("MeshKeeper launch agent");
-        FeatureDetails agentFeature = new FeatureDetails();
-        //agentFeature.addProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, registyConnect);
-        agentFeature.setId(MESH_KEEPER_AGENT_FEATURE_ID);
-        agentFeature.depends(controlFeature);
-        agentFeature.setResource("mop:update run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName() + " --registry "
-                + cachedRegistryConnectUri);
+            if (requestedAgentHosts != null && requestedAgentHosts.length > 0) {
+                agentFeature.setPreferredMachines(new HashSet<String>(Arrays.asList(requestedAgentHosts)));
+            }
 
-        if (requestedAgentHosts != null && requestedAgentHosts.length > 0) {
-            agentFeature.setPreferredMachines(new HashSet<String>(Arrays.asList(requestedAgentHosts)));
+            agentFeature.setOwnsMachine(false);
+            agentFeature.setMaximumInstances("" + maxAgents);
+            agentFeature.validContainerType("mop");
+            agentFeature.setOwnedByProfileId(agentProfile.getId());
+            controller.addFeature(agentFeature);
+            agentProfile.getFeatures().add(new Dependency(agentFeature.getId()));
+            controller.addProfile(agentProfile);
+
+            assertProvisioned(agentProfile.getId());
+
+            final int agentsDeployed = controller.getProcessClientsForFeature(agentFeature.getId()).size();
+            final CountDownLatch latch = new CountDownLatch(1);
+
+            LOG.info("Deployed " + agentsDeployed + " launch agents. Waiting " + provisioningTimeout / 1000 + "s for them to come online");
+            try {
+                registry.addRegistryWatcher(LaunchAgent.REGISTRY_PATH, new RegistryWatcher() {
+
+                    public void onChildrenChanged(String path, List<String> children) {
+                        if (children.size() >= agentsDeployed) {
+                            latch.countDown();
+                        }
+                    }
+
+                });
+                latch.await(provisioningTimeout, TimeUnit.MILLISECONDS);
+                LOG.info("Launch Agents came online");
+            } catch (TimeoutException e) {
+                LOG.warn("Timed out waiting for deployed agents", e);
+            } catch (Exception e) {
+                throw new MeshProvisioningException("Error waiting for launch agents to come on line", e);
+            }
+        } finally {
+            if (registry != null) {
+                try {
+                    registry.destroy();
+                } catch (Exception e) {
+                    LOG.warn("Error closing regisry", e);
+                }
+            }
         }
-
-        agentFeature.setOwnsMachine(false);
-        agentFeature.setMaximumInstances("100");
-        agentFeature.validContainerType("mop");
-        agentFeature.setOwnedByProfileId(agentProfile.getId());
-        controller.addFeature(agentFeature);
-        agentProfile.getFeatures().add(new Dependency(agentFeature.getId()));
-        controller.addProfile(agentProfile);
-
-        assertProvisioned(agentProfile.getId());
 
         //TODO: should perhaps use our Registry created above to watch for launch agents:
 
@@ -247,16 +303,83 @@ public class CloudMixProvisioner implements Provisioner {
      */
     public String findMeshRegistryUri() throws MeshProvisioningException {
         if (cachedRegistryConnectUri == null) {
-            GridClient controller = getGridClient();
-            List<String> agents = controller.getAgentsAssignedToFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
-            if (agents != null) {
-                AgentDetails details = controller.getAgentDetails(agents.get(0));
-                details.getHostname();
-                String controlHost = details.getHostname();
-                cachedRegistryConnectUri = "zk:tcp://" + controlHost + ":4040";
-            } else {
+            RestGridClient controller = getGridClient();
+
+            FeatureDetails fd = controller.getFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
+            if (fd == null) {
                 throw new MeshProvisioningException("MeshKeeper is not deployed");
             }
+
+            String provisionerId = null;
+            for (PropertyDefinition pd : fd.getProperties()) {
+                if (pd.getId().equals(Provisioner.MESHKEEPER_PROVISIONER_ID_PROPERTY)) {
+                    provisionerId = pd.getExpression();
+                }
+            }
+
+            long timeout = System.currentTimeMillis() + provisioningTimeout;
+            while (true) {
+                try {
+                    if (System.currentTimeMillis() > timeout) {
+                        throw new TimeoutException();
+                    }
+
+                    List<? extends ProcessClient> clients = controller.getProcessClientsForFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
+                    if (clients == null || clients.isEmpty()) {
+                        LOG.warn("No processes found running: " + MESH_KEEPER_CONTROL_FEATURE_ID);
+                        throw new MeshProvisioningException("MeshKeeper is not deployed");
+                    }
+
+                    ProcessClient pc = clients.get(0);
+                    byte[] controllerProps = pc.directoryResource("data/server/" + ControlServer.CONTROLLER_PROP_FILE_NAME).get(byte[].class);
+                    Properties p = new Properties();
+                    p.load(new ByteArrayInputStream(controllerProps));
+
+                    //Make sure the provisionerId matches that of the feature (e.g. we don't want to be looking at a
+                    //stale properties file:
+                    if (provisionerId == null || provisionerId.equals(p.getProperty(MESHKEEPER_PROVISIONER_ID_PROPERTY))) {
+                        LOG.debug("Provisioned provisionerId doesn't match");
+
+                        cachedRegistryConnectUri = (String) p.get(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY);
+                        if (cachedRegistryConnectUri == null) {
+                            throw new Exception(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY + " not found in " + "data/server/" + ControlServer.CONTROLLER_PROP_FILE_NAME);
+                        }
+                        return cachedRegistryConnectUri;
+                    }
+
+                } catch (UniformInterfaceException uie) {
+                    //if we get a 404 retry 
+                    if (uie.getResponse().getStatus() != 404) {
+                        throw new MeshProvisioningException("Error retrieving controller properties", uie);
+                    }
+                } catch (Exception e) {
+                    throw new MeshProvisioningException("Error retrieving controller properties", e);
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new MeshProvisioningException("Error retrieving controller properties", e);
+                }
+            }
+
+            //            List<String> agents = controller.getAgentsAssignedToFeature(MESH_KEEPER_CONTROL_FEATURE_ID);
+            //            if (agents != null) {
+            //                
+            //                getProcessClientsForFeature(featureId)
+            //                AgentDetails details = controller.getAgentDetails(agents.get(0));
+            //                details.getHostname();
+            //                String controlHost = details.getHostname();
+            //                details.get
+            //                for (Process p : details.getProcesses().getProcesses())
+            //                {
+            //                    
+            //                }
+            //                
+            //                cachedRegistryConnectUri = "zk:tcp://" + controlHost + ":4040";
+            //            } else {
+            //                throw new MeshProvisioningException("MeshKeeper is not deployed");
+            //            }
         }
 
         return cachedRegistryConnectUri;
@@ -364,6 +487,14 @@ public class CloudMixProvisioner implements Provisioner {
      */
     public void reDeploy(boolean force) throws MeshProvisioningException {
         unDeploy(force);
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new MeshProvisioningException(ie.getMessage(), ie);
+        }
+
         deploy();
     }
 
@@ -398,36 +529,58 @@ public class CloudMixProvisioner implements Provisioner {
         this.requestedAgentHosts = requestedAgentHosts;
     }
 
-
-    /* (non-Javadoc)
-     * @see org.fusesource.meshkeeper.distribution.provisioner.Provisioner#getAgentMachineOwnership()
+    /*
+     * (non-Javadoc)
+     * 
+     * @seeorg.fusesource.meshkeeper.distribution.provisioner.Provisioner#
+     * getAgentMachineOwnership()
      */
     public boolean getAgentMachineOwnership() {
         return machineOwnerShip;
     }
 
-    /* (non-Javadoc)
-     * @see org.fusesource.meshkeeper.distribution.provisioner.Provisioner#getMaxAgents()
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.fusesource.meshkeeper.distribution.provisioner.Provisioner#getMaxAgents
+     * ()
      */
     public int getMaxAgents() {
         return -1;
     }
 
-    /* (non-Javadoc)
-     * @see org.fusesource.meshkeeper.distribution.provisioner.Provisioner#setAgentMachineOwnership(boolean)
+    /*
+     * (non-Javadoc)
+     * 
+     * @seeorg.fusesource.meshkeeper.distribution.provisioner.Provisioner#
+     * setRegistryPort(int)
+     */
+    public void setRegistryPort(int port) {
+        this.registryPort = port;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @seeorg.fusesource.meshkeeper.distribution.provisioner.Provisioner#
+     * setAgentMachineOwnership(boolean)
      */
     public void setAgentMachineOwnership(boolean machineOwnerShip) {
         this.machineOwnerShip = machineOwnerShip;
     }
 
-    /* (non-Javadoc)
-     * @see org.fusesource.meshkeeper.distribution.provisioner.Provisioner#setMaxAgents(int)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.fusesource.meshkeeper.distribution.provisioner.Provisioner#setMaxAgents
+     * (int)
      */
     public void setMaxAgents(int maxAgents) {
         this.maxAgents = maxAgents;
     }
 
-    
     /*
      * (non-Javadoc)
      * 
@@ -436,13 +589,14 @@ public class CloudMixProvisioner implements Provisioner {
      * (boolean)
      */
     public void unDeploy(boolean force) throws MeshProvisioningException {
-        GridClient controller = getGridClient();
+        RestGridClient controller = getGridClient();
 
         boolean removed = false;
 
         for (String profile : new String[] { MESH_KEEPER_AGENT_PROFILE_ID, MESH_KEEPER_CONTROL_PROFILE_ID }) {
             ProfileDetails existing = controller.getProfile(profile);
             if (existing != null) {
+
                 LOG.info("Removing existing meshkeeper profile: " + profile);
                 removed = true;
                 controller.removeProfile(existing);
@@ -456,12 +610,13 @@ public class CloudMixProvisioner implements Provisioner {
 
     private static final void printUsage() {
         System.out.println("Usage:");
-        System.out.println("[deploy|undeploy|status] [cloudmix-control-url] [preferedMeskKeeperControlAgent]");
+        System.out.println("[deploy|redploy|findUri|undeploy|status] [cloudmix-control-url] [preferedMeskKeeperControlAgent]");
     }
 
     public static final void main(String[] args) {
 
-        String command = "deploy";
+        //String command = "findUri";
+        String command = "redeploy";
 
         if (args.length > 0) {
             command = args[0];
@@ -481,6 +636,10 @@ public class CloudMixProvisioner implements Provisioner {
         try {
             if (command.equalsIgnoreCase("deploy")) {
                 support.reDeploy(true);
+            } else if (command.equalsIgnoreCase("redeploy")) {
+                support.reDeploy(true);
+            } else if (command.equalsIgnoreCase("findUri")) {
+                System.out.println("Registry Uri Found: " + support.findMeshRegistryUri());
             } else if (command.equalsIgnoreCase("status")) {
                 support.dumpStatus();
             } else if (command.equalsIgnoreCase("undeploy")) {
@@ -493,6 +652,8 @@ public class CloudMixProvisioner implements Provisioner {
             System.err.println("Error running MeshKeeper CloudMix provisionner: " + e.getMessage());
             e.printStackTrace();
         }
+
+        System.exit(0);
 
     }
 

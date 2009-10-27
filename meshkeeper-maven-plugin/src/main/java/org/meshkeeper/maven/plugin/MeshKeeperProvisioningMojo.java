@@ -41,13 +41,14 @@ public class MeshKeeperProvisioningMojo extends AbstractMojo {
     private String action;
 
     /**
-     * The uri used to specify the provisioning class. An example would
-     * be: cloudmix:http://localhost:8181
+     * The uri used to specify the provisioning class. An example would be:
+     * cloudmix:http://localhost:8181
      * 
-     * @parameter expression="${meshkeeper.provisionerUri}" default-value="embedded"
+     * @parameter expression="${meshkeeper.provisionerUri}"
+     *            default-value="embedded"
      */
     private String provisionerUri;
-    
+
     /**
      * The control-url for the provisioner. This can be used to set a value used
      * to connect to a provisioner (this may be set in cases where such a url is
@@ -56,20 +57,49 @@ public class MeshKeeperProvisioningMojo extends AbstractMojo {
      * @parameter expression="${meshkeeper.provisioner.deploymentUrl}"
      */
     private URL deploymentUrl;
-    
+
     /**
-     * The preferred control host
+     * The preferred control host.
      * 
      * @parameter expression="${meshkeeper.provisioner.preferredControlHost}"
      */
     private String controlHost;
-    
+
     /**
-     * The preferred list of agent hosts
+     * The preferred list of agent hosts.
      * 
-     * @parameter 
+     * @parameter
      */
-    private String [] agentHosts;
+    private String[] agentHosts;
+
+    /**
+     * Sets the maximum number of launch agents to deploy. In the absence
+     * of a specified list of agent hosts this will limit the number of 
+     * agents deployed. If agentHosts are specified then the number of
+     * agents deployed will be the minimum of the number of agentHots or
+     * this limit, with agentHosts dictating which hosts should be used. 
+     * 
+     * @parameter
+     */
+    private Integer maxAgents;
+
+    /**
+     * The port on which the MeshKeeper provisioned registry server should
+     * listen. Specifying 0 causes the control server to choose an appropriate
+     * port.
+     * 
+     * @parameter
+     */
+    private Integer registryPort;
+
+    /**
+     * Instructs the underlying provisioner to grant the provisioned agents
+     * exclusive ownership of the machines on which they are provisioned. When
+     * supported this should prevent other users from using the machines.
+     * 
+     * @parameter
+     */
+    private Boolean agentMachineOwnership;
 
     public void execute() throws MojoExecutionException {
         Provisioner provisioner = null;
@@ -83,17 +113,27 @@ public class MeshKeeperProvisioningMojo extends AbstractMojo {
         if (deploymentUrl != null) {
             provisioner.setDeploymentUri(deploymentUrl.toString());
         }
-        
-        if(agentHosts != null)
-        {
+
+        if (agentHosts != null) {
             provisioner.setRequestedAgentHosts(agentHosts);
         }
-        
-        if(controlHost != null)
-        {
+
+        if (maxAgents != null) {
+            provisioner.setMaxAgents(maxAgents);
+        }
+
+        if (controlHost != null) {
             provisioner.setPreferredControlHost(controlHost);
         }
-        
+
+        if (registryPort != null) {
+            provisioner.setRegistryPort(registryPort);
+        }
+
+        if (agentMachineOwnership != null) {
+            provisioner.setAgentMachineOwnership(agentMachineOwnership);
+        }
+
         if (action.equals("deploy")) {
             try {
                 provisioner.reDeploy(true);

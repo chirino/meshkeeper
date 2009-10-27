@@ -119,7 +119,7 @@ public class MeshKeeperFactory {
     static public ControlServer createControlServer(String registry, File dataDir) throws Exception {
         ControlServer rc = new ControlServer();
         rc.setRegistryUri(registry);
-        rc.setJmsUri("jms:activemq:tcp://localhost:2100");
+        rc.setJmsUri("jms:activemq:tcp://localhost:0");
         rc.setDirectory(dataDir.getCanonicalPath());
         rc.start();
         return rc;

@@ -28,6 +28,8 @@ package org.fusesource.meshkeeper.distribution.provisioner;
  */
 public interface Provisioner {
 
+    public static final String MESHKEEPER_PROVISIONER_ID_PROPERTY = "meshkeeper.provisionerId";
+    
     /**
      * MeshProvisioningException
      * <p>
@@ -48,6 +50,14 @@ public interface Provisioner {
             super(reason, cause);
         }
     }
+    
+    /**
+     * This can be used to specify a specific port on which the registry
+     * service should listen. 
+     * 
+     * @param port The port on which the registry server should listen
+     */
+    public void setRegistryPort(int port);
 
     /**
      * Sets the deployment uri. This is implementation specific, and and may be

@@ -123,6 +123,9 @@ class DefaultDistributor implements MeshKeeper {
     }
 
     private synchronized <T extends PluginClient> T createPluginClient(String uri, AbstractPluginFactory<T> factory, String lookupPath, String defaultUri) throws PluginCreationException {
+        if (destroyed.get()) {
+            throw new IllegalStateException("destroyed");
+        }
         try {
             //Create Remoting client:
             if (uri == null) {
@@ -187,6 +190,7 @@ class DefaultDistributor implements MeshKeeper {
         if (remoting == null) {
             synchronized (this) {
                 if (remoting == null) {
+                    log.info("Creating Remoting Client");
                     remoting = new RemotingWrapper(createPluginClient(remotingUri, new RemotingFactory(), ControlServer.REMOTING_URI_PATH, ControlServer.DEFAULT_REMOTING_URI));
 
                 }
@@ -202,6 +206,9 @@ class DefaultDistributor implements MeshKeeper {
      */
     public Repository repository() {
         if (repository == null) {
+            if (destroyed.get()) {
+                throw new IllegalStateException("destroyed");
+            }
             synchronized (this) {
                 //TODO make this work like the other plugins:
                 try {
@@ -226,8 +233,10 @@ class DefaultDistributor implements MeshKeeper {
     }
 
     public Launcher launcher() {
-
         if (launchClient == null) {
+            if (destroyed.get()) {
+                throw new IllegalStateException("destroyed");
+            }
             synchronized (this) {
                 if (launchClient == null) {
                     launchClient = new LaunchClient();
@@ -277,12 +286,27 @@ class DefaultDistributor implements MeshKeeper {
     public synchronized void destroy() throws Exception {
         if (destroyed.compareAndSet(false, true)) {
             log.info("Shutting down");
+
+            Exception first = null;
+
             if (launchClient != null) {
-                launchClient.destroy();
+                try {
+                    launchClient.destroy();
+                } catch (Exception e) {
+                    first = first == null ? e : first;
+                } finally {
+                    launchClient = null;
+                }
             }
 
             if (eventing != null) {
-                eventing.destroy();
+                try {
+                    eventing.destroy();
+                } catch (Exception e) {
+                    first = first == null ? e : first;
+                } finally {
+                    eventing = null;
+                }
             }
 
             for (DistributionRef<?> ref : distributed.values()) {
@@ -290,11 +314,34 @@ class DefaultDistributor implements MeshKeeper {
             }
 
             if (remoting != null) {
-                remoting.destroy();
+                try {
+                    remoting.destroy();
+                } catch (Exception e) {
+                    first = first == null ? e : first;
+                } finally {
+                    remoting = null;
+                }
+
             }
 
             if (registry != null) {
-                registry.destroy();
+                try {
+                    registry.destroy();
+                } catch (Exception e) {
+                    first = first == null ? e : first;
+                } finally {
+                    registry = null;
+                }
+            }
+
+            if (repository != null) {
+                try {
+                    repository.destroy();
+                } catch (Exception e) {
+                    first = first == null ? e : first;
+                } finally {
+                    repository = null;
+                }
             }
 
             log.info("Shut down");
@@ -628,11 +675,13 @@ class DefaultDistributor implements MeshKeeper {
     /**
      * UserFirstClassLoader
      * <p>
-     * This class loader is passed to Plugins allowing them to resolve user classes
-     * first when necessary, while still including the PluginClassLoader itself. This
-     * is typically useful for Remoting and Registry interfaces that operate in the
-     * plugin classloader, but deserialize and load user classes. 
+     * This class loader is passed to Plugins allowing them to resolve user
+     * classes first when necessary, while still including the PluginClassLoader
+     * itself. This is typically useful for Remoting and Registry interfaces
+     * that operate in the plugin classloader, but deserialize and load user
+     * classes.
      * </p>
+     * 
      * @author cmacnaug
      * @version 1.0
      */

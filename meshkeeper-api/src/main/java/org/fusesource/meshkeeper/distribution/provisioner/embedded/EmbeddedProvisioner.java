@@ -46,6 +46,7 @@ public class EmbeddedProvisioner implements Provisioner {
     private static final Object SYNC = new Object();
     private boolean machineOwnerShip;
     private String deploymentUri;
+    private int registryPort = 0;
 
     /*
      * (non-Javadoc)
@@ -58,6 +59,7 @@ public class EmbeddedProvisioner implements Provisioner {
                 EMBEDDED_SERVER = new EmbeddedServer();
                 try {
                     EMBEDDED_SERVER.setDataDirectory(getControlServerDirectory());
+                    EMBEDDED_SERVER.setRegistryPort(registryPort);
                     EMBEDDED_SERVER.start();
                 } catch (Exception e) {
                     throw new MeshProvisioningException("Error starting embedded server", e);
@@ -325,6 +327,13 @@ public class EmbeddedProvisioner implements Provisioner {
      */
     public void setMaxAgents(int maxAgents) {
         //No-Op for now only one locally.
+    }
+
+    /* (non-Javadoc)
+     * @see org.fusesource.meshkeeper.distribution.provisioner.Provisioner#setRegistryPort(int)
+     */
+    public void setRegistryPort(int port) {
+        this.registryPort = port;
     }
 
 }

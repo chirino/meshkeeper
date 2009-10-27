@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 import org.fusesource.meshkeeper.MeshKeeperFactory;
+import org.fusesource.meshkeeper.distribution.provisioner.Provisioner;
 
 /**
  * Main
@@ -91,6 +92,10 @@ public class Main {
                 } else if (arg.equals("--repository")) {
                     assertHasAdditionalArg(alist, "Expected url after --repository");
                     repository = alist.removeFirst();
+                }
+                else if (arg.equals("--provisionerId")) {
+                    assertHasAdditionalArg(alist, "Expected provisionerId after --provisionerId");
+                    System.setProperty(Provisioner.MESHKEEPER_PROVISIONER_ID_PROPERTY, alist.removeFirst());
                 }
             }
 

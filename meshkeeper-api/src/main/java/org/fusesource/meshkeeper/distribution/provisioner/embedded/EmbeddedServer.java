@@ -34,6 +34,7 @@ public class EmbeddedServer {
     File dataDirectory;
 
     String registryURI;
+    private int registryPort = 0;
 
     public File getDataDirectory() {
         return dataDirectory;
@@ -48,7 +49,7 @@ public class EmbeddedServer {
         if (registryURI != null) {
             return;
         } else {
-            registryURI = "zk:tcp://localhost:2101";
+            registryURI = "zk:tcp://localhost:" + registryPort;
             if (dataDirectory == null) {
                 dataDirectory = MeshKeeperFactory.getDefaultServerDirectory();
             }
@@ -59,6 +60,8 @@ public class EmbeddedServer {
                     preServerShutdown(false);
                 }
             });
+            registryURI = controlServer.getRegistryConnectUri();
+            
             meshKeeper = MeshKeeperFactory.createMeshKeeper(registryURI);
             launchAgent = MeshKeeperFactory.createAgent(meshKeeper);
         }
@@ -122,5 +125,12 @@ public class EmbeddedServer {
         } else {
             return registryURI;
         }
+    }
+
+    /**
+     * @param registryPort The registry port for the registry server to listen on
+     */
+    public void setRegistryPort(int registryPort) {
+        this.registryPort = registryPort;
     }
 }

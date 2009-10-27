@@ -28,6 +28,7 @@ import org.fusesource.meshkeeper.MeshEventListener;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.distribution.DistributorFactory;
+import org.fusesource.meshkeeper.distribution.provisioner.Provisioner;
 import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 /**
@@ -94,6 +95,7 @@ public class ControlServer {
 
     public void start() throws Exception {
 
+        deleteControllerProps();
         shutdownHook = new Thread("MeshKeeper Control Server Shutdown Hook") {
             public void run() {
                 log.debug("Executing Shutdown Hook for " + ControlServer.this);
@@ -134,11 +136,6 @@ public class ControlServer {
             throw new Exception("Error starting Registry Server", e);
         }
 
-        if (repositoryUri == null) {
-            // Just default it to a local directory..  Only really useful in the local test case.
-            repositoryUri = new File(directory + SLASH + "repository").toURI().toString();
-        }
-
         //Connect to the registry and publish service connection info:
         try {
 
@@ -152,7 +149,7 @@ public class ControlServer {
             factory.setEventingUri(eventingUri);
             factory.setRemotingUri(remotingUri);
             factory.setDirectory(getDirectory());
-            MeshKeeper meshKeeper = factory.create();
+            meshKeeper = factory.create();
 
             //Register the control services:
 
@@ -168,8 +165,10 @@ public class ControlServer {
             log.info("Registered event server at " + EVENTING_URI_PATH + "=" + eventingUri);
 
             meshKeeper.registry().removeRegistryData(REPOSITORY_URI_PATH, true);
-            meshKeeper.registry().addRegistryObject(REPOSITORY_URI_PATH, false, repositoryUri);
-            log.info("Registered repository uri at " + REPOSITORY_URI_PATH + "=" + repositoryUri);
+            if (repositoryUri != null) {
+                meshKeeper.registry().addRegistryObject(REPOSITORY_URI_PATH, false, repositoryUri);
+                log.info("Registered repository uri at " + REPOSITORY_URI_PATH + "=" + repositoryUri);
+            }
 
             //Let's save our controller properties to an output file
             //useful for discovering our registry connect url:
@@ -210,16 +209,25 @@ public class ControlServer {
         this.preShutdownHook = runnable;
     }
 
+    private final void deleteControllerProps() {
+        FileSupport.recursiveDelete(new File(getDirectory(), CONTROLLER_PROP_FILE_NAME));
+    }
+
     private final void saveControllerProps() throws IOException {
         //Let's dump some controller properties to our working directory:
         Properties props = new Properties();
         props.put(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, registryServer.getServiceUri());
+        String provisionerId = System.getProperty(Provisioner.MESHKEEPER_PROVISIONER_ID_PROPERTY);
+        if (provisionerId != null) {
+            props.put(Provisioner.MESHKEEPER_PROVISIONER_ID_PROPERTY, provisionerId);
+        }
 
         File f = new File(getDirectory(), CONTROLLER_PROP_FILE_NAME);
         if (f.exists()) {
             f.delete();
         }
         f.getParentFile().mkdirs();
+        f.deleteOnExit();
         PrintStream fout = new PrintStream(f);
         props.store(fout, null);
         fout.flush();
@@ -231,6 +239,8 @@ public class ControlServer {
         if (Thread.currentThread() != shutdownHook) {
             Runtime.getRuntime().removeShutdownHook(shutdownHook);
         }
+
+        deleteControllerProps();
 
         if (preShutdownHook != null) {
             preShutdownHook.run();
@@ -271,9 +281,6 @@ public class ControlServer {
             }
         }
 
-        File f = new File(getDirectory(), CONTROLLER_PROP_FILE_NAME);
-        FileSupport.recursiveDelete(f);
-
         synchronized (this) {
             notifyAll();
         }
@@ -289,8 +296,12 @@ public class ControlServer {
         }
     }
 
-    public void setRepositoryUri(String repositoryProvider) {
-        this.repositoryUri = repositoryProvider;
+    public void setRepositoryUri(String repositoryUri) {
+        if (repositoryUri == null || repositoryUri.trim().length() == 0) {
+            this.repositoryUri = null;
+        } else {
+            this.repositoryUri = repositoryUri;
+        }
     }
 
     public String getRepositoryUri() {
