@@ -242,6 +242,8 @@ public class BasicClassLoaderServer implements ClassLoaderServer {
             if (file.list().length <= 0) {
                 return;
             }
+            if (LOG.isDebugEnabled())
+                LOG.debug("Jaring: " + file);
             File jar = exportedFile.jared = jar(file);
             if (LOG.isDebugEnabled())
                 LOG.debug("Jared: " + file + " as: " + jar);

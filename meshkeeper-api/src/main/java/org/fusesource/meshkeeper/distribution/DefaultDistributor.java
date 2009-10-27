@@ -190,7 +190,9 @@ class DefaultDistributor implements MeshKeeper {
         if (remoting == null) {
             synchronized (this) {
                 if (remoting == null) {
-                    log.info("Creating Remoting Client");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Creating Remoting Client");
+                    }
                     remoting = new RemotingWrapper(createPluginClient(remotingUri, new RemotingFactory(), ControlServer.REMOTING_URI_PATH, ControlServer.DEFAULT_REMOTING_URI));
 
                 }
