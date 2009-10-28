@@ -63,10 +63,10 @@ public class Main {
             return;
         }
 
-        if( System.getProperty("meshkeeper.application")==null ) {
+        if (System.getProperty("meshkeeper.application") == null) {
             System.setProperty("meshkeeper.application", Main.class.getName());
         }
-        
+
         String jms = ControlServer.DEFAULT_JMS_URI;
         String registry = "zk:tcp://localhost:4040";
         String repository = null;
@@ -82,7 +82,7 @@ public class Main {
                 } else if (arg.equals("--jms")) {
                     assertHasAdditionalArg(alist, "Expected uri after --jms");
                     jms = alist.removeFirst();
-                }  else if (arg.equals("--directory")) {
+                } else if (arg.equals("--directory")) {
                     assertHasAdditionalArg(alist, "Directory expected after --directory");
                     directory = alist.removeFirst();
                 } else if (arg.equals("--registry")) {
@@ -92,15 +92,16 @@ public class Main {
                 } else if (arg.equals("--repository")) {
                     assertHasAdditionalArg(alist, "Expected url after --repository");
                     repository = alist.removeFirst();
-                }
-                else if (arg.equals("--provisionerId")) {
+                } else if (arg.equals("--provisionerId")) {
                     assertHasAdditionalArg(alist, "Expected provisionerId after --provisionerId");
                     System.setProperty(Provisioner.MESHKEEPER_PROVISIONER_ID_PROPERTY, alist.removeFirst());
+                } else {
+                    throw new UsageException("Unexpected argument: " + arg);
                 }
             }
 
         } catch (UsageException e) {
-            System.out.println("Invalid usage: "+e.getMessage());
+            System.out.println("Invalid usage: " + e.getMessage());
             System.out.println();
             showUsage();
             System.exit(-1);

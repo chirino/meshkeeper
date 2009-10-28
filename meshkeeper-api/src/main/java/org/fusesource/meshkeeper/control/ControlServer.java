@@ -219,6 +219,7 @@ public class ControlServer {
         props.put(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, registryServer.getServiceUri());
         String provisionerId = System.getProperty(Provisioner.MESHKEEPER_PROVISIONER_ID_PROPERTY);
         if (provisionerId != null) {
+            log.info("Writing provisioner id: " + provisionerId);
             props.put(Provisioner.MESHKEEPER_PROVISIONER_ID_PROPERTY, provisionerId);
         }
 
