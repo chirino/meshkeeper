@@ -168,6 +168,8 @@ public class ControlServer {
             if (repositoryUri != null) {
                 meshKeeper.registry().addRegistryObject(REPOSITORY_URI_PATH, false, repositoryUri);
                 log.info("Registered repository uri at " + REPOSITORY_URI_PATH + "=" + repositoryUri);
+            } else {
+                log.info("Common repository uri was not set, some repository services may not be available");
             }
 
             //Let's save our controller properties to an output file
@@ -197,6 +199,8 @@ public class ControlServer {
                     }
                 }
             }, CONTROL_TOPIC);
+
+            log.info("MeshKeeper Successfully started. The Registry Service is listening on: " + getRegistryUri());
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);

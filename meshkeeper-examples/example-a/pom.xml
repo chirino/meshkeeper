@@ -24,7 +24,13 @@
   <groupId>org.fusesource.meshkeeper.examples</groupId>
   <artifactId>example-a</artifactId>
   <version>1.0-SNAPSHOT</version>
-
+  
+  <parent>
+    <groupId>org.fusesource.meshkeeper</groupId>
+    <artifactId>meshkeeper-examples</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+  
   <name>MeshKeeper Example A</name>
     
   <dependencies>

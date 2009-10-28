@@ -31,32 +31,33 @@ in_menu: false
   Using Java
   ==========
   
-  With just a few lines of java code, you can get it all going:
+  The simplest way to get MeshKeeper up and running is to use the following
   
 :raw
   {coderay::java}
-  File directory = new File("target/data");
-  String registry = "zk:tcp://localhost:2101";
-  server = MeshKeeperFactory.createControlServer(registry, directory);
-  meshKeeper = MeshKeeperFactory.createMeshKeeper(registry, directory);
-  agent = MeshKeeperFactory.createAgent(meshKeeper, directory);
-  {coderay}   
+  meshKeeper = MeshKeeperFactory.createMeshKeeper();
+  {coderay}
 
 :markdown
-  Once the above runs, you will have a deployment similar to to the diagram bellow.  
+  Based on the value of the java system property "meshkeeper.regisry.uri" the above code will either
+  automatically create an embedded control server and launch agent or connect to a pre 
+  provisioned control server. By default it creates an embedded server and is a good way
+  to get started with MeshKeeper.
+   
+  Once the above runs, you will have a deployment similar to to the diagram below.
   Your application should use the [`MeshKeeper`][1] object to access the distributed services
   like remote process launching.
   
   [1]: {api_base:}/MeshKeeper.html
 
-%img{:src=>"images/diagram-2.png", :style=>"margin-top:1em"}
+%img{:src=>"../images/diagram-2.png", :style=>"margin-top:1em"}
 
 :markdown
 
   But Spring Is More Flexible
   ===========================
    
-  While starting up everything in Java is very easy, We recommend that spring 
+  If you'd like more control over the embedded environment we recommend spring 
   be used to to create the objects for you.  This gives you the flexibility to switch
   you application between the embedded and distributed modes with just some configuration changes:
   
@@ -90,14 +91,20 @@ in_menu: false
   Next Steps
   ===========================
   
-  Now that you know how to start up the MeshKeeper services in your Java Application, perhaps you 
-  want to use some of them like [Launching a Remote Process][1] or access a remote process via 
-  [Remoting][2] or [Eventing][3].
+  Now that you know how to start up the [MeshKeeper][4] services in your Java Application, perhaps you 
+  want to use some of them like [Launching a Remote Process][1] or interact with a remote process via 
+  [Remoting][2], [Eventing][3], or the [Registry][5].
   with a remote process.
-    
-  [1]: {relocatable:/documentation/embedded-development.html}
+  
+  When you're ready to switch to a distributed MeshKeeper environment you'll want to check out steps
+  on how to [Deploying MeshKeeper Controllers and Agents][6] 
+  [1]: {relocatable:/documentation/launcher.html}
   [2]: {relocatable:/documentation/remoting.html}
   [3]: {relocatable:/documentation/eventing.html}
   [4]: {api_base:}/MeshKeeper.html
+  [5]: {relocatable:/documentation/registry.html}
+  [6]: {relocatable:/documentation/starting-servers-and-agents.html}
+  
+  
 
     
