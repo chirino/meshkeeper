@@ -221,6 +221,8 @@ public class ControlServer {
         if (provisionerId != null) {
             log.info("Writing provisioner id: " + provisionerId);
             props.put(Provisioner.MESHKEEPER_PROVISIONER_ID_PROPERTY, provisionerId);
+        } else {
+            props.put(Provisioner.MESHKEEPER_PROVISIONER_ID_PROPERTY, "none");
         }
 
         File f = new File(getDirectory(), CONTROLLER_PROP_FILE_NAME);
