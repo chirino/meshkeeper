@@ -126,7 +126,7 @@ task :linkcheck do
   if has_value(errors)
     puts "##teamcity[errorDetails='LinkChecker found some bad HTML links! #{errors} errors. See build artifact: linkerrors.html' status='FAILURE']"
   end
-  if has_value(warnings) or has_value(errors)
+  if has_value(errors)
     puts "##teamcity[buildStatus status='FAILURE' text='LinkChecker found some bad HTML links! #{warnings} warnings and #{errors} errors. See build artifact: linkerrors.html']"
     exit 1
   end
