@@ -9,7 +9,7 @@ The way most developers get started contributing to a project.
 
 ## Building 
 
-{project_name:} uses [Maven](http://maven.apache.org/) as its build tool. If you don't fancy using Maven you can use your IDE directly or [Download](download.html) a distribution or JAR.
+{project_name:} uses [Maven](http://maven.apache.org/) as its build tool. If you don't fancy using Maven you can use your IDE directly or [Download](downloads/index.html) a distribution or JAR.
 
 ### Prequisites
 

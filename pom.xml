@@ -389,7 +389,7 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.4</version>
         <configuration>
-          <excludePackageNames>*.internal</excludePackageNames>
+          <excludePackageNames>*.internal,*org.fusesource.meshkeeper.distribution</excludePackageNames>
           <aggregate>true</aggregate>
           <linksource>true</linksource>
           <links>
