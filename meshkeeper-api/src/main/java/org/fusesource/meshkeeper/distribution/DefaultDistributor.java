@@ -287,7 +287,7 @@ class DefaultDistributor implements MeshKeeper {
 
     public synchronized void destroy() throws Exception {
         if (destroyed.compareAndSet(false, true)) {
-            log.info("Shutting down");
+            log.debug("Shutting down");
 
             Exception first = null;
 
@@ -346,7 +346,7 @@ class DefaultDistributor implements MeshKeeper {
                 }
             }
 
-            log.info("Shut down");
+            log.debug("Shut down");
 
         }
     }
