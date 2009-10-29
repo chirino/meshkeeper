@@ -53,16 +53,20 @@ sort_info: 1
   :markdown 
     [Process Launching][1]: Allows clients to start, monitor, and terminate processes across all the computers
     that have the MeshKeeper Launcher Agent installed.  The Launcher also allows you to 
-    easily remotely execute your `Serializable` `Runnable` objects on remote box.  It 
-    takes care of properly replicating your application's `CLASSPATH` to the launched 
+    easily remotely execute your `Serializable` `Runnable` objects on remote box by providing a lightweight
+    container which takes care of properly replicating your application's `CLASSPATH` to the launched 
     JVM.  For example:
     [1]: {relocatable:/documentation/launcher.html}
     
   :raw
     {coderay::java}
-    Executor executor = 
-            mk.getLauncher().createRemoteExecutor("fastbox");
-    executor.execute(runnable);
+    MeshContainer container = 
+        meshKeeper.launcher().launchMeshContainer("fastbox");
+    
+    //Execute a Runnable
+    container.run(runnable);
+    //Invoke a Callable
+    String result = container.call(callable);
     {coderay}   
          
   :markdown 
