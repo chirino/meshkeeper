@@ -17,6 +17,7 @@ require 'ext/fuse/sitecopy_rake.rb'
 # TODO must change this to the actual project!
 # one day it would be nice to find this from the src/metainfo file
 project_id = "meshkeeper"
+project_version = "1.0-SNAPSHOT"
 
 task :default => :webgen
 task :rebuild => [:clobber, :webgen]
@@ -95,7 +96,7 @@ desc "checks the links on the deployed site"
 task :linkcheck do
   puts 'Generating linkerrors.html file using the linkchecker executable from (http://linkchecker.sourceforge.net)'
 
-  params = "--ignore-url=\"(http://localhost|^git|^ssh|^mailto)\" http://#{project_id}.fusesource.org/"
+  params = "--ignore-url=\"(http://localhost|http://#{project_id}.fusesource.org/maven/#{project_version}/meshkeeper-maven-plugin|^git|^ssh|^mailto)\" http://#{project_id}.fusesource.org/"
   htmlcmd = "linkchecker -o html #{params} > linkerrors.html"
   puts htmlcmd
   system htmlcmd
