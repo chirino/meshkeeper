@@ -123,12 +123,6 @@
                   <goal>jar</goal>
                 </goals>
               </execution>
-              <execution>
-                <id>deploy-javadocs</id>
-                <goals>
-                  <goal>javadoc</goal>
-                </goals>
-              </execution>
             </executions>
           </plugin>
         </plugins>
