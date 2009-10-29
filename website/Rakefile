@@ -100,7 +100,7 @@ task :linkcheck do
   puts htmlcmd
   system htmlcmd
 
-  puts "##teamcity[publishArtifacts 'webgen/linkerrors.html']"
+  puts "##teamcity[publishArtifacts 'website/linkerrors.html']"
 
   puts ''
   puts 'Starting link checking'
