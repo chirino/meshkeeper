@@ -87,7 +87,7 @@ public interface MeshContainerService extends Distributable {
      *            The {@link Runnable}
      * @throws Exception
      */
-    public void run(Runnable r) throws Exception;
+    public <R extends java.lang.Runnable & Serializable> void run(R r) throws Exception;
 
     /**
      * Invokes the {@link Callable} in the container. The {@link Callable} must
@@ -100,7 +100,7 @@ public interface MeshContainerService extends Distributable {
      * @throws Exception
      *             If there is an exception
      */
-    public <T extends Serializable> T call(Callable<T> c) throws Exception;
+    public <T, C extends java.util.concurrent.Callable<T> & Serializable> T call(C c) throws Exception;
 
     /**
      * Closes the container.

@@ -128,7 +128,7 @@ public class RemoteClassLoaderTest extends TestCase {
         ld.add("--cache");
         ld.add(file("./classloader-cache"));
         ld.add("--distributor");
-        ld.add(meshKeeper.getDistributorUri());
+        ld.add(meshKeeper.getRegistryConnectUri());
         ld.add("--classloader");
         ld.add(stub.getRegistryPath());
         ld.add(DataInputTestApplication.class.getName());

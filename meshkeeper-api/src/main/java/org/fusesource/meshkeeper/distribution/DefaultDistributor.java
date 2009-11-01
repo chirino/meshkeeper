@@ -118,7 +118,7 @@ class DefaultDistributor implements MeshKeeper {
      * 
      * @see org.fusesource.meshkeeper.Distributor#getDistributorUri()
      */
-    public String getDistributorUri() {
+    public String getRegistryConnectUri() {
         return registryUri;
     }
 

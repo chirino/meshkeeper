@@ -48,13 +48,17 @@ abstract public class Expression implements Serializable {
     public static PropertyExpression property(String name, Expression defaultExpression) {
         return new PropertyExpression(name, defaultExpression);
     }
+    
+    public static SystemPropertyExpression sysProperty(String name, Expression defaultExpression) {
+        return new SystemPropertyExpression(name, defaultExpression);
+    }
 
     public static StringExpression string(String value) {
         return new StringExpression(value);
     }
 
     public static StringExpression[] string(String... args) {
-        if( args ==null ) {
+        if (args == null) {
             return null;
         }
         StringExpression rc[] = new StringExpression[args.length];
@@ -63,7 +67,6 @@ abstract public class Expression implements Serializable {
         }
         return rc;
     }
-
 
     public static FileExpression file(String value) {
         return new FileExpression(string(value));
@@ -76,8 +79,9 @@ abstract public class Expression implements Serializable {
     public static FileExpression[] file(String... value) {
         return file(string(value));
     }
+
     public static FileExpression[] file(Expression... value) {
-        if( value ==null ) {
+        if (value == null) {
             return null;
         }
         FileExpression[] rc = new FileExpression[value.length];
@@ -127,6 +131,39 @@ abstract public class Expression implements Serializable {
 
         public String evaluate(Properties p) {
             return value;
+        }
+    }
+
+    /**
+     * SystemPropertyExpression
+     * <p>
+     * Evaluates to -Dname=value or an empty string if the value doesn't exists.
+     * </p>
+     * 
+     * @author cmacnaug
+     * @version 1.0
+     */
+    public static class SystemPropertyExpression extends Expression {
+        private static final long serialVersionUID = 1L;
+        String name;
+        Expression defaultExpression;
+
+        public SystemPropertyExpression(String name, Expression defaultExpression) {
+            this.name = name;
+            this.defaultExpression = defaultExpression;
+        }
+
+        public String evaluate(Properties p) {
+            String value = p.getProperty(name);
+            if (value == null && defaultExpression != null) {
+                value = defaultExpression.evaluate(p);
+            }
+
+            if (value == null) {
+                return "";
+            } else {
+                return "-D" + name + "=" + value;
+            }
         }
     }
 
@@ -236,7 +273,7 @@ abstract public class Expression implements Serializable {
             }
         }
     }
-    
+
     public static class AppendExpression extends Expression {
         private static final long serialVersionUID = 1L;
         final ArrayList<Expression> parts = new ArrayList<Expression>();

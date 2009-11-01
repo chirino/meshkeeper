@@ -46,8 +46,8 @@ public class MeshKeeperWrapper implements MeshKeeper {
         return next.eventing();
     }
 
-    public String getDistributorUri() {
-        return next.getDistributorUri();
+    public String getRegistryConnectUri() {
+        return next.getRegistryConnectUri();
     }
 
     public Launcher launcher() {

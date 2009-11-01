@@ -46,9 +46,12 @@ in_menu: false
   [1]: {api_base:}/HostProperties.html
 
   
-  Creating the Launch Description
-  ===============================
-  
+  Creating Launch Descriptions
+  ============================
+  To launch a process using MeshKeeper you need to create a [`LaunchDescription`][1] that describes the process being launched.
+
+  Creating a LaunchDescription
+  ----------------------------
   The next step will be to create a [`LaunchDescription`][1] which is a command line builder for the process that you want to 
   remotely execute.  Command line arguments can be strings or expressions. Expressions get evaluated on the launch agent.  The following
   listing shows how a [`LaunchDescription`][1] is initialized.
@@ -77,7 +80,54 @@ in_menu: false
   We recommend you use a static import of `Expression.*` when building `LaunchDescription` objects.  There are many 
   other [handy expressions][1] that can be used.
 
+  Using the JavaLaunch Builder
+  ----------------------------
+  The LaunchDescription is the most generic way to launch anything via [MeshKeeper][2]. For Launching java applications with a main
+  method, MeshKeeeper provides a [`JavaLaunch`][3] helper class that makes it easier to build LaunchDescriptions for launching java
+  programs. The [`Launcher`][4] also provides an easy way to preinitialize your [`JavaLaunch`][3] with a distributed classpath so
+  that your java programs can execute using the same classpath as your application regardless of where it is run. 
+  
+  The example below shows a snippet for creating a JavaLaunch for a fictional MyMain class.
   [1]: {api_base:}/Expression.html#method_summary
+  [2]: {api_base:}/MeshKeeper.html
+  [3]: {api_base:}/JavaLaunch.html
+  [4]: {api_base:}/MeshKeeper.html#Launcher
+:raw
+  {coderay::java}
+  MeshKeeper meshKeeper = MeshKeeperFactory.createMeshKeeper();
+  //Create a boostrap launch. Under the covers MeshKeeper will 
+  //distribute your classpath out to remote agents for you!
+  JavaLaunch jl = meshKeeper.launcher().createBootstrapJavaLaunch(
+    MyMain.class.getName());
+  MeshProcess process = null;
+  try
+  {
+    //Convert to a LaunchDescription and launch:
+    LaunchDescription ld = jl.toLaunchDescription();
+    MeshProcessListener listener = new DefaultProcessListener("MyMain");
+    process = meshKeeper.launcher().launchProcess(getAgent(), ld, listener);
+    //Do something...
+  }
+  finally
+  {
+    if(process != null) process.kill();
+  }   
+  {coderay}
+
+:markdown 
+  Note that since the above process will be running in the same classpath as your application, so it will have access to all of
+  your classes. It will also have a preconfigured MeshKeeperFactory, So you'll be able to create a [MeshKeeper][4] using
+  `MeshKeeperFactory.createMeshKeeper()`, thus allowing you to interact with it via [Remoting][2], [Eventing][3], the [Registry][5] or
+  the [Repository][6]
+   
+  
+  [1]: {relocatable:/documentation/launcher.html}
+  [2]: {relocatable:/documentation/remoting.html}
+  [3]: {relocatable:/documentation/eventing.html}
+  [4]: {api_base:}/MeshKeeper.html
+  [5]: {relocatable:/documentation/registry.html}
+  [6]: {relocatable:/documentation/repository.html}
+  
   
   Launching the Process
   =====================
@@ -100,4 +150,116 @@ in_menu: false
   [1]: {api_base:}/MeshProcessListener.html
   [2]: {api_base:}/util/DefaultProcessListener.html
   [3]: {api_base:}/MeshProcess.html
-    
+:markdown
+  Using a MeshContainer
+  =====================
+  So far we've shown how to launch generic processes on a remote agent using the [Launcher API][1], but this api contains a couple of 
+  other goodies to make distributing java code even easier. The [Launcher API][1] also allows you to create a [MeshContainer][2] in which 
+  you can host Java objects on a remote machine. Using [MeshContainer][2]s is particularly useful in cases where you'd like to avoid launching 
+  many JVMs on the target machine, by allowing you start a single JVM and run arbitrary code within it.
+  The container has several abilities:
+  
+  [1]: {api_base:}/MeshKeeper.html#Launcher
+  [2]: {api_base:}/MeshContainer.html
+%ol
+  %li
+    :markdown
+      Able to host [`Serializable`][1] Java objects.
+      [1]: http://java.sun.com/j2se/1.5.0/docs/api/java/io/Serializable.html
+    :raw
+      {coderay::java}
+      public static class MyClass implements Serializable
+      {
+        public Properties getSystemProperties()
+        {
+          return System.getProperties();
+        }
+      }
+      
+      public void hostMyClass() throws Exception
+      {
+        MeshKeeper mk = MeshKeeperFactory.createMeshKeeper();
+        MeshContainer container = mk.launcher().launchMeshContainer("fastbox");
+        //Returns a proxy version of my class using MeshKeeper Remoting
+        //support:
+        MyClass myClass = container.host("propFinder", new MyClass());
+        //We can use the proxy to print the system properties on the
+        //target system. 
+        myClass.getSystemProperties().list(System.out);
+        
+        //If we don't need it anymore unhost
+        container.unhost("propFinder");
+        container.kill();
+       }
+       {coderay}
+    Note that `MyClass` is declared as static. If you don't do this then the declaring class would have to be serialized
+    as well.
+  %li 
+    :markdown
+      Able to execute [`Serializable`][1] [`Runnable`][2] objects.
+      You can execute [`Runnable`][2]s providing they are also [`Serializable`][1]. For simplicity
+      you can just implement the [`MeshContainer.Runnable`][3] interface to accomplish this:
+      [1]: http://java.sun.com/j2se/1.5.0/docs/api/java/io/Serializable.html
+      [2]: http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Runnable.html
+      [3]: {api_base:}/org/fusesource/meshkeeper/launcher/MeshContainerService.Runnable.html 
+    :raw
+      {coderay::java}
+      public static class MyRunnable implements MeshContainer.Runnable
+      {
+         public void run() 
+         {
+            System.out.println("Hello from " + 
+                System.getProperties().getProperty("user.timezone"));
+         }
+      }
+      
+      public void runRunnable() throws Exception
+      {
+         meshKeeper.launcher().waitForAvailableAgents(5000);
+         String agentId = 
+             meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
+         MeshContainer container = 
+             meshKeeper.launcher().launchMeshContainer(agentId);
+         container.run(new MyRunnable());
+      }
+      {coderay}
+    Note that MyRunnable is declared as static. If you don't do this then the declaring class would have to be serialized
+    as well.
+  %li
+    :markdown 
+      Able to execute [`Serializable`][1] [`Callable`][2] objects.
+      You can execute [`Callable`][2]s providing they are also [`Serializable`][1]. For simplicity
+      you can just implement the [`MeshContainer.Callable`][3] interface to accomplish this:
+      [1]: http://java.sun.com/j2se/1.5.0/docs/api/java/io/Serializable.html
+      [2]: http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Runnable.html
+      [3]: {api_base:}/org/fusesource/meshkeeper/launcher/MeshContainerService.Callable.html 
+    :raw
+      {coderay::java}
+      public static class MyCallable implements MeshContainer.Callable<String>
+      {
+        public String call() 
+        {
+          return "Hello from " + 
+              System.getProperties().getProperty("user.timezone");
+        }
+      }
+      
+      public void runCallable() throws Exception
+      {
+        meshKeeper.launcher().waitForAvailableAgents(5000);
+        String agentId = 
+            meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
+        MeshContainer container = 
+            meshKeeper.launcher().launchMeshContainer(agentId);
+        System.out.println(container.call(new MyCallable()));
+      }
+      {coderay}
+    Note that MyCallable is declared as static. If you don't do this then the declaring class would have to be serialized
+    as well.
+:markdown
+  [1]: {api_base:}/MeshKeeper.html#Launcher
+  [3]: http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Runnable.html
+  [4]: http://java.sun.com/j2se/1.5.0/docs/api/java/util/concurrent/Callable.html
+  [6]: {relocatable:/documentation/remoting.html}
+  [7]: {api_base:}/org/fusesource/meshkeeper/launcher/MeshContainerService.Runnable.html
+  [8]: {api_base:}/org/fusesource/meshkeeper/launcher/MeshContainerService.Callable.html 

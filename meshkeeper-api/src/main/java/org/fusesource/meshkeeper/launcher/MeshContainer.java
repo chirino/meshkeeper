@@ -30,6 +30,8 @@ import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.MeshKeeper.DistributionRef;
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
+import org.fusesource.meshkeeper.launcher.MeshContainerService.Callable;
+import org.fusesource.meshkeeper.launcher.MeshContainerService.Runnable;
 
 /**
  * MeshContainer
@@ -42,16 +44,18 @@ import org.fusesource.meshkeeper.distribution.PluginClassLoader;
  */
 public class MeshContainer implements MeshContainerService {
 
-    public static MeshKeeper mesh;
-    public static final Log LOG = LogFactory.getLog(LaunchAgent.class);
+    private static MeshKeeper mesh;
+    private static final Log LOG = LogFactory.getLog(LaunchAgent.class);
+    private static boolean isInMeshContainer = false;
 
     private HashMap<String, Object> hosted = new HashMap<String, Object>();
     private String name;
 
     private CountDownLatch closeLatch = new CountDownLatch(1);
 
-    public MeshContainer(String name) {
+    private MeshContainer(String name) {
         this.name = name;
+        isInMeshContainer = true;
     }
 
     public synchronized <T extends Serializable> T host(String name, T object, Class<?>... interfaces) throws Exception {
@@ -76,12 +80,30 @@ public class MeshContainer implements MeshContainerService {
         }
     }
 
-    public void run(Runnable r) {
-        //TODO a thread pool perhaps:
+    /**
+     * Runs the {@link Runnable} in the container. The {@link Runnable} must
+     * also implement {@link Serializable}.
+     * 
+     * @param r
+     *            The {@link Runnable}
+     * @throws Exception
+     */
+    public <R extends java.lang.Runnable & Serializable> void run(R r) throws Exception {
         mesh.getExecutorService().execute(r);
     }
 
-    public <T extends Serializable> T call(Callable<T> c) throws Exception {
+    /**
+     * Invokes the {@link Callable} in the container. The {@link Callable} must
+     * also implement {@link Serializable}.
+     * 
+     * @param <T>
+     * @param c
+     *            The {@link Callable}
+     * @return The result
+     * @throws Exception
+     *             If there is an exception
+     */
+    public <T, C extends java.util.concurrent.Callable<T> & Serializable> T call(C c) throws Exception {
         return c.call();
     }
 
@@ -89,8 +111,18 @@ public class MeshContainer implements MeshContainerService {
         closeLatch.countDown();
     }
 
+    /**
+     * @return The container's meshkeeper.
+     */
     public static MeshKeeper getMeshKeeper() {
         return mesh;
+    }
+
+    /**
+     * @return true if this is a meshcontainer launch
+     */
+    public static boolean isInMeshContainer() {
+        return isInMeshContainer;
     }
 
     public String toString() {
@@ -117,7 +149,7 @@ public class MeshContainer implements MeshContainerService {
                 MeshContainer.mesh = MeshKeeperFactory.createMeshKeeper();
             }
             DistributionRef<MeshContainerService> ref = MeshContainer.getMeshKeeper().distribute(path, false, (MeshContainerService) container, MeshContainerService.class);
-            System.out.println("Started MeshContainer: " + ref.getRegistryPath() + " cl: " + container.getClass().getClassLoader());
+            container.LOG.debug("Started MeshContainer: " + ref.getRegistryPath() + " cl: " + container.getClass().getClassLoader());
             container.closeLatch.await();
         } catch (Exception e) {
             LOG.error("MeshContainer error: ", e);

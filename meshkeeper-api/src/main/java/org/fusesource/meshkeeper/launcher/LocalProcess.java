@@ -26,6 +26,8 @@ import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.util.internal.ProcessSupport;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -90,26 +92,35 @@ public class LocalProcess implements MeshProcess {
         }
 
         // Evaluate the command...
-        String[] cmd = new String[ld.getCommand().size()];
+        List<String> cmdList = new ArrayList<String>(ld.getCommand().size());
         StringBuilder command_line = new StringBuilder();
         boolean first = true;
-        int i = 0;
         for (Expression expression : ld.getCommand()) {
+
+            String arg = expression.evaluate(processProperties);
+
+            //Skip empty args
+            if (arg == null || arg.length() == 0) {
+                continue;
+            }
+
             if (!first) {
                 command_line.append(" ");
             }
             first = false;
 
-            String arg = expression.evaluate(processProperties);
-            cmd[i++] = arg;
+            cmdList.add(arg);
 
             command_line.append('\'');
             command_line.append(arg);
             command_line.append('\'');
         }
-
+        
+        String[] cmdArray = cmdList.toArray(new String [] {});
+        
         // Evaluate the enviorment...
         String[] env = null;
+        int i = 0;
         if (ld.getEnvironment() != null) {
             env = new String[ld.getEnvironment().size()];
             i = 0;
@@ -135,7 +146,7 @@ public class LocalProcess implements MeshProcess {
 
         //Launch:
         synchronized (mutex) {
-            process = Runtime.getRuntime().exec(cmd, env, workingDirectory);
+            process = Runtime.getRuntime().exec(cmdArray, env, workingDirectory);
             if (process == null) {
                 throw new Exception("Process launched failed (returned null).");
             }

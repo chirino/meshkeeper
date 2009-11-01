@@ -105,7 +105,7 @@ public class LaunchAgent implements LaunchAgentService {
         ld.add("--cache");
         ld.add(new File(getDirectory(), "bootstrap-cache").getCanonicalPath());
         ld.add("--distributor");
-        ld.add(getMeshKeeper().getDistributorUri());
+        ld.add(getMeshKeeper().getRegistryConnectUri());
         ld.add("--runnable");
         ld.add(path);
         return launch(ld, handler);

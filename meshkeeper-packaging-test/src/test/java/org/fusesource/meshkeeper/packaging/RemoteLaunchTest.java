@@ -19,16 +19,23 @@ package org.fusesource.meshkeeper.packaging;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.fusesource.meshkeeper.Expression;
 import org.fusesource.meshkeeper.Expression.FileExpression;
+import org.fusesource.meshkeeper.util.DefaultProcessListener;
+import org.fusesource.meshkeeper.JavaLaunch;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.MavenTestSupport;
+import org.fusesource.meshkeeper.MeshEvent;
+import org.fusesource.meshkeeper.MeshEventListener;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.MeshProcessListener;
 
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
 /**
@@ -76,6 +83,29 @@ public class RemoteLaunchTest extends TestCase {
         DataOutputTester tester = new DataOutputTester();
         tester.test(meshKeeper.launcher().launchProcess(getAgent(), ld, tester));
 
+    }
+
+    public void testJavaLaunch() throws Exception {
+        JavaLaunch jl = meshKeeper.launcher().createBootstrapJavaLaunch(DataInputTestApplication.class.getName());
+        MeshProcess process = meshKeeper.launcher().launchProcess(getAgent(), jl.toLaunchDescription(), new DefaultProcessListener("testLaunch"));
+        String topic = "testJavaLaunch";
+
+        try {
+            final CountDownLatch latch = new CountDownLatch(1);
+            meshKeeper.eventing().openEventListener(new MeshEventListener() {
+
+                public void onEvent(MeshEvent e) {
+                    latch.countDown();
+                }
+
+            }, topic);
+
+            process.write(MeshProcess.FD_STD_IN, new String("event:" + topic + "\n").getBytes());
+            
+            latch.await(30, TimeUnit.SECONDS);
+        } finally {
+            process.kill();
+        }
     }
 
     public class DataOutputTester implements MeshProcessListener {

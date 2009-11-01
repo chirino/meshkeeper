@@ -24,6 +24,7 @@ import org.fusesource.meshkeeper.distribution.DistributorFactory;
 import org.fusesource.meshkeeper.distribution.provisioner.Provisioner;
 import org.fusesource.meshkeeper.distribution.provisioner.ProvisionerFactory;
 import org.fusesource.meshkeeper.launcher.LaunchAgent;
+import org.fusesource.meshkeeper.launcher.MeshContainer;
 import org.fusesource.meshkeeper.util.internal.MeshKeeperWrapper;
 
 /**
@@ -110,6 +111,24 @@ public class MeshKeeperFactory {
      */
     public static File getDefaultServerDirectory() {
         return new File(getDefaultBaseDirectory(), "server");
+    }
+
+    /**
+     * Tests if the application is running in a {@link org.fusesource.meshkeeper.MeshContainer}
+     * @return True if running in a MeshContainer
+     */
+    public static final boolean isInMeshContainer() {
+        return MeshContainer.isInMeshContainer();
+    }
+    
+    /**
+     * When the application is running in {@link org.fusesource.meshkeeper.MeshContainer} this
+     * method can be used to get the container's MeshKeeper 
+     * 
+     * @return The containers MeshKeeper if running in a {@link MeshContainer}
+     */
+    public static final MeshKeeper getContainerMeshKeeper() {
+        return MeshContainer.getMeshKeeper();
     }
 
     /**

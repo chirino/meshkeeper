@@ -31,8 +31,8 @@ import static org.fusesource.meshkeeper.Expression.*;
 /**
  * JavaLaunch
  * <p>
- * This is a helper class used to construct {@link LaunchDescription}s for
- * Java processes.
+ * This is a helper class used to construct {@link LaunchDescription}s for Java
+ * processes.
  * </p>
  * 
  * @author cmacnaug
@@ -49,7 +49,6 @@ public class JavaLaunch {
     ArrayList<Expression> systemProperties = new ArrayList<Expression>();
     String bootStrapClassLoaderFactoryPath;
 
-
     /**
      * @return The expression representing the current jvm for the launch.
      */
@@ -58,25 +57,29 @@ public class JavaLaunch {
     }
 
     /**
-     * Sets the java executable to use for the launch. By default
-     * this is simply "java".
-     * @param jvm The java executable for the launch.
+     * Sets the java executable to use for the launch. By default this is simply
+     * "java".
+     * 
+     * @param jvm
+     *            The java executable for the launch.
      */
     public void setJvm(String jvm) {
         this.jvm = string(jvm);
     }
 
     /**
-     * Sets the java executable to use for the launch. By default
-     * this is simply "java".
-     * @param jvm The java executable for the launch.
+     * Sets the java executable to use for the launch. By default this is simply
+     * "java".
+     * 
+     * @param jvm
+     *            The java executable for the launch.
      */
     public void setJvm(Expression jvm) {
         this.jvm = jvm;
     }
 
     /**
-     * @return The expression representing the current jvm args. 
+     * @return The expression representing the current jvm args.
      */
     public List<Expression> getJvmArgs() {
         return jvmArgs;
@@ -84,7 +87,9 @@ public class JavaLaunch {
 
     /**
      * Appends jvm args for the launched process.
-     * @param args The arg
+     * 
+     * @param args
+     *            The arg
      * @return This {@link JavaLaunch}
      */
     public JavaLaunch addJvmArgs(String... args) {
@@ -93,7 +98,9 @@ public class JavaLaunch {
 
     /**
      * Appends jvm args for the launched process.
-     * @param args The arg
+     * 
+     * @param args
+     *            The arg
      * @return This {@link JavaLaunch}
      */
     public JavaLaunch addJvmArgs(Expression... args) {
@@ -102,7 +109,9 @@ public class JavaLaunch {
 
     /**
      * Appends jvm args for the launched process.
-     * @param args The arg
+     * 
+     * @param args
+     *            The arg
      * @return This {@link JavaLaunch}
      */
     public JavaLaunch addJvmArgs(List<Expression> args) {
@@ -111,10 +120,27 @@ public class JavaLaunch {
     }
 
     /**
-     * Appends the key and value as system properties for the 
-     * launched process. 
-     * @param key The key
-     * @param value The value
+     * Append {@link SystemPropertyExpression}to the JavaLaunch. This is useful
+     * for evaluating the System property at the target host.
+     * 
+     * @param expression
+     *            SystemPropertyExpression to evaluate at the host
+     * @param value
+     *            The value
+     * @return This {@link JavaLaunch}
+     */
+    public JavaLaunch addSystemProperty(SystemPropertyExpression expression) {
+        systemProperties.add(expression);
+        return this;
+    }
+
+    /**
+     * Appends the key and value as system properties for the launched process.
+     * 
+     * @param key
+     *            The key
+     * @param value
+     *            The value
      * @return This {@link JavaLaunch}
      */
     public JavaLaunch addSystemProperty(String key, String value) {
@@ -123,10 +149,13 @@ public class JavaLaunch {
     }
 
     /**
-     * Appends the key and value expression as system properties for the 
-     * launched class. 
-     * @param key The key
-     * @param value The value
+     * Appends the key and value expression as system properties for the
+     * launched class.
+     * 
+     * @param key
+     *            The key
+     * @param value
+     *            The value
      * @return This {@link JavaLaunch}
      */
     public JavaLaunch addSystemProperty(Expression key, Expression value) {
@@ -135,11 +164,13 @@ public class JavaLaunch {
     }
 
     /**
-     * Propagates the specified property names from the source propreties as System
-     * properties for the java launch.
+     * Propagates the specified property names from the source propreties as
+     * System properties for the java launch.
      * 
-     * @param sourceProps The source properties. 
-     * @param names The property names to propagate if present.
+     * @param sourceProps
+     *            The source properties.
+     * @param names
+     *            The property names to propagate if present.
      * @return This {@link JavaLaunch}
      */
     public JavaLaunch propagateSystemProperties(Properties sourceProps, String... names) {
@@ -159,22 +190,25 @@ public class JavaLaunch {
     }
 
     /**
-     * Sets the classloader factory path that will be resolved by the {@link LaunchAgent} prior
-     * to launching the class. The specified <code>bootStrapClassLoaderFactoryPath</code> should
-     * already be exported into the {@link Registry} via a {@link ClassLoaderServer} export method
+     * Sets the classloader factory path that will be resolved by the
+     * {@link LaunchAgent} prior to launching the class. The specified
+     * <code>bootStrapClassLoaderFactoryPath</code> should already be exported
+     * into the {@link Registry} via a {@link ClassLoaderServer} export method
      * prior to launching the class.
      * 
-     * @param bootStrapClassLoaderFactoryPath A path to a {@link ClassLoaderFactory} in the {@link Registry}
+     * @param bootStrapClassLoaderFactoryPath
+     *            A path to a {@link ClassLoaderFactory} in the {@link Registry}
      */
     public void setBootstrapClassLoaderFactory(String bootStrapClassLoaderFactoryPath) {
         this.bootStrapClassLoaderFactoryPath = bootStrapClassLoaderFactoryPath;
     }
 
     /**
-     * Sets the classpath for the {@link JavaLaunch}. The classpath when
-     * set is appended to the bootstrap classpath (when present). 
+     * Sets the classpath for the {@link JavaLaunch}. The classpath when set is
+     * appended to the bootstrap classpath (when present).
      * 
-     * @param classpath An expression that can be resolved to a classpath
+     * @param classpath
+     *            An expression that can be resolved to a classpath
      * @return The working directory for the launch.
      */
     public void setClasspath(Expression classpath) {
@@ -182,10 +216,11 @@ public class JavaLaunch {
     }
 
     /**
-     * Sets the classpath for the  {@link JavaLaunch}. The classpath when
-     * set is appended to the bootstrap classpath (when present). 
+     * Sets the classpath for the {@link JavaLaunch}. The classpath when set is
+     * appended to the bootstrap classpath (when present).
      * 
-     * @param classpath A list of file expressions. 
+     * @param classpath
+     *            A list of file expressions.
      * @return The working directory for the launch.
      */
     public void setClasspath(FileExpression... classpath) {
@@ -193,10 +228,11 @@ public class JavaLaunch {
     }
 
     /**
-     * Sets the classpath for the  {@link JavaLaunch}. The classpath when
-     * set is appended to the bootstrap classpath (when present). 
+     * Sets the classpath for the {@link JavaLaunch}. The classpath when set is
+     * appended to the bootstrap classpath (when present).
      * 
-     * @param classpath A list of Strings that are interpreted as file expressions. 
+     * @param classpath
+     *            A list of Strings that are interpreted as file expressions.
      * @return The working directory for the launch.
      */
     public void setClasspath(String... classpath) {
@@ -210,7 +246,7 @@ public class JavaLaunch {
         return workingDir;
     }
 
-    /**
+/**
      * Sets the working directory for the java launch. In general it
      * is good practice to choose a subdirectoy unrderneath the agent's
      * working directory which can be found by examing the corresponding
@@ -223,8 +259,10 @@ public class JavaLaunch {
     }
 
     /**
-     * Sets the working directory for the java launch. 
-     * @param workingDir the working directory for the launch.
+     * Sets the working directory for the java launch.
+     * 
+     * @param workingDir
+     *            the working directory for the launch.
      * @see HostProperties#getDirectory()
      */
     public void setWorkingDir(FileExpression workingDir) {
@@ -239,16 +277,20 @@ public class JavaLaunch {
     }
 
     /**
-     * Sets the java main class to launch. 
-     * @param mainClass The main class
+     * Sets the java main class to launch.
+     * 
+     * @param mainClass
+     *            The main class
      */
     public void setMainClass(String mainClass) {
         this.mainClass = string(mainClass);
     }
 
     /**
-     * Sets the java main class to launch. 
-     * @param mainClass The main class
+     * Sets the java main class to launch.
+     * 
+     * @param mainClass
+     *            The main class
      */
     public void setMainClass(Expression mainClass) {
         this.mainClass = mainClass;
@@ -262,8 +304,10 @@ public class JavaLaunch {
     }
 
     /**
-     * Adds program arguments to the launch. 
-     * @param args The program arguments. 
+     * Adds program arguments to the launch.
+     * 
+     * @param args
+     *            The program arguments.
      * @return The JavaLaunch.
      */
     public JavaLaunch addArgs(String... args) {
@@ -271,8 +315,10 @@ public class JavaLaunch {
     }
 
     /**
-     * Adds program arguments to the launch. 
-     * @param args The program arguments. 
+     * Adds program arguments to the launch.
+     * 
+     * @param args
+     *            The program arguments.
      * @return The JavaLaunch.
      */
     public JavaLaunch addArgs(Expression... args) {
@@ -280,8 +326,10 @@ public class JavaLaunch {
     }
 
     /**
-     * Adds program arguments to the launch. 
-     * @param args The program arguments. 
+     * Adds program arguments to the launch.
+     * 
+     * @param args
+     *            The program arguments.
      * @return The JavaLaunch.
      */
     public JavaLaunch addArgs(List<Expression> args) {
@@ -290,7 +338,8 @@ public class JavaLaunch {
     }
 
     /**
-     * Coverts this {@link JavaLaunch} into a {@link LaunchDescription}. 
+     * Coverts this {@link JavaLaunch} into a {@link LaunchDescription}.
+     * 
      * @return A {@link LaunchDescription} for this {@link JavaLaunch}
      */
     public LaunchDescription toLaunchDescription() {
@@ -315,7 +364,7 @@ public class JavaLaunch {
             }
             ld.add(launchClasspath);
         }
-        
+
         ld.add(mainClass);
         ld.add(args);
         return ld;

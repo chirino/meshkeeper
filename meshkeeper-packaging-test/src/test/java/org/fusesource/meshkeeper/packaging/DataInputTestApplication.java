@@ -26,12 +26,16 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.StringTokenizer;
 
+import org.fusesource.meshkeeper.MeshEvent;
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
+
 /**
  * DataInputClass
  * <p>
  * Description:
  * </p>
- *
+ * 
  * @author cmacnaug
  * @version 1.0
  */
@@ -88,6 +92,8 @@ public class DataInputTestApplication {
                     echoDataFile();
                 } else if (command.equals("error")) {
                     System.err.println(tok.nextToken());
+                } else if (command.equals("event")) {
+                    sendEvent(tok.nextToken().trim());
                 } else {
                     System.err.println("Unknown command: " + command);
                 }
@@ -103,20 +109,30 @@ public class DataInputTestApplication {
         }
     }
 
-    private void echoDataFile() throws Exception
-    {
+    private void sendEvent(String topic) throws Exception {
+        MeshKeeper mesh = null;
+        try {
+            mesh = MeshKeeperFactory.createMeshKeeper();
+            mesh.eventing().sendEvent(new MeshEvent(), topic);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (mesh != null) {
+                mesh.destroy();
+            }
+        }
+    }
+
+    private void echoDataFile() throws Exception {
         BufferedReader reader = new BufferedReader(new FileReader(new File(dataFile)));
-        while(true)
-        {
+        while (true) {
             String line = reader.readLine();
-            if(line == null)
-            {
+            if (line == null) {
                 break;
             }
             System.out.print(line);
             System.out.flush();
         }
-
 
     }
 }

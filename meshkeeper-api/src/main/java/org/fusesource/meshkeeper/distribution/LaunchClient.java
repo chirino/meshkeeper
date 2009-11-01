@@ -16,6 +16,9 @@
  */
 package org.fusesource.meshkeeper.distribution;
 
+import static org.fusesource.meshkeeper.Expression.string;
+import static org.fusesource.meshkeeper.Expression.sysProperty;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -24,8 +27,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -44,12 +45,12 @@ import org.fusesource.meshkeeper.MeshKeeper.Launcher;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServerFactory;
-import org.fusesource.meshkeeper.classloader.Marshalled;
 import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import org.fusesource.meshkeeper.launcher.LaunchAgentService;
 import org.fusesource.meshkeeper.launcher.MeshContainerService;
 import org.fusesource.meshkeeper.util.DefaultProcessListener;
 
+;
 
 /**
  * LaunchClient
@@ -300,7 +301,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
         checkNotClosed();
 
         LaunchAgentService agent = getAgent(agentId);
-        MeshProcessWatcher watcher = new MeshProcessWatcher(listener);
+        MeshProcessWatcher watcher = new MeshProcessWatcher(listener, agentId);
         addWatchedProcess(watcher);
         try {
             watcher.setProcess(agent.launch(launch, watcher.getProxy()));
@@ -319,12 +320,33 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
 
     public JavaLaunch createMeshContainerLaunch() throws Exception {
         MeshContainerLaunch launch = new MeshContainerLaunch();
-        launch.setBootstrapClassLoaderFactory(getBootstrapClassLoaderFactory().getRegistryPath());
         launch.setMainClass(org.fusesource.meshkeeper.launcher.MeshContainer.class.getName());
         // Add the MeshContainer class to be launched:
         launch.regPath = MESHCONTAINER_REGISTRY_PATH + name + "/" + ++meshContainerCounter;
         launch.addArgs(launch.regPath);
 
+        launch.setBootstrapClassLoaderFactory(getBootstrapClassLoaderFactory().getRegistryPath());
+        //Add System properties to be evaluated on the agent side:
+        for (String propName : LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES) {
+            launch.addSystemProperty(sysProperty(propName, null));
+        }
+        //And the registry connect uri
+        launch.addSystemProperty(sysProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, string(meshKeeper.getRegistryConnectUri())));
+
+        return launch;
+    }
+
+    public JavaLaunch createBootstrapJavaLaunch(String mainClass, String... args) throws Exception {
+        JavaLaunch launch = new JavaLaunch();
+        launch.setMainClass(mainClass);
+        launch.addArgs(args);
+        launch.setBootstrapClassLoaderFactory(getBootstrapClassLoaderFactory().getRegistryPath());
+        //Add System properties to be evaluated on the agent side:
+        for (String propName : LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES) {
+            launch.addSystemProperty(sysProperty(propName, null));
+        }
+        //And the registry connect uri
+        launch.addSystemProperty(sysProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, string(meshKeeper.getRegistryConnectUri())));
         return launch;
     }
 
@@ -342,10 +364,6 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
         }
 
         String regPath = ((MeshContainerLaunch) launch).regPath;
-        HostProperties props = agentProps.get(agentId);
-        launch.propagateSystemProperties(props.getSystemProperties(), LaunchAgent.PROPAGATED_SYSTEM_PROPERTIES);
-        launch.addSystemProperty(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY, meshKeeper.getDistributorUri());
-
         MeshProcess proc = launchProcess(agentId, launch.toLaunchDescription(), listener);
         MeshContainerService proxy = meshKeeper.registry().waitForRegistration(regPath, launchTimeout);
         MeshContainerImpl mc = new MeshContainerImpl(proc, proxy);
@@ -360,31 +378,6 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-    }
-
-    public Executor createRemoteExecutor(String agentId) throws Exception {
-        checkNotClosed();
-        final LaunchAgentService agent = getAgent(agentId);
-        return new Executor() {
-            public void execute(Runnable command) {
-                try {
-                    launch(agent, command, null);
-                } catch (Exception e) {
-                    throw new RejectedExecutionException(e);
-                }
-            }
-        };
-    }
-
-    public MeshProcess launch(String agentId, Runnable runnable, MeshProcessListener handler) throws Exception {
-        checkNotClosed();
-        return launch(getAgent(agentId), runnable, handler);
-    }
-
-    private MeshProcess launch(LaunchAgentService agent, Runnable runnable, MeshProcessListener handler) throws Exception {
-        checkNotClosed();
-        Marshalled<Runnable> marshalled = new Marshalled<Runnable>(getBootstrapClassLoaderFactory(), runnable);
-        return agent.launch(marshalled, handler);
     }
 
     /**
@@ -554,17 +547,8 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
          * 
          * @see org.fusesource.meshkeeper.MeshContainer#run(java.lang.Runnable)
          */
-        public void run(Runnable r) throws Exception {
+        public <R extends java.lang.Runnable & Serializable> void run(R r) throws Exception {
             container.run(r);
-        }
-        
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.fusesource.meshkeeper.MeshContainer#run(java.lang.Runnable)
-         */
-        public <T extends Serializable> T call(Callable<T> c) throws Exception {
-            return container.call(c);
         }
 
         /*
@@ -572,6 +556,10 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
          * 
          * @see org.fusesource.meshkeeper.MeshProcess#close(int)
          */
+        public <T, C extends java.util.concurrent.Callable<T> & Serializable> T call(C c) throws Exception {
+            return container.call(c);
+        }
+
         public void close() {
             container.close();
         }
@@ -676,9 +664,9 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher {
         private AtomicBoolean running = new AtomicBoolean(true);
         private MeshProcess process;
 
-        MeshProcessWatcher(MeshProcessListener delegate) {
+        MeshProcessWatcher(MeshProcessListener delegate, String id) {
             if (delegate == null) {
-                this.delegate = new DefaultProcessListener("");
+                this.delegate = new DefaultProcessListener(id);
             } else {
                 this.delegate = delegate;
             }

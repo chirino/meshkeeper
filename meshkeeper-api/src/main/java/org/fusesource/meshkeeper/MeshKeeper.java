@@ -86,6 +86,8 @@ public interface MeshKeeper {
 
         /**
          * Sends an event on the given topic.
+         * @param event The event.
+         * @param topic The topic.
          */
         public void sendEvent(MeshEvent event, String topic) throws Exception;
 
@@ -239,36 +241,6 @@ public interface MeshKeeper {
         public void println(MeshProcess process, String line);
 
         /**
-         * Creates a remote executor on the given agent. This will create a new
-         * jvm instance on the given agent which can be used to execute
-         * runnables.
-         * 
-         * @param agentId
-         *            The agent id.
-         * @return The executor
-         * @throws Exception
-         *             If there is an error creating the remote executor.
-         */
-        public Executor createRemoteExecutor(String agentId) throws Exception;
-
-        /**
-         * Launches the given Runnable in a new jvm instance at the specified
-         * agent. The Runnable must also implement {@link Serializable} as it
-         * will be serialized when sent to the agent for execution.
-         * 
-         * @param agentId
-         *            The agent id
-         * @param runnable
-         *            The runnable to execute
-         * @param listener
-         *            The listener for output from the launched process.
-         * @return The process in which the runnable is executed.
-         * @throws Exception
-         *             If there is an error executing the runnable
-         */
-        public MeshProcess launch(String agentId, Runnable runnable, MeshProcessListener listener) throws Exception;
-
-        /**
          * Creates a JavaLaunch for a {@link MeshContainer}. This can be used in conjunction with
          * {@link #launchMeshContainer(String, JavaLaunch, MeshProcessListener)} in cases where the 
          * caller wishes to add additional classpath elements or arguments to the container launch. 
@@ -280,6 +252,23 @@ public interface MeshKeeper {
          * @throws Exception
          */
         public JavaLaunch createMeshContainerLaunch() throws Exception;
+        
+        /**
+         * Creates a JavaLaunch using this MeshKeeper's bootstrap classloader. The JavaLaunch
+         * will have it's classpath configured using {@link #getBootstrapClassLoader()} which
+         * is usually the applications {@link ClassLoader} meaning this launch can launch any
+         * class in the applications classpath. The returned launch will include the System
+         * Properties used to configure a {@link MeshKeeperFactory} so that the launched application
+         * can create a {@link MeshKeeper} via {@link MeshKeeperFactory#createMeshKeeper()}.
+         * 
+         * In many cases the user will want to further configure the launch with additional
+         * System Properties, JVM args, working directory etc. 
+         * 
+         * @param The main class to launch (e.g. that returned by {@link Class#getName()})
+         * @return A preconfigured java launch.
+         * @throws Exception If there is an error creating the {@link JavaLaunch}
+         */
+        public JavaLaunch createBootstrapJavaLaunch(String mainClass, String ... args) throws Exception;
 
         /**
          * Launches a {@link MeshContainer} on the specified agent.
@@ -672,7 +661,7 @@ public interface MeshKeeper {
      * 
      * @return
      */
-    public String getDistributorUri();
+    public String getRegistryConnectUri();
 
     /**
      * Starts distributor services.

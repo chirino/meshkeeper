@@ -32,7 +32,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Padding is simpler to work with than margins. */
 h1 { padding: .7em 0 .7em 0;  }
-h2 { padding: .8em 0 .8em 0;  }
+h2 { padding: .9em 0 .9em 0;  }
 h3 { padding: 1.0em 0 1.0em 0;  }
 h4 { padding: 1.4em 0 1.4em 0;  }
 h5 { padding: 1.7em 0 1.7em 0;  }
@@ -140,6 +140,12 @@ img {
 #content h1 {
   font-size: 18pt;
 }
+
+#content h2 {
+  font-size: 14pt;
+  color: #B0B08F
+}
+
 #content div.right {
   float:right;
   width:520px;
@@ -178,9 +184,9 @@ img {
 }
 
 div.CodeRay div.code pre {
-  border-color:#EEEEEE;
-  border-style:solid;
-  border-width:1px 1px 1px 20px;
+  border-color:#0F0F0F;
+  border-style:dashed;
+  border-width:1px 1px 1px 1px;
   padding-top: 1em;
   overflow:auto;
   padding:6px 4px 4px 6px;
