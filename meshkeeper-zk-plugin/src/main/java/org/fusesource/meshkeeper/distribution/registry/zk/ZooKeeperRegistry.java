@@ -23,7 +23,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -192,6 +195,35 @@ public class ZooKeeperRegistry extends AbstractRegistryClient {
                 }
             }
         }
+    }
+
+    public Collection<String> list(String path, boolean recursive) throws Exception {
+        return list(path, recursive, new LinkedList<String>());
+    }
+
+    private Collection<String> list(String path, boolean recursive, Collection<String> results) throws Exception {
+        try {
+            byte[] data = zk.getData(path, false, null);
+            if (data != null && data.length > 0) {
+                results.add(path);
+            }
+
+            if (recursive) {
+                List<String> children = zk.getChildren(path, recursive);
+
+                if (path.endsWith("/")) {
+                    path = path.substring(0, path.length() - 1);
+                }
+
+                for (String child : children) {
+                    list(path + "/" + child, recursive, results);
+                }
+            }
+
+        } catch (NoNodeException nne) {
+            return results;
+        }
+        return results;
     }
 
     public synchronized void addRegistryWatcher(String path, RegistryWatcher watcher) throws Exception {

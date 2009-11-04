@@ -17,6 +17,7 @@
 package org.fusesource.meshkeeper.distribution.registry.vm;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -100,7 +101,7 @@ public class VMRegistry extends AbstractRegistryClient {
     @SuppressWarnings("unchecked")
     public <T> T getRegistryObject(String path) throws Exception {
         checkStarted();
-        return (T)SERVER.getObject(path);
+        return (T) SERVER.getObject(path);
     }
 
     /*
@@ -118,8 +119,7 @@ public class VMRegistry extends AbstractRegistryClient {
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * org.fusesource.meshkeeper.distribution.registry.Registry#remove(java
+     * @see org.fusesource.meshkeeper.distribution.registry.Registry#remove(java
      * .lang.String, boolean)
      */
     public void removeRegistryData(String path, boolean recursive) throws Exception {
@@ -155,6 +155,20 @@ public class VMRegistry extends AbstractRegistryClient {
         }
     }
 
+    /**
+     * Returns the list of registry node names at the given path.
+     * 
+     * @param path
+     *            The path.
+     * @param recursive
+     *            If recursive will list all chldren elements under the path as
+     *            well.
+     * @return A list of nodes at the path or an empty list if there are none.
+     */
+    public Collection<String> list(String path, boolean recursive) throws Exception {
+        return SERVER.list(path, recursive);
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -164,7 +178,7 @@ public class VMRegistry extends AbstractRegistryClient {
      */
     public synchronized void removeRegistryWatcher(String path, RegistryWatcher watcher) throws Exception {
         checkStarted();
-        
+
         boolean removed = false;
         //Track our added watchers so we can clean them up:
         synchronized (this) {

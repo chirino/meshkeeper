@@ -406,6 +406,11 @@ public interface MeshKeeper {
          * true then the object will be added at the given location with a
          * unique name. Otherwise the object will be added at the location given
          * by path.
+         * <p>
+         * Paths must start with a '/' character. In general paths may not end in a
+         * "/" character with the exception of "/" root node. One exception to this
+         * would be when sequential is true which is legal because an sequential 
+         * identifier is appended to the path. 
          * 
          * @param path
          *            The path to add to.
@@ -420,7 +425,8 @@ public interface MeshKeeper {
         public String addRegistryObject(String path, boolean sequential, Serializable o) throws Exception;
 
         /**
-         * Gets the data at the specified node as an object.
+         * Gets the data at the specified node as an object. The path name
+         * must not end with a '/' character. 
          * 
          * @param <T>
          *            The type of the object expected.
@@ -433,7 +439,8 @@ public interface MeshKeeper {
         public <T> T getRegistryObject(String path) throws Exception;
 
         /**
-         * Gets the data at the specified node.
+         * Gets the data at the specified node. The path name
+         * must not end with a '/' character. 
          * 
          * @param path
          *            The path of the data.
@@ -444,7 +451,8 @@ public interface MeshKeeper {
         public byte[] getRegistryData(String path) throws Exception;
 
         /**
-         * Removes a node from the registry.
+         * Removes a node from the registry. The path name
+         * must not end with a '/' character. 
          * 
          * @param path
          *            The path to remove.
@@ -459,6 +467,11 @@ public interface MeshKeeper {
          * Adds data to the registry at the given path. If sequential is true
          * then the data will be added at the given location with a unique name.
          * Otherwise the data will be added at the location given by path.
+         * <p>
+         * Paths must start with a '/' character. In general paths may not end in a
+         * "/" character with the exception of "/" root node. One exception to this
+         * would be when sequential is true which is legal because an sequential 
+         * identifier is appended to the path. 
          * 
          * @param path
          *            The path to add to.
@@ -474,7 +487,7 @@ public interface MeshKeeper {
         public String addRegistryData(String path, boolean sequential, byte[] data) throws Exception;
 
         /**
-         * Adds a listener for changes in a path's child elements.
+         * Adds a listener for changes in a path's child elements. 
          * 
          * @param path
          * @param watcher
@@ -482,7 +495,7 @@ public interface MeshKeeper {
         public void addRegistryWatcher(String path, RegistryWatcher watcher) throws Exception;
 
         /**
-         * Removes a previously registered
+         * Removes a previously registered 
          * 
          * @param path
          *            The path on which the listener was listening.
@@ -493,7 +506,7 @@ public interface MeshKeeper {
 
         /**
          * Convenience method that waits for a minimum number of objects to be
-         * registered at the given registry path.
+         * registered at the given registry path. 
          * 
          * @param <T>
          * @param path
@@ -519,6 +532,16 @@ public interface MeshKeeper {
          * @throws Exception
          */
         public <T> T waitForRegistration(String path, long timeout) throws TimeoutException, Exception;
+        
+        /**
+         * Returns a list of registry nodes at or below the given path that have data associated 
+         * with them
+         * 
+         * @param path The path. 
+         * @param recursive If recursive will list all chldren elements under the path as well. 
+         * @return A list of nodes at the path or an empty list if there are none. 
+         */
+        public Collection<String> list(String path, boolean recursive) throws Exception;
     }
 
     /**
@@ -676,15 +699,16 @@ public interface MeshKeeper {
     public void destroy() throws Exception;
 
     /**
-     * This is a convenience method to register and export a Distributable
+     * This is a convenience method to export an Object and register it's proxy, 
+     * allowing other components in the mesh to discover it. 
+     * 
      * object. This is equivalent to calling: <code>
-     * <br>{@link #remoting().export(Distributable)};
-     * <br>{@link #registry().addRegistryObject(String, boolean, Serializable)};
+     * <br> Object proxy = registry().export(distributable, serviceInterfaces);
+     * <br> remoting().addRegistryObject(path, true, proxy);
      * </code>
      * <p>
-     * It is best practice to call {@link #undistribute(Distributable)} once the
+     * It is best practice to call {@link #undistribute(Object))} once the
      * object is no longer needed.
-     * 
      * 
      * @param path
      *            The path at which to register the exported object.
@@ -692,15 +716,15 @@ public interface MeshKeeper {
      *            Whether the registry path should be registered as a unique
      *            node at the given path.
      * @param distributable
-     *            The {@link Distributable} object.
-     * @return a {@link DistributionRef} to the distributed object.
+     *            The object.
+     * @return a {@link DistributionRef} for distributed object.
      */
     public <T, S extends T> DistributionRef<T> distribute(String path, boolean sequential, S distributable, Class<?>... serviceInterfaces) throws Exception;
 
     /**
      * Called to undistribute a previously distributed object. This is
      * equivalent to calling <code>
-     * <br>{@link #unexport(Distributable)};
+     * <br>{@link #unexport(Object)};
      * <br>{@link #removeRegistryObject(String, boolean, Serializable)};
      * </code>
      * 

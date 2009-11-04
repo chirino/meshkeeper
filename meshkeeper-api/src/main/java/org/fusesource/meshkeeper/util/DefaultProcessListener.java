@@ -23,8 +23,10 @@ import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.MeshProcessListener;
 
+import java.io.BufferedReader;
 import java.io.Serializable;
 import java.io.ObjectStreamException;
+import java.io.StringReader;
 import java.util.LinkedList;
 
 /**
@@ -44,6 +46,7 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
     private Distributable proxy;
 
     protected LinkedList<MeshProcessListener> delegates;
+    protected boolean prefixEachLine = true;
 
     public DefaultProcessListener(MeshKeeper meshKeeper) throws Exception {
         proxy = meshKeeper.remoting().export(this);
@@ -144,10 +147,29 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
      * byte[])
      */
     public void onProcessOutput(int fd, byte[] output) {
-        if (fd == MeshProcess.FD_STD_ERR) {
-            LOG.error(format(new String(output)));
+        if (prefixEachLine) {
+            BufferedReader reader = new BufferedReader(new StringReader(new String(output)));
+
+            try {
+                String line = reader.readLine();
+                while (line != null) {
+                    if (fd == MeshProcess.FD_STD_ERR) {
+                        LOG.error(prefix(line));
+                    } else {
+                        LOG.info(prefix(line));
+                    }
+                    line = reader.readLine();
+                    ;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
-            LOG.info(format(new String(output)));
+            if (fd == MeshProcess.FD_STD_ERR) {
+                LOG.error(format(new String(output)));
+            } else {
+                LOG.info(format(new String(output)));
+            }
         }
 
         if (delegates != null) {
@@ -163,7 +185,10 @@ public class DefaultProcessListener implements MeshProcessListener, Serializable
         } else if (s.endsWith("\n")) {
             s = s.substring(0, s.length() - 1);
         }
+        return prefix(s);
+    }
 
+    private String prefix(String s) {
         if (name == null) {
             return s;
         } else {

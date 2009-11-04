@@ -22,8 +22,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,26 +34,24 @@ import org.fusesource.meshkeeper.RegistryWatcher;
 import org.fusesource.meshkeeper.control.ControlService;
 import org.fusesource.meshkeeper.distribution.DistributorFactory;
 
-/** 
+/**
  * VMRegistryServer
  * <p>
  * Description:
  * </p>
+ * 
  * @author cmacnaug
  * @version 1.0
  */
-public class VMRegistryServer implements ControlService{
+public class VMRegistryServer implements ControlService {
     private static final ExecutorService EXECUTOR = DistributorFactory.getExecutorService();
     private final AtomicBoolean started = new AtomicBoolean(false);
 
-    
     VMRNode root = new VMRNode();
-    
 
     public synchronized String addData(String path, boolean sequential, byte[] data) throws Exception {
         checkStarted();
 
-        
         VMRNode parent = createParentPath(path);
         String name = path.substring(path.lastIndexOf("/"));
         if (!sequential) {
@@ -70,7 +70,6 @@ public class VMRegistryServer implements ControlService{
         os.close();
         return addData(path, sequential, baos.toByteArray());
     }
-
 
     @SuppressWarnings("unchecked")
     public <T> T getObject(String path) throws Exception {
@@ -120,6 +119,31 @@ public class VMRegistryServer implements ControlService{
         }
     }
 
+    /**
+     * @param path
+     * @param recursive
+     * @return
+     */
+    public Collection<String> list(String path, boolean recursive) {
+        return list(path, recursive, new LinkedList<String>());
+    }
+
+    private Collection<String> list(String path, boolean recursive, Collection<String> results) {
+        VMRNode node = findNode(path);
+        if (node != null) {
+            if (node.data != null) {
+                results.add(node.getFullPath());
+            }
+
+            if (recursive && node.children != null) {
+                for (VMRNode child : node.children.values()) {
+                    list(child.getFullPath(), recursive, results);
+                }
+            }
+        }
+        return results;
+    }
+
     private VMRNode createParentPath(String path) throws Exception {
         StringTokenizer tok = new StringTokenizer(path, "/");
         VMRNode parent = root;
@@ -148,44 +172,55 @@ public class VMRegistryServer implements ControlService{
             throw new Exception("Not Connected");
         }
     }
-    
+
     //////////////////////////////////////////////////////////////////////
     //Control Service Implementation
     //////////////////////////////////////////////////////////////////////
-    
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.fusesource.meshkeeper.control.ControlService#destroy()
      */
     public void destroy() throws Exception {
         // TODO Auto-generated method stub
-        
+
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.fusesource.meshkeeper.control.ControlService#start()
      */
     public void start() throws Exception {
         // TODO Auto-generated method stub
-        
+
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.fusesource.meshkeeper.control.ControlService#getName()
      */
     public String getName() {
         return "VMRegistryServer";
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.fusesource.meshkeeper.control.ControlService#getServiceUri()
      */
     public String getServiceUri() {
         return "vm:" + getName();
     }
 
-    /* (non-Javadoc)
-     * @see org.fusesource.meshkeeper.control.ControlService#setDirectory(java.lang.String)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.fusesource.meshkeeper.control.ControlService#setDirectory(java.lang
+     * .String)
      */
     public void setDirectory(String directory) {
         //NoOp
@@ -194,9 +229,7 @@ public class VMRegistryServer implements ControlService{
     //////////////////////////////////////////////////////////////////////
     //End of Control Service Implementation
     //////////////////////////////////////////////////////////////////////
-    
-    
-    
+
     public class VMRNode {
         VMRNode parent;
         HashMap<String, VMRNode> children;
