@@ -149,7 +149,7 @@ public class MeshContainer implements MeshContainerService {
                 MeshContainer.mesh = MeshKeeperFactory.createMeshKeeper();
             }
             DistributionRef<MeshContainerService> ref = MeshContainer.getMeshKeeper().distribute(path, false, (MeshContainerService) container, MeshContainerService.class);
-            container.LOG.debug("Started MeshContainer: " + ref.getRegistryPath() + " cl: " + container.getClass().getClassLoader());
+            MeshContainer.LOG.debug("Started MeshContainer: " + ref.getRegistryPath() + " cl: " + container.getClass().getClassLoader());
             container.closeLatch.await();
         } catch (Exception e) {
             LOG.error("MeshContainer error: ", e);

@@ -26,7 +26,6 @@ import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.MeshKeeper.Registry;
 import org.fusesource.meshkeeper.MeshKeeper.Remoting;
-import org.fusesource.meshkeeper.classloader.Marshalled;
 
 /** 
  * ProcessLauncher
