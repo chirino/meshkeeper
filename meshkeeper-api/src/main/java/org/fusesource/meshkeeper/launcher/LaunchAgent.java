@@ -18,14 +18,23 @@ package org.fusesource.meshkeeper.launcher;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.*;
-import org.fusesource.meshkeeper.classloader.Marshalled;
-import org.fusesource.meshkeeper.distribution.PluginClassLoader;
-import org.fusesource.meshkeeper.distribution.PluginResolver;
+import org.fusesource.meshkeeper.HostProperties;
+import org.fusesource.meshkeeper.LaunchDescription;
+import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
+import org.fusesource.meshkeeper.MeshProcess;
+import org.fusesource.meshkeeper.MeshProcessListener;
+import org.fusesource.meshkeeper.MeshKeeper.Launcher;
 import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 /**
@@ -36,10 +45,7 @@ public class LaunchAgent implements LaunchAgentService {
     public static final String LOCAL_REPO_PROP = "org.fusesource.testrunner.localRepoDir";
     public static final Log LOG = LogFactory.getLog(LaunchAgent.class);
 
-    static final public String PROPAGATED_SYSTEM_PROPERTIES[] = new String[] {
-        "meshkeeper.home", "meshkeeper.base",
-        "mop.base", "mop.online", "mop.allways-check-local-repo"
-    };
+    static final public String PROPAGATED_SYSTEM_PROPERTIES[] = new String[] { "meshkeeper.home", "meshkeeper.base", "mop.base", "mop.online", "mop.allways-check-local-repo" };
 
     private String exclusiveOwner;
 
@@ -60,8 +66,8 @@ public class LaunchAgent implements LaunchAgentService {
     public List<Integer> reserveTcpPorts(int count) throws Exception {
         return Arrays.asList(PortReserver.reservePorts(PortReserver.TCP, count));
     }
-    
-    public void releaseTcpPorts(Collection<Integer> ports){
+
+    public void releaseTcpPorts(Collection<Integer> ports) {
         PortReserver.releasePorts(PortReserver.TCP, ports);
     }
 
@@ -84,36 +90,10 @@ public class LaunchAgent implements LaunchAgentService {
         }
     }
 
-    public MeshProcess launch(Marshalled<Runnable> runnable, MeshProcessListener handler) throws Exception {
-        String path = LaunchAgent.REGISTRY_PATH + "-runnable/" + getAgentId();
-        path = meshKeeper.registry().addRegistryObject(path, true, runnable);
-
-        // Figure out the boostrap classpath using mop.
-        PluginResolver resolver = PluginClassLoader.getDefaultPluginLoader().getPluginResolver();
-        String artifactId = PluginResolver.PROJECT_GROUP_ID + ":meshkeeper-api:" + PluginClassLoader.getModuleVersion();
-        String classpath = resolver.resolveClassPath(artifactId);
-
-        LaunchDescription ld = new LaunchDescription();
-        ld.add("java");
-        ld.add("-cp");
-        ld.add(classpath);
-        
-        // Pass on some of our system properties to the launched process
-        ld.propagateSystemProperties(System.getProperties(), PROPAGATED_SYSTEM_PROPERTIES);
-
-        ld.add(RemoteBootstrap.class.getName());
-        ld.add("--cache");
-        ld.add(new File(getDirectory(), "bootstrap-cache").getCanonicalPath());
-        ld.add("--distributor");
-        ld.add(getMeshKeeper().getRegistryConnectUri());
-        ld.add("--runnable");
-        ld.add(path);
-        return launch(ld, handler);
-    }
-
-    synchronized public MeshProcess launch(LaunchDescription launchDescription, MeshProcessListener handler) throws Exception {
+    synchronized public MeshProcess launch(LaunchDescription launchDescription, String sourceRegistryPath, MeshProcessListener handler) throws Exception {
         int pid = pidCounter++;
         LocalProcess rc = createLocalProcess(launchDescription, handler, pid);
+        rc.setOwnerRegistryPath(sourceRegistryPath);
         processes.put(pid, rc);
         try {
             rc.start();
@@ -122,7 +102,7 @@ public class LaunchAgent implements LaunchAgentService {
             throw e;
         }
 
-        return (MeshProcess) meshKeeper.remoting().export(rc);
+        return rc.getProxy();
     }
 
     protected LocalProcess createLocalProcess(LaunchDescription launchDescription, MeshProcessListener handler, int pid) throws Exception {
@@ -172,39 +152,43 @@ public class LaunchAgent implements LaunchAgentService {
     }
 
     private String getRegistryPath() {
-        return LaunchAgent.REGISTRY_PATH + "/" + getAgentId();
+        return LaunchAgent.LAUNCH_AGENT_REGISTRY_PATH + "/" + getAgentId();
     }
 
-    public synchronized void stop() throws Exception {
-        if (!started) {
-            return;
-        }
+    public void stop() throws Exception {
 
-        if (Thread.currentThread() != shutdownHook) {
-            Runtime.getRuntime().removeShutdownHook(shutdownHook);
-        }
-
-        started = false;
-
-        for (LocalProcess process : processes.values()) {
-            try {
-                process.kill();
-            } catch (Exception e) {
-                e.printStackTrace();
+        synchronized (this) {
+            if (!started) {
+                return;
             }
+
+            if (Thread.currentThread() != shutdownHook) {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            }
+
+            started = false;
+
+            for (LocalProcess process : processes.values()) {
+                try {
+                    process.kill();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            processes.clear();
         }
-        processes.clear();
 
         monitor.requestCleanup();
         monitor.stop();
 
         meshKeeper.undistribute(this);
-        
-        notifyAll();
+
+        synchronized (this) {
+            notifyAll();
+        }
     }
-    
-    public synchronized void join() throws InterruptedException
-    {
+
+    public synchronized void join() throws InterruptedException {
         wait();
     }
 
@@ -282,9 +266,46 @@ public class LaunchAgent implements LaunchAgentService {
      * @param timeout
      */
     public void checkForRogueProcesses(int timeout) {
-        // TODO Need a mechanism of pinging the launcher
-        // of a process (then kill processes for which
-        // the controller doesn't respond.
+        ArrayList<LocalProcess> runningProcs = null;
+        synchronized (this) {
+            runningProcs = new ArrayList<LocalProcess>(processes.size());
+            runningProcs.addAll(processes.values());
+        }
+
+        HashSet<String> deadLaunchers = new HashSet<String>();
+        HashSet<String> runningLaunchers = new HashSet<String>();
+        for (LocalProcess p : runningProcs) {
+
+            if (runningLaunchers.contains(runningLaunchers.contains(p.getOwnerRegistryPath()))) {
+                continue;
+            }
+
+            if (!deadLaunchers.contains(p.getOwnerRegistryPath())) {
+                LaunchClientService launcher = null;
+                try {
+                    launcher = meshKeeper.registry().getRegistryObject(p.getOwnerRegistryPath());
+                } catch (Exception e) {
+                    LOG.warn("Error looking up LaunchClient: " + p.getOwnerRegistryPath(), e);
+                }
+
+                if (launcher != null) {
+                    //TODO how to do this with a reasonable timeout?
+                    //launcher.ping();
+                    runningLaunchers.add(p.getOwnerRegistryPath());
+                    continue;
+                } else {
+                    deadLaunchers.add(p.getOwnerRegistryPath());
+                }
+            }
+
+            LOG.warn("Killing rogue process:  " + p);
+            try {
+                p.kill();
+            } catch (Exception e) {
+                LOG.error("", e);
+            }
+        }
+
     }
 
     private class Monitor implements Runnable {
@@ -359,5 +380,12 @@ public class LaunchAgent implements LaunchAgentService {
             cleanupRequested = true;
             notify();
         }
+    }
+
+    /**
+     * @param exitValue
+     */
+    public synchronized void onProcessExit(LocalProcess process, int exitValue) {
+        processes.remove(process.getPid());
     }
 }

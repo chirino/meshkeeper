@@ -19,6 +19,9 @@ package org.fusesource.meshkeeper;
 import org.fusesource.meshkeeper.launcher.LocalProcess;
 
 /**
+ * This interface is used to specify a task to be run when launching a process
+ * on a remote agent.
+ * 
  * @author chirino
  */
 public interface LaunchTask {

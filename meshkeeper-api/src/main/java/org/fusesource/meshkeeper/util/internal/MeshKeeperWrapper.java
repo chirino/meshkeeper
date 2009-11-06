@@ -85,5 +85,13 @@ public class MeshKeeperWrapper implements MeshKeeper {
     public ClassLoader getUserClassLoader() {
         return next.getUserClassLoader();
     }
+    
+    public String getUUID() {
+        return next.getUUID();
+    }
+    
+    public String setUUID(String prefix) {
+        return next.setUUID(prefix);
+    }
 
 }

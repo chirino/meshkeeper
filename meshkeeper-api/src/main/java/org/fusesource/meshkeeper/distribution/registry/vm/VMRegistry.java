@@ -165,8 +165,8 @@ public class VMRegistry extends AbstractRegistryClient {
      *            well.
      * @return A list of nodes at the path or an empty list if there are none.
      */
-    public Collection<String> list(String path, boolean recursive) throws Exception {
-        return SERVER.list(path, recursive);
+    public Collection<String> list(String path, boolean recursive, String ... filters) throws Exception {
+        return SERVER.list(path, recursive, filters);
     }
 
     /*

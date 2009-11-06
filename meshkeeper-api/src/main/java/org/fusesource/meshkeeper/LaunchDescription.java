@@ -17,6 +17,7 @@
 package org.fusesource.meshkeeper;
 
 import org.fusesource.meshkeeper.Expression;
+import org.fusesource.meshkeeper.MeshKeeper.Launcher;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.launcher.LocalProcess;
 
@@ -33,6 +34,10 @@ import java.util.concurrent.CountDownLatch;
 import static org.fusesource.meshkeeper.Expression.*;
 
 /**
+ * A builder used to build a command line for launching a process via A {@link Launcher}
+ * <p>
+ * It is recommended that you create {@link LaunchDescription} via the {@link Launcher#createLaunchDescription()}
+ * method, so that the {@link Launcher} can perform an necessary pre-initialization. 
  * @author chirino
  */
 public class LaunchDescription implements Serializable {
@@ -143,7 +148,7 @@ public class LaunchDescription implements Serializable {
 
         public void execute(LocalProcess process) throws Exception {
             this.process = process;
-            process.getProcessLauncher().launch(launch, this);
+            process.getProcessLauncher().launch(launch, process.getOwnerRegistryPath(), this);
             done.await();
             if (error != null) {
                 throw error;

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.Properties;
 
+import org.fusesource.meshkeeper.MeshKeeper.Launcher;
 import org.fusesource.meshkeeper.MeshKeeper.Registry;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
@@ -29,10 +30,12 @@ import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import static org.fusesource.meshkeeper.Expression.*;
 
 /**
- * JavaLaunch
+ * A helper class used to construct {@link LaunchDescription}s for launching Java processes.
  * <p>
- * This is a helper class used to construct {@link LaunchDescription}s for Java
- * processes.
+ * This class assists in setting up launched java processes. It is strongly recommended that
+ * you use {@link Launcher#createJavaLaunch(String, String...)} to create the {@link JavaLaunch}
+ * so that the {@link Launcher} can preconfigure the launch with the appropriate {@link MeshKeeperFactory}
+ * properties for you. 
  * </p>
  * 
  * @author cmacnaug

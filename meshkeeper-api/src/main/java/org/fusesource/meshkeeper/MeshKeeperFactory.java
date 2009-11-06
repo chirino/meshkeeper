@@ -19,6 +19,7 @@ package org.fusesource.meshkeeper;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.fusesource.meshkeeper.MeshKeeper.Launcher;
 import org.fusesource.meshkeeper.control.ControlServer;
 import org.fusesource.meshkeeper.distribution.DistributorFactory;
 import org.fusesource.meshkeeper.distribution.provisioner.Provisioner;
@@ -79,9 +80,18 @@ public class MeshKeeperFactory {
     /**
      * This property specifies the base directory which MeshKeeper components
      * should use to store their data. When not specified the default value will
-     * be "./data" relative to the current working directory.
+     * be "./data" relative to the current working directory. 
      */
     public static final String MESHKEEPER_BASE_PROPERTY = "meshkeeper.base";
+    
+    /**
+     * When this property is set, created meshkeepers' UUID is set to the specified 
+     * value. This is useful in ensuring that launched processes' meshkeeper instance
+     * share the same UUID as their launcher. {@link Launcher}s will set this automatically
+     * for launched java processes.
+     */
+    public static final String MESHKEEPER_UUID_PROPERTY = "meshkeeper.uuid";
+    
     private static final ProvisioningTracker PROVISIONING_TRACKER = new ProvisioningTracker();
 
     /**

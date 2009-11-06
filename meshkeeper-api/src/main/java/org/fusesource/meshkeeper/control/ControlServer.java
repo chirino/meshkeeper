@@ -27,8 +27,10 @@ import org.fusesource.meshkeeper.MeshEvent;
 import org.fusesource.meshkeeper.MeshEventListener;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
+import org.fusesource.meshkeeper.MeshKeeper.Registry;
 import org.fusesource.meshkeeper.distribution.DistributorFactory;
 import org.fusesource.meshkeeper.distribution.provisioner.Provisioner;
+import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import org.fusesource.meshkeeper.util.internal.FileSupport;
 
 /**
@@ -54,9 +56,9 @@ public class ControlServer {
     public static final String DEFAULT_REGISTRY_URI = "zk:tcp://localhost:4040";
     public static final String DEFAULT_EVENT_URI = "eventviajms:" + DEFAULT_JMS_URI;
 
-    public static final String REMOTING_URI_PATH = "/control/remoting-uri";
-    public static final String EVENTING_URI_PATH = "/control/eventing-uri";
-    public static final String REPOSITORY_URI_PATH = "/control/repository-uri";
+    public static final String REMOTING_URI_PATH = Registry.MESH_KEEPER_ROOT + "/control/remoting-uri";
+    public static final String EVENTING_URI_PATH = Registry.MESH_KEEPER_ROOT + "/control/eventing-uri";
+    public static final String REPOSITORY_URI_PATH = Registry.MESH_KEEPER_ROOT + "/control/repository-uri";
 
     ControlService rmiServer;
     ControlService registryServer;
@@ -70,6 +72,8 @@ public class ControlServer {
     private Thread shutdownHook;
 
     private Runnable preShutdownHook;
+
+    private LaunchAgent embeddedAgent;
 
     public static final String CONTROL_TOPIC = "meshkeeper.control";
 
@@ -200,6 +204,12 @@ public class ControlServer {
                 }
             }, CONTROL_TOPIC);
 
+            if (embeddedAgent != null) {
+                embeddedAgent.setMeshKeeper(meshKeeper);
+                embeddedAgent.setDirectory(new File(getDirectory()));
+                embeddedAgent.start();
+            }
+
             log.info("MeshKeeper Successfully started. The Registry Service is listening on: " + getRegistryUri());
 
         } catch (Exception e) {
@@ -207,6 +217,14 @@ public class ControlServer {
             destroy();
             throw new Exception("Error registering control server", e);
         }
+    }
+
+    public void setEmbeddedLaunchAgent(LaunchAgent embeddedAgent) {
+        this.embeddedAgent = embeddedAgent;
+    }
+
+    public LaunchAgent getEmbeddedLaunchAgent() {
+        return embeddedAgent;
     }
 
     public void setPreShutdownHook(Runnable runnable) {
@@ -255,6 +273,14 @@ public class ControlServer {
         }
 
         Exception first = null;
+
+        if (embeddedAgent != null) {
+            try {
+                embeddedAgent.stop();
+            } catch (Exception e) {
+                first = first == null ? e : first;
+            }
+        }
 
         if (meshKeeper != null) {
             try {
@@ -351,5 +377,13 @@ public class ControlServer {
 
     public String getDirectory() {
         return directory;
+    }
+
+    /**
+     * @return
+     */
+    public MeshKeeper getMeshKeeper() {
+        // TODO Auto-generated method stub
+        return meshKeeper;
     }
 }

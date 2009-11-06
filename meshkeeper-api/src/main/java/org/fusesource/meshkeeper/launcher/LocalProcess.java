@@ -23,6 +23,7 @@ import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.LaunchTask;
 import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.MeshProcessListener;
+import org.fusesource.meshkeeper.MeshKeeper.DistributionRef;
 import org.fusesource.meshkeeper.util.internal.ProcessSupport;
 
 import java.io.*;
@@ -53,6 +54,8 @@ public class LocalProcess implements MeshProcess {
     AtomicBoolean running = new AtomicBoolean();
     private LaunchAgent processLauncher;
     Properties processProperties;
+    private String ownerRegistryPath;
+    private DistributionRef<MeshProcess> distributionRef;
 
     public LocalProcess(LaunchAgent processLauncher, LaunchDescription ld, MeshProcessListener listener, int pid) {
         this.processLauncher = processLauncher;
@@ -60,6 +63,16 @@ public class LocalProcess implements MeshProcess {
         this.listener = listener;
         this.pid = pid;
         this.processProperties = new Properties(processLauncher.getHostProperties().getSystemProperties());
+    }
+
+    /**
+     * @return
+     */
+    public MeshProcess getProxy() {
+        if (distributionRef == null) {
+            return null;
+        }
+        return distributionRef.getProxy();
     }
 
     public Properties getProcessProperties() {
@@ -72,6 +85,18 @@ public class LocalProcess implements MeshProcess {
 
     public MeshProcessListener getListener() {
         return listener;
+    }
+
+    public void setOwnerRegistryPath(String path) {
+        this.ownerRegistryPath = path;
+    }
+
+    public String getOwnerRegistryPath() {
+        return this.ownerRegistryPath;
+    }
+
+    public int getPid() {
+        return pid;
     }
 
     /**
@@ -115,9 +140,9 @@ public class LocalProcess implements MeshProcess {
             command_line.append(arg);
             command_line.append('\'');
         }
-        
-        String[] cmdArray = cmdList.toArray(new String [] {});
-        
+
+        String[] cmdArray = cmdList.toArray(new String[] {});
+
         // Evaluate the enviorment...
         String[] env = null;
         int i = 0;
@@ -159,9 +184,11 @@ public class LocalProcess implements MeshProcess {
                     onExit(exitValue);
                 }
             });
-
         }
 
+        //Register the process:
+        String regPath = LaunchAgentService.PROCESS_REGISTRY_PATH + "/" + processLauncher.getAgentId() + "/" + ownerRegistryPath.substring(1 + ownerRegistryPath.lastIndexOf("/"));
+        distributionRef = processLauncher.getMeshKeeper().distribute(regPath + "/pid-" + pid, false, (MeshProcess) this, MeshProcess.class);
     }
 
     protected void onExit(int exitValue) {
@@ -170,10 +197,13 @@ public class LocalProcess implements MeshProcess {
             listener.onProcessExit(exitValue);
         }
         try {
-            processLauncher.getMeshKeeper().remoting().unexport(this);
+            processLauncher.getMeshKeeper().undistribute(this);
         } catch (Exception e) {
 
         }
+
+        processLauncher.onProcessExit(this, exitValue);
+
     }
 
     public boolean isRunning() {
@@ -185,10 +215,12 @@ public class LocalProcess implements MeshProcess {
     public void kill() throws Exception {
         if (running.compareAndSet(true, false)) {
             try {
-                log.info("Killing process " + process + " [pid = " + pid + "]");
+                if (log.isDebugEnabled())
+                    log.debug("Killing process " + process + " [pid = " + pid + "]");
                 process.destroy();
                 process.waitFor();
-                log.info("Killed process " + process + " [pid = " + pid + "]");
+                if (log.isDebugEnabled())
+                    log.debug("Killed process " + process + " [pid = " + pid + "]");
 
             } catch (Exception e) {
                 log.error("ERROR: destroying process " + process + " [pid = " + pid + "]");
@@ -256,4 +288,9 @@ public class LocalProcess implements MeshProcess {
             super.close();
         }
     }
+
+    public String toString() {
+        return "Process: [" + pid + "] owner: " + getOwnerRegistryPath();
+    }
+
 }

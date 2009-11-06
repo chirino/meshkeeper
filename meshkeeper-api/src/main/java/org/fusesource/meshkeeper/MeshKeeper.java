@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 
@@ -130,14 +129,13 @@ public interface MeshKeeper {
         /**
          * Indicates the path in which Launchers should register themselves.
          */
-        public static final String LAUNCHER_REGISTRY_PATH = "/launchclients/";
+        public static final String LAUNCHER_REGISTRY_PATH = Registry.MESH_KEEPER_ROOT + "/launchclients";
 
         /**
          * Launchers request that mesh containers register themselves at this
          * path in a folder under the launcher's name.
-         * 
          */
-        public static final String MESHCONTAINER_REGISTRY_PATH = "/meshcontainers/";
+        public static final String MESHCONTAINER_REGISTRY_PATH = Registry.MESH_KEEPER_ROOT + "/meshcontainers";
 
         /**
          * Requests the specified number of tcp ports from the specified process
@@ -271,6 +269,31 @@ public interface MeshKeeper {
         public JavaLaunch createBootstrapJavaLaunch(String mainClass, String ... args) throws Exception;
 
         /**
+         * Factory method for creating a {@link LaunchDescription} to be used with this launcher. 
+         * The returned {@link LaunchDescription} should only be used with this {@link Launcher}.
+         * @return A new {@link LaunchDescription};
+         */
+        public LaunchDescription createLaunchDescription();
+
+        /**
+         * Factory method for creating a {@link JavaLaunch} to be used with this launcher. 
+         * The returned {@link LaunchDescription} should only be used with this {@link Launcher}.
+         * <p>
+         * The returned java launch will have the necessary system properties set to configure
+         * the {@link MeshKeeperFactory} for the launched process so that it can communicate
+         * with this {@link Launcher}'s application.  
+         * <p>
+         * If you'd like to launch the application using your application's classpath, you 
+         * may want to use {@link #createBootstrapJavaLaunch(String, String...)} instead so 
+         * that the classpath is set up for you. 
+         * 
+         * @param mainClass The name of the class to launch
+         * @param args the arguments for the launched java program.
+         * @return A new {@link JavaLaunch};
+         */
+        public JavaLaunch createJavaLaunch(String mainClass, String... args);
+        
+        /**
          * Launches a {@link MeshContainer} on the specified agent.
          *  
          * @param agentId The agent. 
@@ -290,9 +313,10 @@ public interface MeshKeeper {
         public MeshContainer launchMeshContainer(String agentId, MeshProcessListener listener) throws Exception;
 
         /**
-         * Launches a {@link MeshContainer} on the specified agent. The provided java launch when non null,
-         * is used to take additional jvm args, or classpath elements for the launched container. Usage
-         * of a provided java launch is an advanced feature, and is recommended only when needed.  
+         * Launches a {@link MeshContainer} on the specified agent. The provided {@link JavaLaunch} when non null,
+         * must have been created via {@link #createMeshContainerLaunch()} which can then be used 
+         * used to set additional jvm args, or classpath elements for the launched container. Usage
+         * of a provided java launch is an advanced feature, and is recommended only when needed. 
          *  
          * @param agentId The agent. 
          * @param listener The listener for container output. 
@@ -400,7 +424,13 @@ public interface MeshKeeper {
      * @version 1.0
      */
     public interface Registry {
-
+        
+        /**
+         * This is the root node reserved for internal meshkeeper data. 
+         * Application should not use this node.
+         */
+        public static final String MESH_KEEPER_ROOT = "/meshkeeper";
+        
         /**
          * Adds an object to the registry at the given path. If sequential is
          * true then the object will be added at the given location with a
@@ -532,16 +562,18 @@ public interface MeshKeeper {
          * @throws Exception
          */
         public <T> T waitForRegistration(String path, long timeout) throws TimeoutException, Exception;
-        
+
         /**
          * Returns a list of registry nodes at or below the given path that have data associated 
          * with them
          * 
-         * @param path The path. 
+         * @param path The path to list
          * @param recursive If recursive will list all chldren elements under the path as well. 
-         * @return A list of nodes at the path or an empty list if there are none. 
+         * @param filter List of relative paths to filter
+         * @return A list of nodes at the path or an empty list if there are none.  
+         * @throws Exception
          */
-        public Collection<String> list(String path, boolean recursive) throws Exception;
+        public Collection<String> list(String path, boolean recursive, String ... filter) throws Exception;
     }
 
     /**
@@ -697,6 +729,28 @@ public interface MeshKeeper {
      * Closes the distributor cleaning up all distributed references.
      */
     public void destroy() throws Exception;
+    
+    /**
+     * Sets a unique id for this meshkeeper instance, if not already set.
+     * If the id isn't already set a unique name will be generated using
+     * the given prefix followed by a unique id. If the id has already
+     * been set this will have no effect. 
+     * 
+     * The unique id is used by {@link MeshKeeper} services such as 
+     * {@link Eventing} and {@link Registry} to create unique name spaces.
+     * 
+     * @param prefix The prefix. 
+     * @return The value of the uuid.
+     */
+    public String setUUID(String prefix);
+    
+    /**
+     * Gets this meshkeepers unique id, creating one if one has not
+     * been set. 
+     * 
+     * @return The unique id for this meshkeeper instance. 
+     */
+    public String getUUID();
 
     /**
      * This is a convenience method to export an Object and register it's proxy, 

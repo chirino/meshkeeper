@@ -21,14 +21,19 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.MeshKeeper;
+import org.fusesource.meshkeeper.MeshKeeperFactory;
+import org.fusesource.meshkeeper.RegistryWatcher;
 import org.fusesource.meshkeeper.control.ControlServer;
 import org.fusesource.meshkeeper.distribution.event.EventClient;
 import org.fusesource.meshkeeper.distribution.event.EventClientFactory;
@@ -66,13 +71,16 @@ class DefaultDistributor implements MeshKeeper {
     private ClassLoader userClassLoader;
     private UserFirstClassLoader pluginUserClassLoader;
 
+    private boolean uuidCreator = true;
+    private String uuid;
+
     private final HashMap<Object, DistributionRef<?>> distributed = new HashMap<Object, DistributionRef<?>>();
 
     private AtomicBoolean started = new AtomicBoolean(false);
     private AtomicBoolean destroyed = new AtomicBoolean(false);
 
     DefaultDistributor() {
-
+        uuid = System.getProperty(MeshKeeperFactory.MESHKEEPER_UUID_PROPERTY);
     }
 
     /*
@@ -137,6 +145,7 @@ class DefaultDistributor implements MeshKeeper {
                 }
             }
             T ret = factory.create(uri);
+            ret.setMeshKeeper(this);
             if (userClassLoader != null) {
                 ret.setUserClassLoader(pluginUserClassLoader);
             }
@@ -158,7 +167,7 @@ class DefaultDistributor implements MeshKeeper {
         if (registry == null) {
             synchronized (this) {
                 if (registry == null) {
-                    registry = createPluginClient(registryUri, new RegistryFactory(), null, ControlServer.DEFAULT_REGISTRY_URI);
+                    registry = new RegistryWrapper(createPluginClient(registryUri, new RegistryFactory(), null, ControlServer.DEFAULT_REGISTRY_URI));
                 }
             }
         }
@@ -327,6 +336,17 @@ class DefaultDistributor implements MeshKeeper {
             }
 
             if (registry != null) {
+
+                //Clear out the registry of unique data if we are the creator
+                //of the uuid:
+                if (uuidCreator) {
+                    try {
+                        registry().removeRegistryData("/" + uuid, true);
+                    } catch (Exception e) {
+                        first = (first == null ? e : first);
+                    }
+                }
+
                 try {
                     registry.destroy();
                 } catch (Exception e) {
@@ -456,6 +476,34 @@ class DefaultDistributor implements MeshKeeper {
         }
     }
 
+    public String getUUID() {
+        return setUUID("");
+    }
+
+    public String setUUID(String prefix) {
+        if (uuid == null) {
+            synchronized (this) {
+                if (uuid != null) {
+                    return uuid;
+                }
+
+                uuidCreator = true;
+
+                if (prefix == null) {
+                    prefix = "";
+                }
+                try {
+                    String id = registry().addRegistryData(MeshKeeper.Registry.MESH_KEEPER_ROOT + "/UUID/" + prefix, true, new byte[0]);
+                    uuid = id.substring(1 + id.lastIndexOf("/"));
+                } catch (Exception e) {
+                    throw new RuntimeException("UUID creation error", e);
+                }
+            }
+        }
+
+        return uuid;
+    }
+
     /**
      * RemotingWrapper
      * <p>
@@ -472,6 +520,21 @@ class DefaultDistributor implements MeshKeeper {
 
         RemotingWrapper(RemotingClient delegate) {
             this.delegate = delegate;
+        }
+
+        /**
+         * @param meshKeeper
+         *            the meshkeeper instance that created the plugin client
+         */
+        public void setMeshKeeper(MeshKeeper meshKeeper) {
+            delegate.setMeshKeeper(meshKeeper);
+        }
+
+        /**
+         * @return the meshkeeper instance that created the plugin client
+         */
+        public MeshKeeper getMeshKeeper() {
+            return delegate.getMeshKeeper();
         }
 
         /**
@@ -537,7 +600,7 @@ class DefaultDistributor implements MeshKeeper {
         }
 
         /**
-         * Unexports an object. If the object's stub was registered it will be
+         * Unexports an object. If the object's proxy was registered it will be
          * unregistered as well.
          * 
          * @param <T>
@@ -752,6 +815,134 @@ class DefaultDistributor implements MeshKeeper {
                 }
             }
             return urls;
+        }
+    }
+
+    /**
+     * RegistryWrapper Performs path substitutions. </p>
+     * 
+     * @author cmacnaug
+     * @version 1.0
+     */
+    private static final String[] SYSTEM_ROOTS = new String[] { "/meshkeeper", "/zookeeper" };
+
+    private class RegistryWrapper implements RegistryClient {
+        final RegistryClient client;
+
+        RegistryWrapper(RegistryClient client) {
+            this.client = client;
+        }
+
+        public final String addRegistryData(String path, boolean sequential, byte[] data) throws Exception {
+            path = doPathSubstitutions(path);
+            return client.addRegistryData(path, sequential, data);
+        }
+
+        public final String addRegistryObject(String path, boolean sequential, Serializable o) throws Exception {
+            path = doPathSubstitutions(path);
+            return client.addRegistryObject(path, sequential, o);
+        }
+
+        public final void addRegistryWatcher(String path, RegistryWatcher watcher) throws Exception {
+            path = doPathSubstitutions(path);
+            client.addRegistryWatcher(path, watcher);
+        }
+
+        public final void destroy() throws Exception {
+            client.destroy();
+        }
+
+        public final MeshKeeper getMeshKeeper() {
+            return client.getMeshKeeper();
+        }
+
+        public final byte[] getRegistryData(String path) throws Exception {
+            path = doPathSubstitutions(path);
+            return client.getRegistryData(path);
+        }
+
+        @SuppressWarnings("unchecked")
+        public final <T> T getRegistryObject(String path) throws Exception {
+            path = doPathSubstitutions(path);
+            return (T) client.getRegistryObject(path);
+        }
+
+        public final ClassLoader getUserClassLoader() {
+            return client.getUserClassLoader();
+        }
+
+        public final Collection<String> list(String path, boolean recursive, String... filters) throws Exception {
+            if (path.equals("*")) {
+                path = "/";
+                filters = null;
+                return client.list(path, recursive);
+            }
+
+            path = doPathSubstitutions(path);
+            if (path.equals("/")) {
+                if (filters == null) {
+                    filters = SYSTEM_ROOTS;
+                } else {
+                    ArrayList<String> filterList = new ArrayList<String>(SYSTEM_ROOTS.length + filters.length);
+                    filterList.addAll(Arrays.asList(SYSTEM_ROOTS));
+                    filterList.addAll(Arrays.asList(filters));
+                    filters = filterList.toArray(new String[0]);
+                }
+
+            }
+
+            return client.list(path, recursive, filters);
+        }
+
+        public final void removeRegistryData(String path, boolean recursive) throws Exception {
+            path = doPathSubstitutions(path);
+            client.removeRegistryData(path, recursive);
+        }
+
+        public final void removeRegistryWatcher(String path, RegistryWatcher watcher) throws Exception {
+            path = doPathSubstitutions(path);
+            client.removeRegistryWatcher(path, watcher);
+        }
+
+        public final void setMeshKeeper(MeshKeeper meshKeeper) {
+            client.setMeshKeeper(meshKeeper);
+        }
+
+        public final void setUserClassLoader(ClassLoader classLoader) {
+            client.setUserClassLoader(classLoader);
+        }
+
+        public final void start() throws Exception {
+            client.start();
+        }
+
+        @SuppressWarnings("unchecked")
+        public final <T> T waitForRegistration(String path, long timeout) throws TimeoutException, Exception {
+            path = doPathSubstitutions(path);
+            return (T) client.waitForRegistration(path, timeout);
+        }
+
+        @SuppressWarnings("unchecked")
+        public final <T> Collection<T> waitForRegistrations(String path, int min, long timeout) throws TimeoutException, Exception {
+            path = doPathSubstitutions(path);
+            return (Collection<T>) client.waitForRegistrations(path, min, timeout);
+        }
+
+        /**
+         * 
+         * @param path
+         * @return
+         */
+        private final String doPathSubstitutions(String path) {
+            if (path == null) {
+                path = "";
+            }
+            //If the path isn't absolute prefix with UUID:
+            if (!path.startsWith("/")) {
+                path = "/" + getUUID() + "/" + path;
+            }
+
+            return path;
         }
     }
 

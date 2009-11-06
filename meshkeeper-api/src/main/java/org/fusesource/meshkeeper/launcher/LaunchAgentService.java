@@ -24,6 +24,8 @@ import org.fusesource.meshkeeper.HostProperties;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.MeshProcessListener;
+import org.fusesource.meshkeeper.MeshKeeper.Registry;
+import org.fusesource.meshkeeper.MeshKeeper.Remoting;
 import org.fusesource.meshkeeper.classloader.Marshalled;
 
 /** 
@@ -40,7 +42,13 @@ public interface LaunchAgentService extends Distributable {
      * Specifies the registry prefix where IRemoteProcess launchers
      * will be published for discovery. 
      */
-    public static final String REGISTRY_PATH = "/launchers";
+    public static final String LAUNCH_AGENT_REGISTRY_PATH = Registry.MESH_KEEPER_ROOT + "/launch-agents";
+    
+    /**
+     * Specifies the registry prefix where IRemoteProcess launchers
+     * will be published for discovery. 
+     */
+    public static final String PROCESS_REGISTRY_PATH = Registry.MESH_KEEPER_ROOT + "/processes";
     
     public void bind(String owner) throws Exception;
 
@@ -61,18 +69,17 @@ public interface LaunchAgentService extends Distributable {
      */
     public void releaseTcpPorts(Collection<Integer> ports);
 
-    public MeshProcess launch(LaunchDescription launchDescription, MeshProcessListener handler) throws Exception;
-
-
     /**
-     * Executes a runnable task in a new JVM. 
-     *
-     * @param runnable
-     * @param handler
+     * Launches an agent. The sourceRegistryPath must point to a {@link LaunchClientService} {@link Remoting} proxy
+     * in the registry.
+     * 
+     * @param launchDescription The launch description
+     * @param sourceRegistryPath The launch client
+     * @param listener The process listener (should be a {@link Remoting} proxy)
      * @return
      * @throws Exception
      */
-    public MeshProcess launch(Marshalled<Runnable> runnable, MeshProcessListener handler) throws Exception;
-    
+    public MeshProcess launch(LaunchDescription launchDescription, String sourceRegistryPath, MeshProcessListener listener) throws Exception;
+
     public HostProperties getHostProperties() throws Exception;
 }

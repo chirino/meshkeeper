@@ -265,7 +265,7 @@ public class CloudMixProvisioner implements Provisioner {
 
             LOG.info("Deployed " + agentsDeployed + " launch agents. Waiting " + provisioningTimeout / 1000 + "s for them to come online");
             try {
-                registry.addRegistryWatcher(LaunchAgent.REGISTRY_PATH, new RegistryWatcher() {
+                registry.addRegistryWatcher(LaunchAgent.LAUNCH_AGENT_REGISTRY_PATH, new RegistryWatcher() {
 
                     public void onChildrenChanged(String path, List<String> children) {
                         if (children.size() >= agentsDeployed) {

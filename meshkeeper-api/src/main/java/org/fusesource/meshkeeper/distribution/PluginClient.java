@@ -16,6 +16,8 @@
  */
 package org.fusesource.meshkeeper.distribution;
 
+import org.fusesource.meshkeeper.MeshKeeper;
+
 /** 
  * PluginClient
  * <p>
@@ -26,6 +28,16 @@ package org.fusesource.meshkeeper.distribution;
  */
 public interface PluginClient {
 
+    /**
+     * @param meshKeeper the meshkeeper instance that created the plugin client
+     */
+    public void setMeshKeeper(MeshKeeper meshKeeper);
+    
+    /**
+     * @return the meshkeeper instance that created the plugin client
+     */
+    public MeshKeeper getMeshKeeper();
+    
     /**
      * Sets the user class loader. Setting the user class loader assists meshkeeper
      * in resolving user's serialized objects. 

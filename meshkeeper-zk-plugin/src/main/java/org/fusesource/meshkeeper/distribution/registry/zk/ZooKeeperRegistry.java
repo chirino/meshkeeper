@@ -23,8 +23,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -143,7 +146,7 @@ public class ZooKeeperRegistry extends AbstractRegistryClient {
 
     public String addRegistryData(String path, boolean sequential, byte[] data) throws Exception {
         checkConnected();
-        if (log.isWarnEnabled() && data.length > 20000) {
+        if (log.isWarnEnabled() && data != null && data.length > 20000) {
             log.warn("Warning -- long data length for " + path + ": " + data.length);
         }
 
@@ -197,26 +200,46 @@ public class ZooKeeperRegistry extends AbstractRegistryClient {
         }
     }
 
-    public Collection<String> list(String path, boolean recursive) throws Exception {
-        return list(path, recursive, new LinkedList<String>());
+    @SuppressWarnings("unchecked")
+    public Collection<String> list(String path, boolean recursive, String... filters) throws Exception {
+        if (filters != null) {
+            HashSet<String> filterSet = new HashSet<String>();
+            filterSet.addAll(Arrays.asList(filters));
+            return list(path, recursive, new LinkedList<String>(), filterSet);
+        } else {
+            return list(path, recursive, new LinkedList<String>(), Collections.EMPTY_LIST);
+        }
+
     }
 
-    private Collection<String> list(String path, boolean recursive, Collection<String> results) throws Exception {
+    private Collection<String> list(String path, boolean recursive, Collection<String> results, Collection<String> filters) throws Exception {
         try {
+            List<String> children = null;
             byte[] data = zk.getData(path, false, null);
             if (data != null && data.length > 0) {
-                results.add(path);
+                results.add(path + " [" + data.length + "]");
+            } else {
+                children = zk.getChildren(path, recursive);
+                if (children.size() == 0) {
+                    results.add(path + " [" + (data == null ? "-" : data.length) + "]");
+                    if (recursive) {
+                        return results;
+                    }
+                }
             }
 
             if (recursive) {
-                List<String> children = zk.getChildren(path, recursive);
+                children = zk.getChildren(path, recursive);
 
                 if (path.endsWith("/")) {
                     path = path.substring(0, path.length() - 1);
                 }
 
                 for (String child : children) {
-                    list(path + "/" + child, recursive, results);
+                    String childPath = path + "/" + child;
+                    if (!filters.remove(childPath)) {
+                        list(childPath, recursive, results, filters);
+                    }
                 }
             }
 

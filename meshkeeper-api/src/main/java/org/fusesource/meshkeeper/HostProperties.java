@@ -19,12 +19,13 @@ package org.fusesource.meshkeeper;
 import java.io.Serializable;
 import java.util.Properties;
 
+import org.fusesource.meshkeeper.MeshKeeper.Launcher;
+
 /** 
- * HostProperties
+ * Holds properties for a given launch agent in the mesh. 
  * <p>
- * Properties related to a launch agent running on a remote machine. 
- * A launch agent handles the launching of {@link MeshProcess}s described
- * by {@link LaunchDescription}s 
+ * This interface returns properties for a launch agent in the mesh, 
+ * {@link HostProperties} can be obtained by calling {@link Launcher#getAvailableAgents()}
  * </p>
  * @author cmacnaug
  * @version 1.0
@@ -32,7 +33,9 @@ import java.util.Properties;
 public interface HostProperties extends Serializable {
 
     /**
-     * Gets the agentId used to represent this agent. 
+     * Gets the agentId used to represent this agent. This is passed
+     * to {@link Launcher} when launching a process to identify the 
+     * host on which the process should be launched. 
      * @return The id used to indetify the agent. 
      */
     public String getAgentId();

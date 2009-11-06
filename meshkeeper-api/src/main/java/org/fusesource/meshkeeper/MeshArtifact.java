@@ -18,11 +18,11 @@ package org.fusesource.meshkeeper;
 
 import java.io.Serializable;
 
+import org.fusesource.meshkeeper.MeshKeeper.Repository;
+
 /**
- * Resource
- * <p>
- * Description:
- * </p>
+ * Encapsulates a Distributable test artifact for use with the
+ * {@link Repository} api.
  * 
  * @author cmacnaug
  * @version 1.0
@@ -33,12 +33,12 @@ public interface MeshArtifact extends Serializable {
      * Constant indicating that the resource is a single file.
      */
     public static final short FILE = 0;
-    
+
     /**
-     * Constant indicating the resrouce is a directory. 
+     * Constant indicating the resrouce is a directory.
      */
     public static final short DIRECTORY = 1;
-    
+
     /**
      * @return the id
      */
@@ -71,29 +71,30 @@ public interface MeshArtifact extends Serializable {
      *            the repoName to set
      */
     public void setRepositoryId(String repoName);
-    
+
     /**
      * @return the type
      */
     public short getType();
 
     /**
-     * Sets the type of resource. If directory is 
-     * specified then the agent will recursively pull
-     * down the contents of the directory.
+     * Sets the type of resource. If directory is specified then the agent will
+     * recursively pull down the contents of the directory.
      * 
-     * @param type the type to set
+     * @param type
+     *            the type to set
      */
     public void setType(short type);
 
     /**
-     * Sets the local path of the resource. 
+     * Sets the local path of the resource.
+     * 
      * @param resolvedPath
      */
     public void setLocalPath(String resolvedPath);
 
     /**
-     * @return the local path of the resource. 
+     * @return the local path of the resource.
      */
     public String getLocalPath();
 }

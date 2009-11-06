@@ -18,18 +18,14 @@ package org.fusesource.meshkeeper.distribution.provisioner.embedded;
 
 import java.io.File;
 
-import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.control.ControlServer;
-import org.fusesource.meshkeeper.launcher.LaunchAgent;
 
 /**
  * @author chirino
  */
 public class EmbeddedServer {
 
-    MeshKeeper meshKeeper;
-    LaunchAgent launchAgent;
     ControlServer controlServer;
     File dataDirectory;
 
@@ -54,68 +50,23 @@ public class EmbeddedServer {
                 dataDirectory = MeshKeeperFactory.getDefaultServerDirectory();
             }
             controlServer = MeshKeeperFactory.createControlServer(registryURI, dataDirectory);
-            //Add shutdown hook:
-            controlServer.setPreShutdownHook(new Runnable() {
-                public void run() {
-                    preServerShutdown(false);
-                }
-            });
             registryURI = controlServer.getRegistryConnectUri();
             
-            meshKeeper = MeshKeeperFactory.createMeshKeeper(registryURI);
-            launchAgent = MeshKeeperFactory.createAgent(meshKeeper);
-        }
-    }
-
-    private void preServerShutdown(boolean internal) {
-        Exception first = null;
-        if (launchAgent != null) {
-            try {
-                launchAgent.stop();
-            } catch (Exception e) {
-                first = e;
-            } finally {
-                launchAgent = null;
-            }
-        }
-        if (meshKeeper != null) {
-            try {
-                meshKeeper.destroy();
-            } catch (Exception e) {
-                first = first == null ? e : first;
-            } finally {
-                meshKeeper = null;
-            }
-        }
-        if (!internal) {
-            controlServer = null;
-            registryURI = null;
+            //Add embedded agent to control server:
+            controlServer.setEmbeddedLaunchAgent(MeshKeeperFactory.createAgent(controlServer.getMeshKeeper(), dataDirectory));
         }
     }
 
     public void stop() throws Exception {
         Exception first = null;
 
-        controlServer.setPreShutdownHook(null);
-
         try {
-            preServerShutdown(true);
+            controlServer.destroy();
         } catch (Exception e) {
             first = first == null ? e : first;
-        }
-        if (controlServer != null) {
-            try {
-                controlServer.destroy();
-            } catch (Exception e) {
-                first = first == null ? e : first;
-            } finally {
-                controlServer = null;
-            }
-        }
-
-        registryURI = null;
-        if (first != null) {
-            throw first;
+        } finally {
+            controlServer = null;
+            registryURI = null;
         }
     }
 

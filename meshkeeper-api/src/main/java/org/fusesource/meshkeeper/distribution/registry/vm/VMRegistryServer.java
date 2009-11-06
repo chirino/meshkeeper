@@ -22,10 +22,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -124,11 +127,18 @@ public class VMRegistryServer implements ControlService {
      * @param recursive
      * @return
      */
-    public Collection<String> list(String path, boolean recursive) {
-        return list(path, recursive, new LinkedList<String>());
+    @SuppressWarnings("unchecked")
+    public Collection<String> list(String path, boolean recursive, String... filters) {
+        if (filters != null) {
+            HashSet<String> filterSet = new HashSet<String>();
+            filterSet.addAll(Arrays.asList(filters));
+            return list(path, recursive, new LinkedList<String>(), filterSet);
+        } else {
+            return list(path, recursive, new LinkedList<String>(), Collections.EMPTY_SET);
+        }
     }
 
-    private Collection<String> list(String path, boolean recursive, Collection<String> results) {
+    private Collection<String> list(String path, boolean recursive, Collection<String> results, Set<String> filters) {
         VMRNode node = findNode(path);
         if (node != null) {
             if (node.data != null) {
@@ -137,7 +147,9 @@ public class VMRegistryServer implements ControlService {
 
             if (recursive && node.children != null) {
                 for (VMRNode child : node.children.values()) {
-                    list(child.getFullPath(), recursive, results);
+                    if (!filters.remove(child.getFullPath())) {
+                        list(child.getFullPath(), recursive, results, filters);
+                    }
                 }
             }
         }

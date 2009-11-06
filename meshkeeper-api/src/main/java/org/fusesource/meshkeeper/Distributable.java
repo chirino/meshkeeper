@@ -19,14 +19,14 @@ package org.fusesource.meshkeeper;
 
 
 /** 
- * Distributable
+ * A marker class used to indicate that an interface is distributable
  * <p>
  * Description: This class is similar in purpose to the {@link java.rmi.Remote} interface
  * in that it serves as a marker on an interface to indicate that the interface can be 
  * used for remote method invocation. However, unlike {@link java.rmi.Remote}, this interface
  * does not add the constraint that methods throw a {@link java.rmi.RemoteException} which makes
  * it simpler to convert an interface to a remote interface. Objects whose methods remote method 
- * invocation result in a failure of the underlying rmi impementation will instead produce a 
+ * invocation result in a failure of the underlying rmi implementation will instead produce a 
  * {@link RuntimeException}
  * 
  * </p>

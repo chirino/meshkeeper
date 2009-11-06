@@ -29,6 +29,7 @@ import org.fusesource.meshkeeper.launcher.LaunchAgent;
 import org.fusesource.meshkeeper.util.internal.ProcessSupport;
 
 /**
+ * Helpers for build platform neutral expression. 
  * @author chirino
  */
 abstract public class Expression implements Serializable {

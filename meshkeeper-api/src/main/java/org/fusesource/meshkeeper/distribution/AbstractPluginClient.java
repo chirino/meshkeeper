@@ -16,6 +16,8 @@
  */
 package org.fusesource.meshkeeper.distribution;
 
+import org.fusesource.meshkeeper.MeshKeeper;
+
 /**
  * AbstractPluginClient
  * <p>
@@ -28,6 +30,23 @@ package org.fusesource.meshkeeper.distribution;
 public abstract class AbstractPluginClient implements PluginClient {
 
     protected ClassLoader userClassLoader = null;
+    protected MeshKeeper meshKeeper = null;
+
+    /**
+     * Sets the meshkeeper instance that created the plugin client
+     * 
+     * @param meshKeeper
+     */
+    public void setMeshKeeper(MeshKeeper meshKeeper) {
+        this.meshKeeper = meshKeeper;
+    }
+
+    /**
+     * @return the meshkeeper instance that created the plugin client
+     */
+    public MeshKeeper getMeshKeeper() {
+        return meshKeeper;
+    }
 
     /**
      * Sets the user class loader. Setting the user class loader assists
