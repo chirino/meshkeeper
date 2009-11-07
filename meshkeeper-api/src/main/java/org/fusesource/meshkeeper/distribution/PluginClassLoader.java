@@ -342,14 +342,17 @@ public class PluginClassLoader extends URLClassLoader {
             try {
                 // Extract the jar to temp file...
                 InputStream is = PluginClassLoader.class.getClassLoader().getResourceAsStream("meshkeeper-mop-resolver.jar");
-                File tempJar = File.createTempFile("meshkeeper-mop-resolver", ".jar");
-                tempJar.deleteOnExit();
-                try {
-                    FileSupport.write(is, tempJar);
-                } finally {
-                    IOSupport.close(is);
+                if(is != null)
+                {
+                    File tempJar = File.createTempFile("meshkeeper-mop-resolver", ".jar");
+                    tempJar.deleteOnExit();
+                    try {
+                        FileSupport.write(is, tempJar);
+                    } finally {
+                        IOSupport.close(is);
+                    }
+                    loader.addUrl(tempJar.toURL());
                 }
-                loader.addUrl(tempJar.toURL());
                 PLUGIN_RESOLVER = (PluginResolver) loader.loadClass("org.fusesource.meshkeeper.distribution.MopPluginResolver").newInstance();
             } catch (Throwable thrown) {
                 LOG.error("Error loading plugin resolver:" + thrown.getMessage(), thrown);

@@ -187,7 +187,7 @@ public class CloudMixProvisioner implements Provisioner {
             controlFeature.preferredMachine(preferredControlControlHost);
         }
         String provisionerId = UUID.randomUUID().toString();
-        controlFeature.setResource("mop:update run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.control.Main.class.getName()
+        controlFeature.setResource("mop:update includeOptional exec org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.control.Main.class.getName()
                 + " --jms activemq:tcp://0.0.0.0:0" + " --registry zk:tcp://0.0.0.0:" + registryPort + " --provisionerId " + provisionerId);
         controlFeature.setOwnedByProfileId(controlProfile.getId());
         controlFeature.setOwnsMachine(false);
@@ -243,7 +243,7 @@ public class CloudMixProvisioner implements Provisioner {
             agentFeature.setId(MESH_KEEPER_AGENT_FEATURE_ID);
             agentFeature.depends(controlFeature);
             agentFeature.setOwnsMachine(machineOwnerShip);
-            agentFeature.setResource("mop:update run org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName()
+            agentFeature.setResource("mop:update includeOptional exec org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName()
                     + " --registry " + cachedRegistryConnectUri);
 
             if (requestedAgentHosts != null && requestedAgentHosts.length > 0) {
@@ -622,28 +622,32 @@ public class CloudMixProvisioner implements Provisioner {
             command = args[0];
         }
 
-        CloudMixProvisioner support = new CloudMixProvisioner();
-        support.setDeploymentUri(CloudmixHelper.getDefaultRootUrl());
-
+        CloudMixProvisioner provisioner = new CloudMixProvisioner();
+        provisioner.setDeploymentUri(CloudmixHelper.getDefaultRootUrl());
+        
         if (args.length > 1) {
-            support.setDeploymentUri(args[1]);
+            provisioner.setDeploymentUri(args[1]);
         }
 
         if (args.length > 2) {
-            support.setPreferredControlHost(args[2]);
+            provisioner.setPreferredControlHost(args[2]);
         }
 
+        provisioner.setDeploymentUri("http://vm-fuseubt1.bedford.progress.com:8181");
+        provisioner.setPreferredControlHost("vm-fuseubt1.bedford.progress.com");
+        provisioner.setRequestedAgentHosts(new String [] {"vm-fuseubt2.bedford.progress.com", "vm-fuseubt3.bedford.progress.com"});
+        
         try {
             if (command.equalsIgnoreCase("deploy")) {
-                support.reDeploy(true);
+                provisioner.reDeploy(true);
             } else if (command.equalsIgnoreCase("redeploy")) {
-                support.reDeploy(true);
+                provisioner.reDeploy(true);
             } else if (command.equalsIgnoreCase("findUri")) {
-                System.out.println("Registry Uri Found: " + support.findMeshRegistryUri());
+                System.out.println("Registry Uri Found: " + provisioner.findMeshRegistryUri());
             } else if (command.equalsIgnoreCase("status")) {
-                support.dumpStatus();
+                provisioner.dumpStatus();
             } else if (command.equalsIgnoreCase("undeploy")) {
-                support.unDeploy(true);
+                provisioner.unDeploy(true);
             } else {
                 printUsage();
             }
