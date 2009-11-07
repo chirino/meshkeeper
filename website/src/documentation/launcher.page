@@ -201,7 +201,7 @@ in_menu: false
       you can just implement the [`MeshContainer.Runnable`][3] interface to accomplish this:
       [1]: http://java.sun.com/j2se/1.5.0/docs/api/java/io/Serializable.html
       [2]: http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Runnable.html
-      [3]: {api_base:}/org/fusesource/meshkeeper/launcher/MeshContainerService.Runnable.html 
+      [3]: {api_base:}/launcher/MeshContainerService.Runnable.html 
     :raw
       {coderay::java}
       public static class MyRunnable implements MeshContainer.Runnable
@@ -232,7 +232,7 @@ in_menu: false
       you can just implement the [`MeshContainer.Callable`][3] interface to accomplish this:
       [1]: http://java.sun.com/j2se/1.5.0/docs/api/java/io/Serializable.html
       [2]: http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Runnable.html
-      [3]: {api_base:}/org/fusesource/meshkeeper/launcher/MeshContainerService.Callable.html 
+      [3]: {api_base:}/launcher/MeshContainerService.Callable.html 
     :raw
       {coderay::java}
       public static class MyCallable implements MeshContainer.Callable<String>
