@@ -59,7 +59,7 @@ import org.fusesource.meshkeeper.distribution.registry.AbstractRegistryClient;
  */
 public class ZooKeeperRegistry extends AbstractRegistryClient {
 
-    Log log = LogFactory.getLog(this.getClass());
+    Log LOG = LogFactory.getLog(this.getClass());
     HashMap<String, ZooKeeperChildWatcher> watcherMap = new HashMap<String, ZooKeeperChildWatcher>();
     private CountDownLatch connected = new CountDownLatch(1);
 
@@ -146,12 +146,12 @@ public class ZooKeeperRegistry extends AbstractRegistryClient {
 
     public String addRegistryData(String path, boolean sequential, byte[] data) throws Exception {
         checkConnected();
-        if (log.isWarnEnabled() && data != null && data.length > 20000) {
-            log.warn("Warning -- long data length for " + path + ": " + data.length);
+        if (LOG.isWarnEnabled() && data != null && data.length > 20000) {
+            LOG.warn("Warning -- long data length for " + path + ": " + data.length);
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Registering " + path + " length=" + (data != null ? data.length : 0));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Registering " + path + " length=" + (data != null ? data.length : 0));
         }
         try {
             if (sequential) {
@@ -168,8 +168,8 @@ public class ZooKeeperRegistry extends AbstractRegistryClient {
     public void removeRegistryData(String path, boolean recursive) throws Exception {
         checkConnected();
         try {
-            if (log.isDebugEnabled()) {
-                log.debug("Removing: " + path);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Removing: " + path);
             }
 
             //ZK doesn't allow you to delete the root, throw a NotEmptyExecption to 
@@ -184,18 +184,22 @@ public class ZooKeeperRegistry extends AbstractRegistryClient {
                 return;
             }
             zk.delete(path, -1);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Removed: " + path);
+            }
             //Delete ancestors:
             deleteEmptyAncestors(path);
         } catch (NoNodeException nne) {
             //Done.
         } catch (NotEmptyException nee) {
+            zk.setData(path, null, -1);
             //If it's not recursive and not empty, just set data null.
-            if (!recursive) {
-                zk.setData(path, null, -1);
-            } else {
+            if (recursive) {
                 for (String child : zk.getChildren(path, false)) {
                     removeRegistryData(path + "/" + child, true);
                 }
+                //zk.delete(path, -1);
+                //deleteEmptyAncestors(path);
             }
         }
     }
@@ -286,9 +290,19 @@ public class ZooKeeperRegistry extends AbstractRegistryClient {
         //Don't create if there is no parent 
         if (ls > 1) {
             String parent = path.substring(0, ls);
+            byte[] data = zk.getData(parent, false, null);
+            if (data != null && data.length > 0) {
+                return;
+            }
+
             try {
-                zk.delete(path, -1);
+                zk.delete(parent, -1);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Removed: " + parent);
+                }
             } catch (KeeperException.NotEmptyException nee) {
+                return;
+            } catch (KeeperException.NoNodeException nn){
                 return;
             }
             deleteEmptyAncestors(parent);
@@ -303,15 +317,15 @@ public class ZooKeeperRegistry extends AbstractRegistryClient {
             String parent = path.substring(0, ls);
             try {
 
-                zk.create(parent, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.create(parent, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             } catch (NodeExistsException e) {
                 return;
             } catch (NoNodeException nne) {
                 createParentPath(parent);
-                zk.create(parent, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.create(parent, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
-            if (log.isDebugEnabled()) {
-                log.debug("Created: " + parent);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Created: " + parent);
             }
         }
     }

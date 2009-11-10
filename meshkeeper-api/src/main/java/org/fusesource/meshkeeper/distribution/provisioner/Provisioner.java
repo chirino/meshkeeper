@@ -52,6 +52,21 @@ public interface Provisioner {
     }
     
     /**
+     * 
+     * @return The time allows to wait for each provisioned component 
+     * to come online.
+     */
+    public long getProvisioningTimeout();
+
+    /**
+     * sets the time allows to wait for each provisioned component 
+     * to come online.
+     * @param provisioningTimeout the time allows to wait for each provisioned component 
+     * to come online.
+     */
+    public void setProvisioningTimeout(long provisioningTimeout);
+    
+    /**
      * This can be used to specify a specific port on which the registry
      * service should listen. 
      * 

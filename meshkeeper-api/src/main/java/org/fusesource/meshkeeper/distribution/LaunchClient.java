@@ -89,7 +89,6 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
     public void start() throws Exception {
         registryPath = meshKeeper.distribute(LAUNCHER_REGISTRY_PATH + "/" + System.getProperty("user.name"), true, this, LaunchClientService.class).getRegistryPath();
         name = registryPath.substring(registryPath.lastIndexOf("/") + 1);
-
         agentWatcher = new RegistryWatcher() {
 
             public void onChildrenChanged(String path, List<String> children) {
@@ -102,7 +101,9 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
                                 HostProperties props = pl.getHostProperties();
                                 agentProps.put(agentId, props);
 
-                                log.info("DISCOVERED: " + props.getAgentId());
+                                if (log.isDebugEnabled()) {
+                                    log.debug("DISCOVERED: " + props.getAgentId());
+                                }
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -179,7 +180,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
         }
 
         //Release reserved ports:
-        for (String agentName : reservedPorts.keySet()) {
+        for (String agentName : reservedPorts.keySet().toArray(new String [] {})) {
             releaseAllPorts(agentName);
         }
 

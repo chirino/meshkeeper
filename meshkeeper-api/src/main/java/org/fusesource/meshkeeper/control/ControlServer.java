@@ -75,6 +75,8 @@ public class ControlServer {
 
     private LaunchAgent embeddedAgent;
 
+    private boolean startEmbeddedAgent;
+
     public static final String CONTROL_TOPIC = "meshkeeper.control";
 
     public enum ControlEvent {
@@ -203,6 +205,10 @@ public class ControlServer {
                     }
                 }
             }, CONTROL_TOPIC);
+
+            if (startEmbeddedAgent && embeddedAgent == null) {
+                embeddedAgent = new LaunchAgent();
+            }
 
             if (embeddedAgent != null) {
                 embeddedAgent.setMeshKeeper(meshKeeper);
@@ -354,6 +360,21 @@ public class ControlServer {
             return registryServer.getServiceUri();
         }
         return registryUri;
+    }
+
+    /**
+     * @param startEmbeddedAgent
+     *            Whether an embedded agent will be started
+     */
+    public void setStartEmbeddedAgent(boolean startEmbeddedAgent) {
+        this.startEmbeddedAgent = startEmbeddedAgent;
+    }
+
+    /**
+     * @return Whether an embedded agent will be started.
+     */
+    public boolean getStartEmbeddedAgent() {
+        return startEmbeddedAgent;
     }
 
     /**

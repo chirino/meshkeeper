@@ -7,6 +7,8 @@
  */
 package org.fusesource.meshkeeper.cloudmix;
 
+import static org.fusesource.meshkeeper.control.ControlServer.ControlEvent.SHUTDOWN;
+
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -32,6 +34,8 @@ import org.fusesource.cloudmix.common.dto.FeatureDetails;
 import org.fusesource.cloudmix.common.dto.ProfileDetails;
 import org.fusesource.cloudmix.common.dto.ProfileStatus;
 import org.fusesource.cloudmix.common.dto.PropertyDefinition;
+import org.fusesource.meshkeeper.MeshEvent;
+import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.RegistryWatcher;
 import org.fusesource.meshkeeper.control.ControlServer;
@@ -72,7 +76,7 @@ public class CloudMixProvisioner implements Provisioner {
     private int maxAgents = 100;
 
     private int registryPort = 0;
-    private int provisioningTimeout = 60000;
+    private long provisioningTimeout = 90000;
 
     public void dumpStatus() throws MeshProvisioningException {
         StringBuffer buf = new StringBuffer(1024);
@@ -99,7 +103,7 @@ public class CloudMixProvisioner implements Provisioner {
     /**
      * Asserts that all the requested features have been provisioned properly
      */
-    protected void assertProvisioned(String profileId) throws MeshProvisioningException {
+    protected void assertProvisioned(String profileId, int min) throws MeshProvisioningException {
         long start = System.currentTimeMillis();
 
         Set<String> provisionedFeatures = new TreeSet<String>();
@@ -169,6 +173,7 @@ public class CloudMixProvisioner implements Provisioner {
      */
     public void deploy() throws MeshProvisioningException {
 
+        LOG.info("Deploying MeshKeeper");
         RestGridClient controller = getGridClient();
 
         if (isDeployed()) {
@@ -198,7 +203,7 @@ public class CloudMixProvisioner implements Provisioner {
         controller.addProfile(controlProfile);
 
         //Wait for the control profile to be provisioned:
-        assertProvisioned(controlProfile.getId());
+        assertProvisioned(controlProfile.getId(), 1);
 
         LOG.info("Waiting " + provisioningTimeout / 1000 + "s for MeshKeeper control server to come on line.");
 
@@ -243,11 +248,13 @@ public class CloudMixProvisioner implements Provisioner {
             agentFeature.setId(MESH_KEEPER_AGENT_FEATURE_ID);
             agentFeature.depends(controlFeature);
             agentFeature.setOwnsMachine(machineOwnerShip);
-            agentFeature.setResource("mop:update includeOptional exec org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " " + org.fusesource.meshkeeper.launcher.Main.class.getName()
-                    + " --registry " + cachedRegistryConnectUri);
+            agentFeature.setResource("mop:update includeOptional exec org.fusesource.meshkeeper:meshkeeper-api:" + getMeshKeeperVersion() + " "
+                    + org.fusesource.meshkeeper.launcher.Main.class.getName() + " --registry " + cachedRegistryConnectUri);
 
+            int expectedAgentCount = 1;
             if (requestedAgentHosts != null && requestedAgentHosts.length > 0) {
                 agentFeature.setPreferredMachines(new HashSet<String>(Arrays.asList(requestedAgentHosts)));
+                expectedAgentCount = requestedAgentHosts.length;
             }
 
             agentFeature.setOwnsMachine(false);
@@ -258,7 +265,7 @@ public class CloudMixProvisioner implements Provisioner {
             agentProfile.getFeatures().add(new Dependency(agentFeature.getId()));
             controller.addProfile(agentProfile);
 
-            assertProvisioned(agentProfile.getId());
+            assertProvisioned(agentProfile.getId(), expectedAgentCount);
 
             final int agentsDeployed = controller.getProcessClientsForFeature(agentFeature.getId()).size();
             final CountDownLatch latch = new CountDownLatch(1);
@@ -560,6 +567,27 @@ public class CloudMixProvisioner implements Provisioner {
         this.registryPort = port;
     }
 
+    /**
+     * 
+     * @return The time allows to wait for each provisioned component to come
+     *         online.
+     */
+    public long getProvisioningTimeout() {
+        return provisioningTimeout;
+    }
+
+    /**
+     * sets the time allows to wait for each provisioned component to come
+     * online.
+     * 
+     * @param provisioningTimeout
+     *            the time allows to wait for each provisioned component to come
+     *            online.
+     */
+    public void setProvisioningTimeout(long provisioningTimeout) {
+        this.provisioningTimeout = provisioningTimeout;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -593,6 +621,25 @@ public class CloudMixProvisioner implements Provisioner {
 
         boolean removed = false;
 
+//        MeshKeeper mesh = null;
+//        try {
+//            String reg = findMeshRegistryUri();
+//            if (reg != null) {
+//                mesh = MeshKeeperFactory.createMeshKeeper(reg);
+//                mesh.eventing().sendEvent(ControlServer.ControlEvent.SHUTDOWN.createEvent("CloudmixProvisioner",null), ControlServer.CONTROL_TOPIC);
+//                Thread.sleep(5000);
+//            }
+//        } catch (Exception e) {
+//
+//        } finally {
+//            if (mesh != null) {
+//                try {
+//                    mesh.destroy();
+//                } catch (Exception e) {
+//                }
+//            }
+//        }
+
         for (String profile : new String[] { MESH_KEEPER_AGENT_PROFILE_ID, MESH_KEEPER_CONTROL_PROFILE_ID }) {
             ProfileDetails existing = controller.getProfile(profile);
             if (existing != null) {
@@ -624,7 +671,7 @@ public class CloudMixProvisioner implements Provisioner {
 
         CloudMixProvisioner provisioner = new CloudMixProvisioner();
         provisioner.setDeploymentUri(CloudmixHelper.getDefaultRootUrl());
-        
+
         if (args.length > 1) {
             provisioner.setDeploymentUri(args[1]);
         }
@@ -635,8 +682,8 @@ public class CloudMixProvisioner implements Provisioner {
 
         provisioner.setDeploymentUri("http://vm-fuseubt1.bedford.progress.com:8181");
         provisioner.setPreferredControlHost("vm-fuseubt1.bedford.progress.com");
-        provisioner.setRequestedAgentHosts(new String [] {"vm-fuseubt2.bedford.progress.com", "vm-fuseubt3.bedford.progress.com"});
-        
+        provisioner.setRequestedAgentHosts(new String[] { "vm-fuseubt2.bedford.progress.com", "vm-fuseubt3.bedford.progress.com" });
+
         try {
             if (command.equalsIgnoreCase("deploy")) {
                 provisioner.reDeploy(true);

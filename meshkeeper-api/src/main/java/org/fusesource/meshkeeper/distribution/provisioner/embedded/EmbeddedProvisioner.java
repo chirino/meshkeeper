@@ -47,6 +47,7 @@ public class EmbeddedProvisioner implements Provisioner {
     private boolean machineOwnerShip;
     private String deploymentUri;
     private int registryPort = 0;
+    private int provisioningTimeout = -1;
 
     /*
      * (non-Javadoc)
@@ -217,20 +218,18 @@ public class EmbeddedProvisioner implements Provisioner {
         }
         return false;
     }
-    
-    private File getControlServerDirectory() throws Exception
-    {
+
+    private File getControlServerDirectory() throws Exception {
         if (deploymentUri != null) {
             return new File(deploymentUri);
-        }
-        else {
+        } else {
             return MeshKeeperFactory.getDefaultServerDirectory();
         }
     }
 
     private Properties getFileProps() throws Exception {
         File propFile = new File(getControlServerDirectory(), ControlServer.CONTROLLER_PROP_FILE_NAME);
-     
+
         if (propFile.exists()) {
             Properties props = new Properties();
             FileInputStream fis = null;
@@ -329,11 +328,35 @@ public class EmbeddedProvisioner implements Provisioner {
         //No-Op for now only one locally.
     }
 
-    /* (non-Javadoc)
-     * @see org.fusesource.meshkeeper.distribution.provisioner.Provisioner#setRegistryPort(int)
+    /*
+     * (non-Javadoc)
+     * 
+     * @seeorg.fusesource.meshkeeper.distribution.provisioner.Provisioner#
+     * setRegistryPort(int)
      */
     public void setRegistryPort(int port) {
         this.registryPort = port;
+    }
+
+    /**
+     * 
+     * @return The time allows to wait for each provisioned component to come
+     *         online.
+     */
+    public long getProvisioningTimeout() {
+        return provisioningTimeout;
+    }
+
+    /**
+     * sets the time allows to wait for each provisioned component to come
+     * online.
+     * 
+     * @param provisioningTimeout
+     *            the time allows to wait for each provisioned component to come
+     *            online.
+     */
+    public void setProvisioningTimeout(long provisioningTimeout) {
+
     }
 
 }

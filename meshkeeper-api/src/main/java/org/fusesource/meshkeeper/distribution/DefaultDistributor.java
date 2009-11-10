@@ -283,7 +283,7 @@ class DefaultDistributor implements MeshKeeper {
             //TODO Consider deferring startup of these?
             remoting();
             eventing();
-            repository();
+            //repository();
         } catch (PluginCreationException re) {
             if (re.getCause() != null && re.getCause() instanceof Exception) {
                 throw (Exception) re.getCause();
@@ -364,6 +364,10 @@ class DefaultDistributor implements MeshKeeper {
                 } finally {
                     repository = null;
                 }
+            }
+
+            if (first != null) {
+                throw first;
             }
 
             log.debug("Shut down");
@@ -493,7 +497,7 @@ class DefaultDistributor implements MeshKeeper {
                     prefix = "";
                 }
                 try {
-                    String id = registry().addRegistryData(MeshKeeper.Registry.MESH_KEEPER_ROOT + "/UUID/" + prefix, true, new byte[0]);
+                    String id = registry().addRegistryData(MeshKeeper.Registry.MESH_KEEPER_ROOT + "/UUID/" + prefix, true, null);
                     uuid = id.substring(1 + id.lastIndexOf("/"));
                 } catch (Exception e) {
                     throw new RuntimeException("UUID creation error", e);
