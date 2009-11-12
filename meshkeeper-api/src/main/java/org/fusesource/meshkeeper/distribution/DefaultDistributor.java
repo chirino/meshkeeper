@@ -756,14 +756,28 @@ class DefaultDistributor implements MeshKeeper {
      */
     private static class UserFirstClassLoader extends ClassLoader {
         ArrayList<ClassLoader> delegates = new ArrayList<ClassLoader>(2);
+        ArrayList<String> exceptions = new ArrayList<String>();
 
         UserFirstClassLoader(ClassLoader userLoader) {
             super(userLoader.getParent());
+
+            exceptions.add("net.sf.cglib");
 
             //Search first in bootstrap class loader:
             delegates.add(userLoader);
             //Then try the plugin class loader:
             delegates.add(PluginClassLoader.getDefaultPluginLoader());
+        }
+
+        public Class<?> loadClass(String name) throws ClassNotFoundException {
+            for (String e : exceptions) {
+                if (name.startsWith(e)) {
+                    return PluginClassLoader.getDefaultPluginLoader().loadClass(name);
+                }
+            }
+
+            return super.loadClass(name);
+
         }
 
         protected Class<?> findClass(String name) throws ClassNotFoundException {

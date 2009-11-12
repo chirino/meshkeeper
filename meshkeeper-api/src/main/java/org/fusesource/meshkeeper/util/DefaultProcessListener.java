@@ -39,23 +39,13 @@ import java.util.LinkedList;
  * @author cmacnaug
  * @version 1.0
  */
-public class DefaultProcessListener implements MeshProcessListener, Serializable {
+public class DefaultProcessListener implements MeshProcessListener {
 
     Log LOG = LogFactory.getLog(DefaultProcessListener.class);
     protected String name = "";
-    private Distributable proxy;
 
     protected LinkedList<MeshProcessListener> delegates;
     protected boolean prefixEachLine = true;
-
-    public DefaultProcessListener(MeshKeeper meshKeeper) throws Exception {
-        proxy = meshKeeper.remoting().export(this);
-    }
-
-    // When this object is serialized, we serialize the remote proxy.
-    protected Object writeReplace() throws ObjectStreamException {
-        return proxy;
-    }
 
     public DefaultProcessListener(String name) {
         this.name = name;

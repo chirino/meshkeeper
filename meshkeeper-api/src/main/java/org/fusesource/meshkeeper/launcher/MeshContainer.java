@@ -45,7 +45,7 @@ import org.fusesource.meshkeeper.launcher.MeshContainerService.Runnable;
 public class MeshContainer implements MeshContainerService {
 
     private static MeshKeeper mesh;
-    private static final Log LOG = LogFactory.getLog(LaunchAgent.class);
+    private static final Log LOG = LogFactory.getLog(MeshContainer.class);
     private static boolean isInMeshContainer = false;
 
     private HashMap<String, Object> hosted = new HashMap<String, Object>();
@@ -62,7 +62,9 @@ public class MeshContainer implements MeshContainerService {
 
         T proxy = null;
         if (!hosted.containsKey(name)) {
-            LOG.info(this + " Hosting: " + name + ":" + object);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(this + " Hosting: " + name + ":" + object);
+            }
             proxy = (T) mesh.remoting().export(object);
             hosted.put(name, object);
         } else {
@@ -76,6 +78,9 @@ public class MeshContainer implements MeshContainerService {
 
         Object d = hosted.get(name);
         if (d != null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(this + " Hosting: " + name + ":" + d);
+            }
             mesh.remoting().unexport(d);
         }
     }
