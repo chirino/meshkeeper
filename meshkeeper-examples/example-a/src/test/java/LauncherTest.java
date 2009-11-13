@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.fusesource.meshkeeper.Expression.*;
 import org.fusesource.meshkeeper.HostProperties;
 import org.fusesource.meshkeeper.LaunchDescription;
+import org.fusesource.meshkeeper.MavenTestSupport;
 import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeper.Launcher;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
@@ -40,7 +41,8 @@ public class LauncherTest extends TestCase {
     MeshKeeper meshKeeper;
 
     protected void setUp() throws Exception {
-        meshKeeper = MeshKeeperFactory.createMeshKeeper();
+        //Use MavenTestSupport to create MeshKeeper under target directory:
+        meshKeeper = MavenTestSupport.createMeshKeeper("LauncherTest");
     }
 
     protected void tearDown() throws Exception {

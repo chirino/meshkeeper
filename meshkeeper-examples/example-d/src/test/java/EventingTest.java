@@ -14,8 +14,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -25,11 +23,13 @@ import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.HostProperties;
+import org.fusesource.meshkeeper.MavenTestSupport;
 import org.fusesource.meshkeeper.MeshContainer;
 import org.fusesource.meshkeeper.MeshEvent;
 import org.fusesource.meshkeeper.MeshEventListener;
 import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.MeshKeeperFactory;
+import org.fusesource.meshkeeper.MeshContainer.Hostable;
+import org.fusesource.meshkeeper.MeshContainer.MeshContainerContext;
 
 /**
  * EventingTest
@@ -48,8 +48,22 @@ public class EventingTest extends TestCase {
     public static final int SAY_HELLO = 0;
     public static final int HELLO = 1;
 
+    MeshKeeper meshKeeper;
+
+    protected void setUp() throws Exception {
+        //Use MavenTestSupport to create MeshKeeper under target directory:
+        meshKeeper = MavenTestSupport.createMeshKeeper(EventingTest.class.getSimpleName());
+    }
+
+    protected void tearDown() throws Exception {
+        if (meshKeeper != null) {
+            meshKeeper.destroy();
+            meshKeeper = null;
+        }
+    }
+    
     @SuppressWarnings("serial")
-    public static class Greeter implements Serializable, MeshEventListener {
+    public static class Greeter implements Hostable, MeshEventListener {
         private transient Log LOG = LogFactory.getLog(Greeter.class);
         private transient MeshKeeper mk;
         public String name;
@@ -74,23 +88,30 @@ public class EventingTest extends TestCase {
             }
         }
 
-        private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-            in.defaultReadObject();
+        //////////////////////////////////////////////////////////////////////////////////////////
+        //Hostable
+        public void initialize(MeshContainerContext ctx) throws Exception {
             LOG = LogFactory.getLog(Greeter.class + "." + name);
-            //Note that we pick up MeshKeeper from the MeshContainer:
-            mk = MeshKeeperFactory.getContainerMeshKeeper();
+            //Note that we pick up MeshKeeper from the MeshContainerContext:
+            mk = ctx.getContainerMeshKeeper();
+        }
+        
+        public void destroy(MeshContainerContext ctx) throws Exception {
+            // TODO Auto-generated method stub
 
         }
+        //Hostable
+        //////////////////////////////////////////////////////////////////////////////////////////
+
     }
 
     public void testEventing() throws Exception {
 
-        MeshKeeper mk = MeshKeeperFactory.createMeshKeeper();
-        mk.launcher().waitForAvailableAgents(60000);
-        HostProperties[] hosts = mk.launcher().getAvailableAgents();
+        meshKeeper.launcher().waitForAvailableAgents(60000);
+        HostProperties[] hosts = meshKeeper.launcher().getAvailableAgents();
 
-        MeshContainer c1 = mk.launcher().launchMeshContainer(hosts[0].getAgentId());
-        MeshContainer c2 = mk.launcher().launchMeshContainer((hosts.length > 1 ? hosts[1] : hosts[0]).getAgentId());
+        MeshContainer c1 = meshKeeper.launcher().launchMeshContainer(hosts[0].getAgentId());
+        MeshContainer c2 = meshKeeper.launcher().launchMeshContainer((hosts.length > 1 ? hosts[1] : hosts[0]).getAgentId());
 
         Greeter g1 = new Greeter();
         g1.name = "machine1";
@@ -133,19 +154,19 @@ public class EventingTest extends TestCase {
                 }
             }
         };
-        mk.eventing().openEventListener(listener, EVENT_TOPIC + ".*");
+        meshKeeper.eventing().openEventListener(listener, EVENT_TOPIC + ".*");
 
         //Start the
         g1.startListening();
         g2.startListening();
-        mk.eventing().sendEvent(new MeshEvent(SAY_HELLO, "controller", null), EVENT_TOPIC + ".control");
+        meshKeeper.eventing().sendEvent(new MeshEvent(SAY_HELLO, "controller", null), EVENT_TOPIC + ".control");
 
         hellos.await(10, TimeUnit.SECONDS);
         Thread.sleep(2000);
         assertTrue("There were errors", errors.isEmpty());
         c1.close();
         c2.close();
-        
-        mk.eventing().closeEventListener(listener, EVENT_TOPIC + ".*");
+
+        meshKeeper.eventing().closeEventListener(listener, EVENT_TOPIC + ".*");
     }
 }
