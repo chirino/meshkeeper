@@ -89,19 +89,23 @@ public class LaunchAgent implements LaunchAgentService {
         }
     }
 
-    synchronized public MeshProcess launch(LaunchDescription launchDescription, String sourceRegistryPath, MeshProcessListener handler) throws Exception {
-        int pid = pidCounter++;
-        LocalProcess rc = createLocalProcess(launchDescription, handler, pid);
-        rc.setOwnerRegistryPath(sourceRegistryPath);
-        processes.put(pid, rc);
-        try {
-            rc.start();
-        } catch (Exception e) {
-            processes.remove(pid);
-            throw e;
-        }
+    public MeshProcess launch(LaunchDescription launchDescription, String sourceRegistryPath, MeshProcessListener handler) throws Exception {
+        checkForRogueProcesses(10000);
+        synchronized (this) {
+            int pid = pidCounter++;
 
-        return rc.getProxy();
+            LocalProcess rc = createLocalProcess(launchDescription, handler, pid);
+            rc.setOwnerRegistryPath(sourceRegistryPath);
+            processes.put(pid, rc);
+            try {
+                rc.start();
+            } catch (Exception e) {
+                processes.remove(pid);
+                throw e;
+            }
+
+            return rc.getProxy();
+        }
     }
 
     protected LocalProcess createLocalProcess(LaunchDescription launchDescription, MeshProcessListener handler, int pid) throws Exception {
@@ -194,8 +198,7 @@ public class LaunchAgent implements LaunchAgentService {
     /**
      * Clears the launchers local resource cache.
      * 
-     * @throws IOException
-     *             If there is an error purging the cache.
+     * @throws IOException If there is an error purging the cache.
      */
     public void purgeResourceRepository() throws IOException {
         meshKeeper.repository().purgeLocalRepo();
@@ -229,8 +232,7 @@ public class LaunchAgent implements LaunchAgentService {
     /**
      * Sets the name of the agent id. Once set it cannot be changed.
      * 
-     * @param id
-     *            the name of the agent id.
+     * @param id the name of the agent id.
      */
     public void setAgentId(String id) {
         if (agentId == null && id != null) {
