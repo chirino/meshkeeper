@@ -26,8 +26,8 @@ import org.fusesource.meshkeeper.Distributable;
 import org.fusesource.meshkeeper.MavenTestSupport;
 import org.fusesource.meshkeeper.MeshContainer;
 import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.launcher.MeshContainerService.Callable;
-import org.fusesource.meshkeeper.launcher.MeshContainerService.Runnable;
+import org.fusesource.meshkeeper.MeshContainer.Callable;
+import org.fusesource.meshkeeper.MeshContainer.Runnable;
 import org.fusesource.meshkeeper.util.DefaultProcessListener;
 
 /**

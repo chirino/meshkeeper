@@ -30,8 +30,10 @@ import org.fusesource.meshkeeper.MeshKeeper;
 import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.MeshKeeper.DistributionRef;
 import org.fusesource.meshkeeper.distribution.PluginClassLoader;
-import org.fusesource.meshkeeper.launcher.MeshContainerService.Callable;
-import org.fusesource.meshkeeper.launcher.MeshContainerService.Runnable;
+import org.fusesource.meshkeeper.MeshContainer.Callable;
+import org.fusesource.meshkeeper.MeshContainer.Hostable;
+import org.fusesource.meshkeeper.MeshContainer.MeshContainerContext;
+import org.fusesource.meshkeeper.MeshContainer.Runnable;
 
 /**
  * MeshContainer
@@ -42,7 +44,7 @@ import org.fusesource.meshkeeper.launcher.MeshContainerService.Runnable;
  * @author cmacnaug
  * @version 1.0
  */
-public class MeshContainer implements MeshContainerService {
+public class MeshContainer implements MeshContainerService, MeshContainerContext {
 
     private static MeshKeeper mesh;
     private static final Log LOG = LogFactory.getLog(MeshContainer.class);
@@ -61,14 +63,26 @@ public class MeshContainer implements MeshContainerService {
     public synchronized <T extends Serializable> T host(String name, T object, Class<?>... interfaces) throws Exception {
 
         T proxy = null;
-        if (!hosted.containsKey(name)) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(this + " Hosting: " + name + ":" + object);
+        try {
+            if (!hosted.containsKey(name)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(this + " Hosting: " + name + ":" + object);
+                }
+                proxy = (T) mesh.remoting().export(object);
+                try {
+                    hosted.put(name, object);
+                } finally {
+                    initializeObject(object);
+                }
+            } else {
+                throw new Exception("Already hosting an object with name " + name);
             }
-            proxy = (T) mesh.remoting().export(object);
-            hosted.put(name, object);
-        } else {
-            throw new Exception("Already hosting an object with name " + name);
+        } catch (Exception e) {
+            LOG.warn("Error hosting " + name, e);
+            if (proxy != null) {
+                unhost(name);
+                throw e;
+            }
         }
 
         return proxy;
@@ -81,7 +95,11 @@ public class MeshContainer implements MeshContainerService {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(this + " Hosting: " + name + ":" + d);
             }
-            mesh.remoting().unexport(d);
+            try {
+                mesh.remoting().unexport(d);
+            } finally {
+                destroyObject(d);
+            }
         }
     }
 
@@ -89,12 +107,34 @@ public class MeshContainer implements MeshContainerService {
      * Runs the {@link Runnable} in the container. The {@link Runnable} must
      * also implement {@link Serializable}.
      * 
-     * @param r
-     *            The {@link Runnable}
+     * @param r The {@link Runnable}
      * @throws Exception
      */
-    public <R extends java.lang.Runnable & Serializable> void run(R r) throws Exception {
-        mesh.getExecutorService().execute(r);
+    public <R extends java.lang.Runnable & Serializable> void run(final R r) throws Exception {
+        java.lang.Runnable wrapper = r;
+
+        //Handle Hostables
+        if (r instanceof Hostable) {
+            initializeObject(r);
+            wrapper = new java.lang.Runnable() {
+
+                public void run() {
+                    try {
+                        r.run();
+                    } finally {
+                        try {
+                            destroyObject(r);
+                        } catch (Exception e) {
+                            LOG.warn("Runnable destroy error", e);
+                        }
+                    }
+                }
+            };
+
+            ((Hostable) r).initialize(this);
+        }
+
+        mesh.getExecutorService().execute(wrapper);
     }
 
     /**
@@ -102,14 +142,41 @@ public class MeshContainer implements MeshContainerService {
      * also implement {@link Serializable}.
      * 
      * @param <T>
-     * @param c
-     *            The {@link Callable}
+     * @param c The {@link Callable}
      * @return The result
-     * @throws Exception
-     *             If there is an exception
+     * @throws Exception If there is an exception
      */
     public <T, C extends java.util.concurrent.Callable<T> & Serializable> T call(C c) throws Exception {
-        return c.call();
+        initializeObject(c);
+        Exception first = null;
+        try {
+            return c.call();
+        } catch (Exception e) {
+            first = e;
+            throw e;
+        } finally {
+            try {
+                destroyObject(c);
+            } catch (Exception e) {
+                if (first != null) {
+                    throw first;
+                } else {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    private void initializeObject(Object o) throws Exception {
+        if (o instanceof Hostable) {
+            ((Hostable) o).initialize(this);
+        }
+    }
+
+    private void destroyObject(Object o) throws Exception {
+        if (o instanceof Hostable) {
+            ((Hostable) o).destroy(this);
+        }
     }
 
     public void close() {
@@ -128,6 +195,20 @@ public class MeshContainer implements MeshContainerService {
      */
     public static boolean isInMeshContainer() {
         return isInMeshContainer;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @seeorg.fusesource.meshkeeper.MeshContainer.MeshContainerContext#
+     * getContainerMeshKeeper()
+     */
+    public MeshKeeper getContainerMeshKeeper() {
+        return mesh;
+    }
+
+    public String getContainerName() {
+        return name;
     }
 
     public String toString() {

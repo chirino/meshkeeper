@@ -31,30 +31,7 @@ import org.fusesource.meshkeeper.Distributable;
  */
 public interface MeshContainerService extends Distributable {
 
-    /**
-     * Callable
-     * <p>
-     * Extends {@link java.util.concurrent.Callable} and {@link Serializable}
-     * </p>
-     * 
-     * @author cmacnaug
-     * @version 1.0
-     * @param <R>
-     *            The return type of the {@link Callable}
-     */
-    public interface Callable<R extends Serializable> extends java.util.concurrent.Callable<R>, Serializable{};
 
-    /**
-     * 
-     * Runnable
-     * <p>
-     * Extends {@link java.lang.Runnable} and {@link Serializable}
-     * </p>
-     * 
-     * @author cmacnaug
-     * @version 1.0
-     */
-    public interface Runnable extends java.lang.Runnable, Serializable {}
 
     /**
      * Hosts the given object in the specified container using the given name as
