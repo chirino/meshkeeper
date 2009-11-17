@@ -55,6 +55,7 @@ public class ActiveMQControlService implements ControlService {
      */
     public void start() throws Exception {
         controlBroker.setDataDirectory(directory);
+        controlBroker.setUseShutdownHook(false);
         controlBroker.start();
         List<TransportConnector> connectors = controlBroker.getTransportConnectors();
         serviceUri = "activemq:" + connectors.get(0).getConnectUri();
