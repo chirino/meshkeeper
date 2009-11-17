@@ -223,6 +223,8 @@ public class MeshContainer implements MeshContainerService, MeshContainerContext
         String path = args[0];
 
         MeshContainer container = new MeshContainer(path);
+        
+        Throwable error = null;
 
         try {
             //Running from RemoteBootstrapper?
@@ -237,16 +239,20 @@ public class MeshContainer implements MeshContainerService, MeshContainerContext
             DistributionRef<MeshContainerService> ref = MeshContainer.getMeshKeeper().distribute(path, false, (MeshContainerService) container, MeshContainerService.class);
             MeshContainer.LOG.debug("Started MeshContainer: " + ref.getRegistryPath() + " cl: " + container.getClass().getClassLoader());
             container.closeLatch.await();
-        } catch (Exception e) {
-            LOG.error("MeshContainer error: ", e);
+            MeshContainer.LOG.debug("Closing MeshContainer: " + ref.getRegistryPath() + " cl: " + container.getClass().getClassLoader());
+        } catch (Throwable thrown) {
+            error = error == null ? thrown : error;
+            LOG.error("MeshContainer error: ", thrown);
         } finally {
             try {
                 if (mesh != null) {
                     mesh.destroy();
                 }
-            } catch (Exception e) {
-                LOG.error("MeshContainer error: ", e);
+            } catch (Exception thrown) {
+                error = error == null ? thrown : error;
+                LOG.error("MeshContainer error: ", thrown);
             }
+            System.exit(error == null ? 0 : 1);
         }
     }
 

@@ -192,18 +192,19 @@ public class LocalProcess implements MeshProcess {
     }
 
     protected void onExit(int exitValue) {
-        running.set(false);
-        if (listener != null) {
-            listener.onProcessExit(exitValue);
+        if (running.compareAndSet(true, false)) {
+            if (listener != null) {
+                listener.onProcessExit(exitValue);
+            }
+            try {
+                processLauncher.getMeshKeeper().undistribute(this);
+            } catch (Exception e) {
+                if (log.isDebugEnabled())
+                    log.debug("Error undistributing " + this, e);
+            }
+    
+            processLauncher.onProcessExit(this, exitValue);
         }
-        try {
-            processLauncher.getMeshKeeper().undistribute(this);
-        } catch (Exception e) {
-
-        }
-
-        processLauncher.onProcessExit(this, exitValue);
-
     }
 
     public boolean isRunning() {
@@ -213,12 +214,13 @@ public class LocalProcess implements MeshProcess {
     }
 
     public void kill() throws Exception {
-        if (running.compareAndSet(true, false)) {
+        if (running.get()) {
             try {
                 if (log.isDebugEnabled())
                     log.debug("Killing process " + process + " [pid = " + pid + "]");
                 process.destroy();
-                process.waitFor();
+                onExit(process.waitFor());
+                
                 if (log.isDebugEnabled())
                     log.debug("Killed process " + process + " [pid = " + pid + "]");
 

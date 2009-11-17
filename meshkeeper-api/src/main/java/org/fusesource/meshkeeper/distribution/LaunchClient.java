@@ -41,6 +41,7 @@ import org.fusesource.meshkeeper.MeshKeeperFactory;
 import org.fusesource.meshkeeper.MeshProcess;
 import org.fusesource.meshkeeper.MeshProcessListener;
 import org.fusesource.meshkeeper.RegistryWatcher;
+import org.fusesource.meshkeeper.MeshKeeper.DistributionRef;
 import org.fusesource.meshkeeper.MeshKeeper.Launcher;
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
 import org.fusesource.meshkeeper.classloader.ClassLoaderServer;
@@ -79,7 +80,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
     private final HashMap<String, LaunchAgentService> boundAgents = new HashMap<String, LaunchAgentService>();
     private final HashMap<String, HashSet<Integer>> reservedPorts = new HashMap<String, HashSet<Integer>>();
     private String name;
-    private String registryPath;
+    private DistributionRef<LaunchClientService> distributionRef;
 
     private ClassLoaderServer classLoaderServer;
     private ClassLoaderFactory bootStrapClassLoaderFactory;
@@ -87,8 +88,8 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
     private int meshContainerCounter;
 
     public void start() throws Exception {
-        registryPath = meshKeeper.distribute(LAUNCHER_REGISTRY_PATH + "/" + System.getProperty("user.name"), true, this, LaunchClientService.class).getRegistryPath();
-        name = registryPath.substring(registryPath.lastIndexOf("/") + 1);
+        distributionRef = meshKeeper.distribute(LAUNCHER_REGISTRY_PATH + "/" + System.getProperty("user.name"), true, (LaunchClientService) this, LaunchClientService.class);
+        name = distributionRef.getRegistryPath().substring(distributionRef.getRegistryPath().lastIndexOf("/") + 1);
         agentWatcher = new RegistryWatcher() {
 
             public void onChildrenChanged(String path, List<String> children) {
@@ -123,13 +124,11 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
      * Requests the specified number of tcp ports from the specified process
      * launcher.
      * 
-     * @param agentName
-     *            The name of the process launcher
-     * @param count
-     *            The number of ports.
+     * @param agentName The name of the process launcher
+     * @param count The number of ports.
      * @return The reserved ports
-     * @throws Exception
-     *             If there is an error reserving the requested number of ports.
+     * @throws Exception If there is an error reserving the requested number of
+     *             ports.
      */
     public synchronized List<Integer> reserveTcpPorts(String agentName, int count) throws Exception {
         agentName = agentName.toUpperCase();
@@ -180,7 +179,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
         }
 
         //Release reserved ports:
-        for (String agentName : reservedPorts.keySet().toArray(new String [] {})) {
+        for (String agentName : reservedPorts.keySet().toArray(new String[] {})) {
             releaseAllPorts(agentName);
         }
 
@@ -196,6 +195,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
         meshKeeper.undistribute(this);
         meshKeeper.registry().removeRegistryWatcher(LaunchAgentService.LAUNCH_AGENT_REGISTRY_PATH, agentWatcher);
         //Clear out any container registrations: 
+        meshKeeper.registry().removeRegistryData(distributionRef.getRegistryPath(), true);
         meshKeeper.registry().removeRegistryData(MESHCONTAINER_REGISTRY_PATH + "/" + name, true);
 
         knownAgents.clear();
@@ -306,7 +306,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
         MeshProcessWatcher watcher = new MeshProcessWatcher(listener, agentId);
         addWatchedProcess(watcher);
         try {
-            watcher.setProcess(agent.launch(launch, registryPath, watcher.getProxy()));
+            watcher.setProcess(agent.launch(launch, distributionRef.getRegistryPath(), watcher.getProxy()));
         } catch (Exception e) {
             watcher.cleanup();
             throw e;
@@ -415,10 +415,8 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
      * {@link ClassLoaderFactory} associated witht the specified
      * {@link ClassLoader}.
      * 
-     * @param classLoader
-     *            The classloader to be used for bootstrapping.
-     * @throws Exception
-     *             if the classloader can't be used for bootstrapping.
+     * @param classLoader The classloader to be used for bootstrapping.
+     * @throws Exception if the classloader can't be used for bootstrapping.
      */
     public synchronized void setBootstrapClassLoader(ClassLoader classLoader) throws Exception {
 
@@ -450,8 +448,8 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
      * The caller is responsible for managing the lifecycle of the associated
      * {@link ClassLoaderServer}
      * 
-     * @param bootStrapClassLoaderFactory
-     *            The factory stub to use for bootstrapping java launches.
+     * @param bootStrapClassLoaderFactory The factory stub to use for
+     *            bootstrapping java launches.
      */
     public synchronized void setBootstrapClassLoaderFactory(ClassLoaderFactory bootStrapClassLoaderFactory) {
         this.bootStrapClassLoaderFactory = bootStrapClassLoaderFactory;
@@ -464,8 +462,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
      * been created it will be created on demand using the {@link ClassLoader}
      * returned by {@link #getBootstrapClassLoader()}
      * 
-     * @param factory
-     *            The factory stub to use for bootstrapping java launches.
+     * @param factory The factory stub to use for bootstrapping java launches.
      */
     public synchronized ClassLoaderFactory getBootstrapClassLoaderFactory() {
         if (bootStrapClassLoaderFactory == null) {
@@ -515,7 +512,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
         this.killTimeout = killTimeout;
     }
 
-    private static class MeshContainerImpl implements MeshContainer {
+    private class MeshContainerImpl implements MeshContainer {
         private final MeshProcess process;
         private final MeshContainerService container;
 
@@ -571,7 +568,11 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
         }
 
         public void close() {
-            container.close();
+            try {
+                kill();
+            } catch (Exception e) {
+                log.warn("error closing meshcontainer", e);
+            }
         }
 
         /*

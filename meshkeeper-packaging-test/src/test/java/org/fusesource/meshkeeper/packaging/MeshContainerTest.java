@@ -135,7 +135,19 @@ public class MeshContainerTest extends TestCase {
             }
             assertNotNull(expected);
 
+            System.out.println("Dumping registry:");
+            for(String path : meshKeeper.registry().list("*", true))
+            {
+                System.out.println(path);
+            }
+            
             container.close();
+            
+            System.out.println("Dumping registry:");
+            for(String path : meshKeeper.registry().list("*", true))
+            {
+                System.out.println(path);
+            }
 
         } catch (Exception thrown) {
             thrown.printStackTrace();

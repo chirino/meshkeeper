@@ -127,7 +127,8 @@ public interface MeshKeeper {
     public interface Launcher {
 
         /**
-         * Indicates the path in which Launchers should register themselves.
+         * Indicates the path in which Launchers should register themselves. Data placed under this root
+         * will be cleaned up if the Launcher becomes unresponsive
          */
         public static final String LAUNCHER_REGISTRY_PATH = Registry.MESH_KEEPER_ROOT + "/launchclients";
 
