@@ -20,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.fusesource.meshkeeper.Expression.*;
+
+import org.fusesource.meshkeeper.Expression;
 import org.fusesource.meshkeeper.HostProperties;
 import org.fusesource.meshkeeper.LaunchDescription;
 import org.fusesource.meshkeeper.MavenTestSupport;
@@ -32,9 +34,9 @@ import org.fusesource.meshkeeper.util.DefaultProcessListener;
 import junit.framework.TestCase;
 
 /**
- * This TestCase shows you how you can use MeshKeeper to launch remote
- * processes in your test case.
- *
+ * This TestCase shows you how you can use MeshKeeper to launch remote processes
+ * in your test case.
+ * 
  */
 public class LauncherTest extends TestCase {
 
@@ -52,10 +54,9 @@ public class LauncherTest extends TestCase {
         }
     }
 
-    private String getAgent() throws InterruptedException, TimeoutException
-    {
+    private HostProperties getAgent() throws InterruptedException, TimeoutException {
         meshKeeper.launcher().waitForAvailableAgents(5000);
-        return meshKeeper.launcher().getAvailableAgents()[0].getAgentId();
+        return meshKeeper.launcher().getAvailableAgents()[0];
     }
 
     public void testDataOutput() throws Exception {
@@ -63,17 +64,24 @@ public class LauncherTest extends TestCase {
         // Process launching is main focused around the Launcher interface
         Launcher launcher = meshKeeper.launcher();
 
-        // Lets get an agent to launch on...
-        launcher.waitForAvailableAgents(5000);
-        HostProperties host = launcher.getAvailableAgents()[0];
+        HostProperties host = getAgent();
 
-        System.out.println("Launching on: "+host.getExternalHostName());
+        System.out.println("Launching on: " + host.getExternalHostName());
 
-        // Setup a simple remote command to execute.. we are just going to do an echo of the OS
+        boolean windows = host.getSystemProperties().get("os.name").toString().toLowerCase().contains("windows");
+
+        // Setup a simple remote command to execute.. we are just going to do a simple echo 
+        // of Hello World from the host machines timezone.
         LaunchDescription ld = new LaunchDescription();
+        //For windows start cmd shell:
+        if (windows) {
+            ld.add("cmd");
+            ld.add("/c");
+        }
         ld.add("echo");
-        ld.add("The remote OS is a: ");
-        ld.add(property("os.name"));
+        //Note the use of Expressions' append', 'string' and 'property' used to build the command.
+        //Here the 'property' is evaluated from the host's launcher:
+        ld.add(append(string("Hello World From: "), property("user.timezone")));
 
         final CountDownLatch done = new CountDownLatch(1);
         final AtomicInteger exitCode = new AtomicInteger();
@@ -88,11 +96,9 @@ public class LauncherTest extends TestCase {
         };
 
         MeshProcess process = launcher.launchProcess(host.getAgentId(), ld, listener);
-
+        
         assertTrue(done.await(10, TimeUnit.SECONDS));
         assertEquals(0, exitCode.get());
-
     }
-
 
 }
