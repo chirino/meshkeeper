@@ -31,7 +31,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   
-  <name>MeshKeeper Example A</name>
+  <name>MeshKeeper :: Example A</name>
     
   <dependencies>
     

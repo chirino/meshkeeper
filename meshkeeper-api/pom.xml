@@ -113,7 +113,7 @@
 
   <profiles>
     <profile>
-      <id>deploy</id>
+      <id>full</id>
       <build>
         <defaultGoal>install</defaultGoal>
         <plugins>
@@ -122,10 +122,12 @@
             <artifactId>maven-javadoc-plugin</artifactId>
             <configuration>
               <encoding>${project.build.sourceEncoding}</encoding>
-              <excludePackageNames>*org.fusesource.meshkeeper.distribution</excludePackageNames>
             </configuration>
             <executions>
               <execution>
+                <configuration>
+                  <detectOfflineLinks>false</detectOfflineLinks>
+                </configuration>
                 <id>attach-javadocs</id>
                 <goals>
                   <goal>jar</goal>

@@ -5,7 +5,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.fusesource.meshkeeper</groupId>
+  <groupId>org.fusesource.meshkeeper.examples</groupId>
   <artifactId>example-c</artifactId>
   <name>MeshKeeper :: Example C</name>
   <version>1.0-SNAPSHOT</version>

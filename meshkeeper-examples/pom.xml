@@ -29,7 +29,7 @@
   <version>1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>MeshKeeper Examples Pom</name>
+  <name>MeshKeeper :: Examples Parent</name>
 
   <modules>
     <module>example-assembly-descriptor</module>

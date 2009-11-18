@@ -30,6 +30,6 @@
   <artifactId>example-assembly-descriptor</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>MeshKeeper Examples Assembly Descriptor</name>
+  <name>MeshKeeper :: Examples Assembly Descriptor</name>
 
 </project>
