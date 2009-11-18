@@ -387,6 +387,7 @@ public class LaunchAgent implements LaunchAgentService {
      * @param exitValue
      */
     public synchronized void onProcessExit(LocalProcess process, int exitValue) {
+        LOG.info(process + " exited with: " + exitValue);
         processes.remove(process.getPid());
     }
 }
