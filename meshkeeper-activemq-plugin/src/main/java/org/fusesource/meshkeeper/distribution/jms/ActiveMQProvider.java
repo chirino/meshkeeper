@@ -31,19 +31,25 @@ import org.fusesource.meshkeeper.distribution.jms.JMSProvider;
  * <p>
  * Description:
  * </p>
- *
+ * 
  * @author cmacnaug
  * @version 1.0
  */
 public class ActiveMQProvider extends JMSProvider {
 
     public ConnectionFactory createConnectionFactory(URI uri) {
-        return new ActiveMQConnectionFactory(uri);
+
+        if (!uri.toString().contains("failover")) {
+            return new ActiveMQConnectionFactory("failover:(" + uri.toString() + ")");
+        } else {
+            return new ActiveMQConnectionFactory(uri);
+        }
+
     }
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see
      * org.fusesource.meshkeeper.distribution.jms.JMSProvider#createQueue(java
      * .lang.String)
@@ -55,7 +61,7 @@ public class ActiveMQProvider extends JMSProvider {
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see
      * org.fusesource.meshkeeper.distribution.jms.JMSProvider#createTopic(java
      * .lang.String)
