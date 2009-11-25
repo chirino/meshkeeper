@@ -58,16 +58,22 @@ public class MavenTestSupport {
     public static MeshKeeper createMeshKeeper(String testName) throws Exception {
         File dataDirectory = getDataDirectory(testName);
         //Set up the meshkeeper base dir (private to the test):
-        System.setProperty("meshkeeper.base", dataDirectory.getCanonicalPath());
-        //Set up mop.base (shared between tests)
-        System.setProperty("mop.base", new File(getDataDirectory(null), "mop").getCanonicalPath());
+        if (System.getProperty(MeshKeeperFactory.MESHKEEPER_BASE_PROPERTY) == null) {
+            System.setProperty("meshkeeper.base", dataDirectory.getCanonicalPath());
+        }
+
+        //TODO should remove references to mop.base
+        if (System.getProperty("mop.base") == null) {
+            //Set up mop.base (shared between tests)
+            System.setProperty("mop.base", new File(getDataDirectory(null), "mop").getCanonicalPath());
+        }
         return MeshKeeperFactory.createMeshKeeper();
     }
 
     public static File getBaseDirectory() {
         return new File(System.getProperty("basedir", "."));
     }
-    
+
     public static File getDataDirectory() {
         return getDataDirectory(null);
     }
