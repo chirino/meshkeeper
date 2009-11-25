@@ -39,11 +39,13 @@ public class ActiveMQProvider extends JMSProvider {
 
     public ConnectionFactory createConnectionFactory(URI uri) {
 
-        if (!uri.toString().contains("failover")) {
-            return new ActiveMQConnectionFactory("failover:(" + uri.toString() + ")");
-        } else {
-            return new ActiveMQConnectionFactory(uri);
-        }
+//        if (!uri.toString().contains("failover")) {
+//            return new ActiveMQConnectionFactory("failover:(" + uri.toString() + ")");
+//        } else {
+//            return new ActiveMQConnectionFactory(uri);
+//        }
+        
+        return new ActiveMQConnectionFactory(uri);
 
     }
 
