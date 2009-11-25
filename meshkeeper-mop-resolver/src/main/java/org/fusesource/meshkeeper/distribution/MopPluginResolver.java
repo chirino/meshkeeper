@@ -112,11 +112,11 @@ public class MopPluginResolver implements PluginResolver {
 
             LinkedHashMap<String, String> repositories = MOP_REPO.getRemoteRepositories();
             repositories.clear();
-            //Add in configured repos (which may have auth to get to meshkeeper:
+            //Add in configured repos:
             repositories.putAll(MOP_REPO.getConfiguredRepositories());
-            //We could add our meshkeeper repos.. but they require authorization.. so there is no point.
-            //repositories.put("meshkeeper.release", "http://meshkeeper.fusesource.org/repo/release");
-            //repositories.put("meshkeeper.snapshot", "http://meshkeeper.fusesource.org/repo/snapshot");
+            //Add in meshkeeper repos:
+            repositories.put("meshkeeper.release", "http://meshkeeper.fusesource.org/repo/release");
+            repositories.put("meshkeeper.snapshot", "http://meshkeeper.fusesource.org/repo/snapshot");
 
         }
         return MOP_REPO;
