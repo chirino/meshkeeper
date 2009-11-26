@@ -56,7 +56,7 @@ public class MeshKeeperProvisioningMojo extends AbstractMojo {
      * 
      * @parameter expression="${meshkeeper.provisioner.deploymentUrl}"
      */
-    private URL deploymentUrl;
+    private String deploymentUrl;
 
     /**
      * The preferred control host.
@@ -111,7 +111,7 @@ public class MeshKeeperProvisioningMojo extends AbstractMojo {
         }
 
         if (deploymentUrl != null) {
-            provisioner.setDeploymentUri(deploymentUrl.toString());
+            provisioner.setDeploymentUri(deploymentUrl);
         }
 
         if (agentHosts != null) {

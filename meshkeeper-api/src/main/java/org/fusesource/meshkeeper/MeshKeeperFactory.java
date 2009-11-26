@@ -99,7 +99,7 @@ public class MeshKeeperFactory {
      * components.
      */
     public static File getDefaultBaseDirectory() {
-        return new File(System.getProperty(MESHKEEPER_BASE_PROPERTY, "./data"));
+        return new File(System.getProperty(MESHKEEPER_BASE_PROPERTY, "./meshkeeper"));
     }
 
     /**

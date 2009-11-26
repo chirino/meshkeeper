@@ -135,7 +135,6 @@ public class EmbeddedProvisioner implements Provisioner {
      * @see org.fusesource.meshkeeper.MeshProvisioner#getDeploymentUri()
      */
     public String getDeploymentUri() {
-        // TODO Auto-generated method stub
         return "embedded:";
     }
 
@@ -219,7 +218,7 @@ public class EmbeddedProvisioner implements Provisioner {
         return false;
     }
 
-    private File getControlServerDirectory() throws Exception {
+    File getControlServerDirectory() throws Exception {
         if (deploymentUri != null) {
             return new File(deploymentUri);
         } else {
@@ -256,7 +255,7 @@ public class EmbeddedProvisioner implements Provisioner {
         unDeploy(true);
         deploy();
     }
-
+    
     /*
      * (non-Javadoc)
      * 

@@ -16,6 +16,11 @@
  */
 package org.fusesource.meshkeeper.distribution.provisioner.embedded;
 
+import java.io.File;
+import java.net.URI;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.fusesource.meshkeeper.distribution.provisioner.Provisioner;
 import org.fusesource.meshkeeper.distribution.provisioner.ProvisionerFactory;
 
@@ -30,6 +35,7 @@ import org.fusesource.meshkeeper.distribution.provisioner.ProvisionerFactory;
  */
 public class EmbeddedProvisionerFactory extends ProvisionerFactory {
 
+    private Log LOG = LogFactory.getLog(EmbeddedProvisionerFactory.class);
     /*
      * (non-Javadoc)
      * 
@@ -39,10 +45,19 @@ public class EmbeddedProvisionerFactory extends ProvisionerFactory {
     @Override
     protected Provisioner createPlugin(String uri) throws Exception {
         EmbeddedProvisioner provisioner = new EmbeddedProvisioner();
-        if (uri != null && uri.trim().length() > 0) {
-            provisioner.setDeploymentUri(uri.trim());
+        LOG.info("Creating embedded provisioner from " + uri);
+        uri = super.applyQueryParameters(provisioner, new URI(uri)).toString().trim();
+        
+        //Treat the remaining portion if any as a the deployment uri (which be a uri
+        //specifying the control server directory)
+        if (uri.length() > 0) {
+            if (uri != null && uri.trim().length() > 0) {
+                provisioner.setDeploymentUri(new File(new URI(uri)).toString());
+            }
         }
         
+       LOG.info("Created embedded provisioner, control server directory is: " + provisioner.getControlServerDirectory());
+
         return provisioner;
     }
 }
