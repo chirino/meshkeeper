@@ -133,6 +133,7 @@ public class RemoteBootstrap {
             System.out.println("Invalid Syntax: " + e.getMessage());
             System.out.println();
             showUsage();
+            Thread.currentThread().sleep(1000);
             System.exit(2);
         }
         main.execute();
