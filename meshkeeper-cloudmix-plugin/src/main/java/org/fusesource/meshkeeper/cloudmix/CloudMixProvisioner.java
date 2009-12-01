@@ -338,7 +338,7 @@ public class CloudMixProvisioner implements Provisioner {
                     }
 
                     ProcessClient pc = clients.get(0);
-                    byte[] controllerProps = pc.directoryResource("data/server/" + ControlServer.CONTROLLER_PROP_FILE_NAME).get(byte[].class);
+                    byte[] controllerProps = pc.directoryResource("meshkeeper/server/" + ControlServer.CONTROLLER_PROP_FILE_NAME).get(byte[].class);
                     Properties p = new Properties();
                     p.load(new ByteArrayInputStream(controllerProps));
 
@@ -349,7 +349,7 @@ public class CloudMixProvisioner implements Provisioner {
 
                         cachedRegistryConnectUri = (String) p.get(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY);
                         if (cachedRegistryConnectUri == null) {
-                            throw new Exception(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY + " not found in " + "data/server/" + ControlServer.CONTROLLER_PROP_FILE_NAME);
+                            throw new Exception(MeshKeeperFactory.MESHKEEPER_REGISTRY_PROPERTY + " not found in " + "meshkeeper/server/" + ControlServer.CONTROLLER_PROP_FILE_NAME);
                         }
                         return cachedRegistryConnectUri;
                     }
@@ -663,7 +663,7 @@ public class CloudMixProvisioner implements Provisioner {
     public static final void main(String[] args) {
 
         //String command = "findUri";
-        String command = "redeploy";
+        String command = "undeploy";
 
         if (args.length > 0) {
             command = args[0];
@@ -679,10 +679,6 @@ public class CloudMixProvisioner implements Provisioner {
         if (args.length > 2) {
             provisioner.setPreferredControlHost(args[2]);
         }
-
-        provisioner.setDeploymentUri("http://vm-fuseubt1.bedford.progress.com:8181");
-        provisioner.setPreferredControlHost("vm-fuseubt1.bedford.progress.com");
-        provisioner.setRequestedAgentHosts(new String[] { "vm-fuseubt2.bedford.progress.com", "vm-fuseubt3.bedford.progress.com" });
 
         try {
             if (command.equalsIgnoreCase("deploy")) {
