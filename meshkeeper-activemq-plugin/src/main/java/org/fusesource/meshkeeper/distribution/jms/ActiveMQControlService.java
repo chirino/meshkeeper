@@ -16,8 +16,11 @@
  */
 package org.fusesource.meshkeeper.distribution.jms;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.URL;
 import java.util.List;
+
 
 import org.apache.activemq.broker.BrokerFactory;
 import org.apache.activemq.broker.BrokerService;
@@ -58,7 +61,19 @@ public class ActiveMQControlService implements ControlService {
         controlBroker.setUseShutdownHook(false);
         controlBroker.start();
         List<TransportConnector> connectors = controlBroker.getTransportConnectors();
-        serviceUri = "activemq:" + connectors.get(0).getConnectUri();
+        serviceUri = "activemq:" + externalizeUrl(connectors.get(0).getConnectUri());
+    }
+    
+    private URI externalizeUrl(URI uri) throws Exception
+    {
+        InetAddress address = InetAddress.getByName(uri.getHost());
+        if(address.isAnyLocalAddress())
+        {
+            //InetAddress address = serverFactory.getLocalAddress().getAddress();
+            String actualHost = InetAddress.getLocalHost().getCanonicalHostName();
+            uri = new URI(uri.getScheme(), uri.getUserInfo(), actualHost, new Integer(uri.getPort()), uri.getPath(), uri.getQuery(), uri.getFragment());
+        }
+        return uri;
     }
 
     /*
