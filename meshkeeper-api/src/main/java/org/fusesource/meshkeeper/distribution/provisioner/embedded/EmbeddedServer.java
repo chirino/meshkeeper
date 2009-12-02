@@ -45,7 +45,7 @@ public class EmbeddedServer {
         if (registryURI != null) {
             return;
         } else {
-            registryURI = "zk:tcp://localhost:" + registryPort;
+            registryURI = "zk:tcp://0.0.0.0:" + registryPort;
             if (dataDirectory == null) {
                 dataDirectory = MeshKeeperFactory.getDefaultServerDirectory();
             }

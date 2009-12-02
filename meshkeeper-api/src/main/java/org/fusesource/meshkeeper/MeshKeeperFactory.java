@@ -292,7 +292,6 @@ public class MeshKeeperFactory {
         if (registry != null) {
             rc.setRegistryUri(registry);
         }
-        rc.setJmsUri("jms:activemq:tcp://localhost:0");
         rc.setDirectory(dataDir.getCanonicalPath());
         rc.start();
         return rc;

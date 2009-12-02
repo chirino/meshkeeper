@@ -68,7 +68,7 @@ public class Main {
         }
 
         String jms = ControlServer.DEFAULT_JMS_URI;
-        String registry = "zk:tcp://localhost:4040";
+        String registry = ControlServer.DEFAULT_REGISTRY_URI;
         String repository = null;
         String directory = MeshKeeperFactory.getDefaultServerDirectory().getPath();
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));

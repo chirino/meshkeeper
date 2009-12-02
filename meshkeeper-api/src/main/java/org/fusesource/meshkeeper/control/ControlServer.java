@@ -51,9 +51,9 @@ public class ControlServer {
     Log log = LogFactory.getLog(ControlServer.class);
     private static final ControlServiceFactory SERVICE_FACTORY = new ControlServiceFactory();
 
-    public static final String DEFAULT_JMS_URI = "activemq:tcp://localhost:4041";
+    public static final String DEFAULT_JMS_URI = "activemq:tcp://0.0.0.0:0";
     public static final String DEFAULT_REMOTING_URI = "rmiviajms:" + DEFAULT_JMS_URI;
-    public static final String DEFAULT_REGISTRY_URI = "zk:tcp://localhost:4040";
+    public static final String DEFAULT_REGISTRY_URI = "zk:tcp://0.0.0.0:4040";
     public static final String DEFAULT_EVENT_URI = "eventviajms:" + DEFAULT_JMS_URI;
 
     public static final String REMOTING_URI_PATH = Registry.MESH_KEEPER_ROOT + "/control/remoting-uri";

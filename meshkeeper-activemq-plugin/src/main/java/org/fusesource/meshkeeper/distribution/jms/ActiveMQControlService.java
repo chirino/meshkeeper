@@ -17,6 +17,7 @@
 package org.fusesource.meshkeeper.distribution.jms;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
@@ -67,9 +68,8 @@ public class ActiveMQControlService implements ControlService {
     private URI externalizeUrl(URI uri) throws Exception
     {
         InetAddress address = InetAddress.getByName(uri.getHost());
-        if(address.isAnyLocalAddress())
+        if(address.isAnyLocalAddress() || address.isLoopbackAddress())
         {
-            //InetAddress address = serverFactory.getLocalAddress().getAddress();
             String actualHost = InetAddress.getLocalHost().getCanonicalHostName();
             uri = new URI(uri.getScheme(), uri.getUserInfo(), actualHost, new Integer(uri.getPort()), uri.getPath(), uri.getQuery(), uri.getFragment());
         }
@@ -123,5 +123,4 @@ public class ActiveMQControlService implements ControlService {
         rc.controlBroker = controlBroker;
         return rc;
     }
-
 }
