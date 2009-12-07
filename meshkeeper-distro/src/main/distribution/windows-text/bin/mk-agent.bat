@@ -106,8 +106,9 @@ goto :EOF
 :LOCATE_CLASSPATH
   set CLASSPATH=
   set CLASSPATH=%CLASSPATH%;%MESHKEEPER_HOME%\repository\org\fusesource\meshkeeper\meshkeeper-api\${project.version}\meshkeeper-api-${project.version}.jar
-  set CLASSPATH=%CLASSPATH%;commons-logging\commons-logging\${commons-logging-version}\commons-logging-${commons-logging-version}.jar
-  set CLASSPATH=%CLASSPATH%;log4j\log4j\${log4j-version}\log4j-${log4j-version}.jar
+  set CLASSPATH=%CLASSPATH%;%MESHKEEPER_HOME%\repository\org\fusesource\meshkeeper\meshkeeper-mop-resolver\${project.version}\meshkeeper-meshkeeper-mop-resolver-${project.version}.jar
+  set CLASSPATH=%CLASSPATH%;%MESHKEEPER_HOME%\repository\commons-logging\commons-logging\${commons-logging-version}\commons-logging-${commons-logging-version}.jar
+  set CLASSPATH=%CLASSPATH%;%MESHKEEPER_HOME%\repository\log4j\log4j\${log4j-version}\log4j-${log4j-version}.jar
 goto :EOF
     
 :ERROR
