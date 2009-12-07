@@ -197,7 +197,7 @@ setupDefaults() {
 
     # Setup the classpath..
     CLASSPATH="$MESHKEEPER_HOME/repository/org/fusesource/meshkeeper/meshkeeper-api/${project.version}/meshkeeper-api-${project.version}.jar"
-    CLASSPATH="$MESHKEEPER_HOME/repository/org/fusesource/meshkeeper/meshkeeper-mop-resolver/${project.version}/meshkeeper-mop-resolver-${project.version}.jar"
+    CLASSPATH="$CLASSPATH:$MESHKEEPER_HOME/repository/org/fusesource/meshkeeper/meshkeeper-mop-resolver/${project.version}/meshkeeper-mop-resolver-${project.version}.jar"
     CLASSPATH="$CLASSPATH:$MESHKEEPER_HOME/repository/commons-logging/commons-logging/${commons-logging-version}/commons-logging-${commons-logging-version}.jar"
     CLASSPATH="$CLASSPATH:$MESHKEEPER_HOME/repository/log4j/log4j/${log4j-version}/log4j-${log4j-version}.jar"
   	if $cygwin; then
