@@ -40,6 +40,7 @@ public class Main {
         System.out.println("  -h,--help                   -- this message");
         System.out.println("  --registry <uri>            -- specifies the uri of a control server registry.");
         System.out.println("  [--directory <directory>]   -- specifies data directory used by the Launcher.");
+        System.out.println("  [--agent-id <name>]         -- specifies the id of the agent, defaults to the machine's host name.");
     }
 
     static class UsageException extends Exception {
@@ -70,6 +71,7 @@ public class Main {
         
         MeshKeeper meshKeeper = null;
         String regisitry = null;
+        String agentId = null;
         String directory = MeshKeeperFactory.getDefaultAgentDirectory().getPath();
         LinkedList<String> alist = new LinkedList<String>(Arrays.asList(args));
 
@@ -86,6 +88,9 @@ public class Main {
                 } else if (arg.equals("--directory")) {
                     assertHasAdditionalArg(alist, "Directory expected after --directory");
                     directory = alist.removeFirst();
+                } else if (arg.equals("--agent-id")) {
+                    assertHasAdditionalArg(alist, "Name expected after --agent-id");
+                    agentId = alist.removeFirst();
                 } 
             }
 
@@ -98,6 +103,9 @@ public class Main {
             meshKeeper = MeshKeeperFactory.createMeshKeeper(regisitry, new File(directory));
 
             LaunchAgent agent = new LaunchAgent();
+            if( agentId!=null ) {
+                agent.setAgentId(agentId);
+            }
             agent.setDirectory(new File(directory));
             agent.setMeshKeeper(meshKeeper);
             agent.start();
