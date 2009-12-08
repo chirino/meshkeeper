@@ -37,6 +37,20 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  
+  <repositories>
+    <repository>
+      <id>cloudmix.m2.snapshot</id>
+      <name>cloudmix snapshot repository</name>
+      <url>http://cloudmix.fusesource.org/repo/snapshot</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+  </repositories>
 
   <dependencies>
     <dependency>
