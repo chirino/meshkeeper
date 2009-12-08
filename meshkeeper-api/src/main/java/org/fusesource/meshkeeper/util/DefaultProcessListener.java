@@ -16,18 +16,18 @@
  */
 package org.fusesource.meshkeeper.util;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.fusesource.meshkeeper.Distributable;
-import org.fusesource.meshkeeper.MeshKeeper;
-import org.fusesource.meshkeeper.MeshProcess;
-import org.fusesource.meshkeeper.MeshProcessListener;
-
 import java.io.BufferedReader;
-import java.io.Serializable;
-import java.io.ObjectStreamException;
 import java.io.StringReader;
 import java.util.LinkedList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.fusesource.meshkeeper.MeshProcess;
+import org.fusesource.meshkeeper.MeshProcessListener;
 
 /**
  * DefaultProcessListener
@@ -46,6 +46,9 @@ public class DefaultProcessListener implements MeshProcessListener {
 
     protected LinkedList<MeshProcessListener> delegates;
     protected boolean prefixEachLine = true;
+    
+    protected final CountDownLatch exitLatch = new CountDownLatch(1);
+    protected final AtomicInteger exitCode = new AtomicInteger();
 
     public DefaultProcessListener(String name) {
         this.name = name;
@@ -106,12 +109,41 @@ public class DefaultProcessListener implements MeshProcessListener {
      * @see org.fusesource.meshkeeper.ProcessListener#onProcessExit(int)
      */
     public void onProcessExit(int exitCode) {
-        LOG.info(format("exited with " + exitCode));
-        if (delegates != null) {
-            for (MeshProcessListener listener : delegates) {
-                listener.onProcessExit(exitCode);
+        this.exitCode.set(exitCode);
+        try {
+            LOG.info(format("exited with " + exitCode));
+            if (delegates != null) {
+                for (MeshProcessListener listener : delegates) {
+                    listener.onProcessExit(exitCode);
+                }
             }
+        } finally {
+            exitLatch.countDown();
         }
+    }
+    
+    public int waitForExit() throws InterruptedException {
+        exitLatch.await();
+        return exitCode.get();
+    }
+
+    public int waitForExit(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+        if( exitLatch.await(timeout, unit) )
+            return exitCode.get();
+        throw new TimeoutException();
+    }
+
+    /**
+     * 
+     * @return 
+     *              The exit code of the remote process
+     * @throws IllegalStateException
+     *              If the 
+     */
+    public int exitCode() throws IllegalStateException {
+        if( exitLatch.getCount()==0 )
+            return exitCode.get();
+        throw new IllegalStateException();
     }
 
     /*
