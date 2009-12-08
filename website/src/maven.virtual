@@ -18,10 +18,10 @@ in_menu: false
 --- name:content pipeline:tags
 \--- !omap
 - /maven/:
-    url: http://meshkeeper.fusesource.org/maven/1.0-SNAPSHOT
+    url: http://meshkeeper.fusesource.org/maven/1.0-m1
     
 - /javadoc.html:
     title: Javadoc
     in_menu: true
     sort_info: 60
-    url: http://meshkeeper.fusesource.org/maven/1.0-SNAPSHOT/apidocs/index.html
+    url: http://meshkeeper.fusesource.org/maven/1.0-m1/apidocs/index.html
