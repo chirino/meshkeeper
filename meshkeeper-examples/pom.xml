@@ -37,6 +37,7 @@
     <module>example-b</module>
     <module>example-c</module>
     <module>example-d</module>
+    <module>intro-demo</module>
   </modules>
   
   <dependencies>
@@ -87,6 +88,7 @@
 
   <build>
     <testResources>
+      <!-- 
       <testResource>
         <filtering>false</filtering>
         <directory>${basedir}/..</directory>
@@ -95,11 +97,13 @@
           <include>license.txt</include>
         </includes>
       </testResource>
+       -->
       <testResource>
         <directory>src/test/resources</directory>
       </testResource>
     </testResources>
     <resources>
+      <!-- 
       <resource>
         <filtering>false</filtering>
         <directory>${basedir}/..</directory>
@@ -108,6 +112,7 @@
           <include>license.txt</include>
         </includes>
       </resource>
+       -->
       <resource>
         <directory>src/main/resources</directory>
       </resource>
