@@ -64,9 +64,9 @@ public class MeshKeeperProvisionerTest extends TestCase {
         assertNotNull(expected);
     }
 
-    public void testCloudmixProvisionerInstantiation() throws Exception {
-        Provisioner provisioner = new ProvisionerFactory().create("cloudmix:http://localhost:8181");
-        assertNotNull(provisioner);
-        assertEquals("http://localhost:8181", provisioner.getDeploymentUri());
-    }
+    // public void testCloudmixProvisionerInstantiation() throws Exception {
+    //     Provisioner provisioner = new ProvisionerFactory().create("cloudmix:http://localhost:8181");
+    //     assertNotNull(provisioner);
+    //     assertEquals("http://localhost:8181", provisioner.getDeploymentUri());
+    // }
 }
