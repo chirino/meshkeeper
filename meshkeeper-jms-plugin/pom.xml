@@ -22,12 +22,12 @@
   <parent>
     <artifactId>meshkeeper</artifactId>
     <groupId>org.fusesource.meshkeeper</groupId>
-    <version>1.0-m1</version>
+    <version>1.0-SNAPSHOT</version>
   </parent>
   
   <groupId>org.fusesource.meshkeeper</groupId>
   <artifactId>meshkeeper-jms-plugin</artifactId>
-  <version>1.0-m1</version>
+  <version>1.0-SNAPSHOT</version>
 
   <name>MeshKeeper :: JMS Plugin</name>
   

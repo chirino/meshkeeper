@@ -2,13 +2,13 @@
   <parent>
     <artifactId>meshkeeper-examples</artifactId>
     <groupId>org.fusesource.meshkeeper</groupId>
-    <version>1.0-m1</version>
+    <version>1.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.fusesource.meshkeeper.examples</groupId>
   <artifactId>example-d</artifactId>
   <name>MeshKeeper :: Example D</name>
-  <version>1.0-m1</version>
+  <version>1.0-SNAPSHOT</version>
   <url>http://maven.apache.org</url>
   
 </project>
