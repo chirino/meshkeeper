@@ -258,7 +258,7 @@
           -->
           <header>etc/header.txt</header>
           <quiet>false</quiet>
-          <failIfMissing>false</failIfMissing>
+          <failIfMissing>true</failIfMissing>
           <aggregate>false</aggregate>
           <includes>
             <include>pom.xml</include>
@@ -270,6 +270,7 @@
           <excludes>
             <exclude>target/**</exclude>
             <exclude>etc/**</exclude>
+            <exclude>website/**</exclude>
           </excludes>
           <useDefaultExcludes>true</useDefaultExcludes>
           <useDefaultMapping>true</useDefaultMapping>
