@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -204,14 +205,19 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
     }
 
     public void waitForAvailableAgents(long timeout) throws InterruptedException, TimeoutException {
+        waitForAvailableAgents(1, timeout, TimeUnit.MILLISECONDS);
+    }
+
+    public void waitForAvailableAgents(int agentCount, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+        timeout = unit.toNanos(timeout);
         synchronized (this) {
-            long start = System.currentTimeMillis();
+            long start = System.nanoTime();
             while (timeout > 0 && agentProps.isEmpty()) {
                 wait(timeout);
-                if (agentProps.size() > 0) {
+                if (agentProps.size() >= agentCount) {
                     return;
                 }
-                timeout -= System.currentTimeMillis() - start;
+                timeout -= System.nanoTime() - start;
             }
 
             if (agentProps.isEmpty()) {
@@ -219,7 +225,7 @@ class LaunchClient extends AbstractPluginClient implements MeshKeeper.Launcher, 
             }
         }
     }
-
+    
     private LaunchAgentService getAgent(String agentName) throws Exception {
         agentName = agentName.toUpperCase();
         LaunchAgentService launcher;

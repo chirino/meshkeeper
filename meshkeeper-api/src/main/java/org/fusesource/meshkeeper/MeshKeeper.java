@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.fusesource.meshkeeper.classloader.ClassLoaderFactory;
@@ -164,7 +165,7 @@ public interface MeshKeeper {
         public void releaseAllPorts(String agentName) throws Exception;
 
         /**
-         * Waits for an agent to become available timing out of one does not
+         * Waits for an agent to become available timing out if one does not
          * become available after the given timeout.
          * 
          * @param timeout
@@ -176,6 +177,23 @@ public interface MeshKeeper {
          *             If timed out.
          */
         public void waitForAvailableAgents(long timeout) throws InterruptedException, TimeoutException;
+
+        /**
+         * Waits for the specified number of agents to become available timing out if 
+         * they do not become available after the given timeout.
+         * 
+         * @param agents
+         *            The number of agents to wait for
+         * @param timeout
+         *            The timeout
+         * @param unit
+         *            The unit of time the timeout is provided in
+         * @throws InterruptedException
+         *             If the thread is interrupted while waiting
+         * @throws TimeoutException
+         *             If timed out.
+         */
+        public void waitForAvailableAgents(int agents, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
 
         /**
          * Gets available the properties of available agents.

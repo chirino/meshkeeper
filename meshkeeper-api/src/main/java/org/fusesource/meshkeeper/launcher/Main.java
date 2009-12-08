@@ -128,6 +128,7 @@ public class Main {
                 System.exit(-3);
             }
         }
+        System.exit(0);
     }
 
     private static void assertHasAdditionalArg(LinkedList<String> alist, String message) throws Exception {
