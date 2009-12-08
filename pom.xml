@@ -49,7 +49,7 @@
     
     <commons-logging-version>1.1.1</commons-logging-version>
     <log4j-version>1.2.15</log4j-version>
-    <mop-version>1.0-SNAPSHOT</mop-version>
+    <mop-version>1.0-m1</mop-version>
     <spring-version>2.5.5</spring-version>
   </properties>
     

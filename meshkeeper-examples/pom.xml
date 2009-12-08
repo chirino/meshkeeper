@@ -37,7 +37,6 @@
     <module>example-b</module>
     <module>example-c</module>
     <module>example-d</module>
-    <module>intro-demo</module>
   </modules>
   
   <dependencies>
