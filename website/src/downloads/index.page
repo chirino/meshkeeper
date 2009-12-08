@@ -15,6 +15,7 @@
 # limitations under the License.
 
 title: Downloads
+artifactId: meshkeeper-distro
 in_menu: true
 sort_info: 5
 --- name:overview
@@ -43,13 +44,12 @@ Download it Today!
   %ul
     %li 
       Unix:    
-      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{project_maven_artifactId:}/{project_version:}/{project_maven_artifactId:}-{project_version:}.tar.gz"}
-        {project_maven_artifactId:}-{project_version:}.tar.gz
+      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{artifactId:}/{project_version:}/{artifactId:}-{project_version:}.tar.gz"}
+        {artifactId:}-{project_version:}.tar.gz
     %li 
       Windows: 
-      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{project_maven_artifactId:}/{project_version:}/{project_maven_artifactId:}-{project_version:}.zip"}
-        {project_maven_artifactId:}-{project_version:}.zip
-
+      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{artifactId:}/{project_version:}/{artifactId:}-{project_version:}.zip"}
+        {artifactId:}-{project_version:}.zip
 .left
   %h1 Are you a Maven User?
 .right
