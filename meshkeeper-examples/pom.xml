@@ -21,12 +21,12 @@
   <parent>
     <groupId>org.fusesource.meshkeeper</groupId>
     <artifactId>meshkeeper</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0-m1</version>
   </parent>
 
   <groupId>org.fusesource.meshkeeper</groupId>
   <artifactId>meshkeeper-examples</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0-m1</version>
   <packaging>pom</packaging>
 
   <name>MeshKeeper :: Examples Parent</name>
@@ -49,7 +49,7 @@
     <dependency>
       <groupId>org.fusesource.meshkeeper</groupId>
       <artifactId>meshkeeper-api</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.0-m1</version>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>

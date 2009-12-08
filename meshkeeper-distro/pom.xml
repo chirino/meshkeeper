@@ -15,19 +15,18 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   
   <parent>
     <artifactId>meshkeeper</artifactId>
     <groupId>org.fusesource.meshkeeper</groupId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0-m1</version>
   </parent>
   
   <groupId>org.fusesource.meshkeeper</groupId>
   <artifactId>meshkeeper-distro</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0-m1</version>
   <packaging>pom</packaging>
 
   <name>MeshKeeper :: Distro</name>
@@ -44,19 +43,19 @@
     <dependency>
       <groupId>org.fusesource.meshkeeper</groupId>
       <artifactId>meshkeeper-website</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.0-m1</version>
     </dependency>
     
     <dependency>
       <groupId>org.fusesource.meshkeeper</groupId>
       <artifactId>meshkeeper-website</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.0-m1</version>
     </dependency>
     
     <dependency>
       <groupId>org.fusesource.meshkeeper.examples</groupId>
       <artifactId>example-a</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.0-m1</version>
       <classifier>project</classifier>
       <type>zip</type>
     </dependency>
@@ -64,7 +63,7 @@
     <dependency>
       <groupId>org.fusesource.meshkeeper.examples</groupId>
       <artifactId>example-a</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.0-m1</version>
       <classifier>project</classifier>
       <type>tar.gz</type>
     </dependency>
