@@ -28,12 +28,28 @@ Download it Today!
   %h1 Just need a jar?
   
 .right
+  %p
   Try out the nightly build:
   %ul
     %li
       %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{project_maven_artifactId:}/{project_version:}/{project_maven_artifactId:}-{project_version:}.jar"}
         {project_maven_artifactId:}-{project_version:}.jar
-    
+
+.left
+  %h1 Need a full Distribution?
+.right
+  %p
+  Nightly Builds:
+  %ul
+    %li 
+      Unix:    
+      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{project_maven_artifactId:}/{project_version:}/{project_maven_artifactId:}-{project_version:}.tar.gz"}
+        {project_maven_artifactId:}-{project_version:}.tar.gz
+    %li 
+      Windows: 
+      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{project_maven_artifactId:}/{project_version:}/{project_maven_artifactId:}-{project_version:}.zip"}
+        {project_maven_artifactId:}-{project_version:}.zip
+
 .left
   %h1 Are you a Maven User?
 .right
