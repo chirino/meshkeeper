@@ -26,33 +26,29 @@ Download it Today!
 --- name:content pipeline:haml,tags
 
 .left
-  %h1 Just need a jar?
+  %h1 Latest Release
   
 .right
-  %p
-  Try out the nightly build:
-  %ul
-    %li
-      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{project_maven_artifactId:}/{project_version:}/{project_maven_artifactId:}-{project_version:}.jar"}
-        {project_maven_artifactId:}-{project_version:}.jar
-
-.left
-  %h1 Need a full Distribution?
-.right
-  %p
-  Nightly Builds:
+  %h3
+    Need a full Distribution?
   %ul
     %li 
       Unix:    
-      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{artifactId:}/{project_version:}/{artifactId:}-{project_version:}.tar.gz"}
+      %a{:href => "http://{project_id:}.fusesource.org/repo/release/org/fusesource/{project_id:}/{artifactId:}/{project_version:}/{artifactId:}-{project_version:}.tar.gz"}
         {artifactId:}-{project_version:}.tar.gz
     %li 
       Windows: 
-      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{artifactId:}/{project_version:}/{artifactId:}-{project_version:}.zip"}
+      %a{:href => "http://{project_id:}.fusesource.org/repo/release/org/fusesource/{project_id:}/{artifactId:}/{project_version:}/{artifactId:}-{project_version:}.zip"}
         {artifactId:}-{project_version:}.zip
-.left
-  %h1 Are you a Maven User?
-.right
+
+  %h3
+    Just need a Jar?
+  %ul
+    %li
+      %a{:href => "http://{project_id:}.fusesource.org/repo/release/org/fusesource/{project_id:}/{project_maven_artifactId:}/{project_version:}/{project_maven_artifactId:}-{project_version:}.jar"}
+        {project_maven_artifactId:}-{project_version:}.jar
+
+  %h3 Are you a Maven User?
   :markdown
     Just the following to your `pom.xml`
   :raw
@@ -81,6 +77,50 @@ Download it Today!
           <enabled>true</enabled>
         </releases>
       </repository>
+    </repositories>
+    {coderay}
+      
+.left
+  %h1 Nightly Build
+  
+.right
+  %h3
+    Need a full Distribution?
+  %ul
+    %li 
+      Unix:    
+      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{artifactId:}/{project_snapshot_version:}/{artifactId:}-{project_snapshot_version:}.tar.gz"}
+        {artifactId:}-{project_snapshot_version:}.tar.gz
+    %li 
+      Windows: 
+      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{artifactId:}/{project_snapshot_version:}/{artifactId:}-{project_snapshot_version:}.zip"}
+        {artifactId:}-{project_snapshot_version:}.zip
+
+  %h3
+    Just need a Jar?
+  %ul
+    %li
+      %a{:href => "http://{project_id:}.fusesource.org/repo/snapshot/org/fusesource/{project_id:}/{project_maven_artifactId:}/{project_snapshot_version:}/{project_maven_artifactId:}-{project_snapshot_version:}.jar"}
+        {project_maven_artifactId:}-{project_snapshot_version:}.jar
+
+  %h3 Are you a Maven User?
+  :markdown
+    Just the following to your `pom.xml`
+  :raw
+    {coderay::xml}
+    <dependency>
+      <groupId>{project_maven_groupId:}</groupId>
+      <artifactId>{project_maven_artifactId:}</artifactId>
+      <version>{project_snapshot_version:}</version>
+    </dependency>
+    {coderay}
+    
+  :markdown
+    ... and also our repository ...
+    
+  :raw
+    {coderay:: xml}  
+    <repositories>
       <repository>
         <id>{project_id:}.snapshot.m2</id>
         <name>{project_id:} Release Repository</name>
@@ -94,7 +134,8 @@ Download it Today!
       </repository>
     </repositories>
     {coderay}
-      
+
+
 .left
   %h1 Building from Source
 .right
