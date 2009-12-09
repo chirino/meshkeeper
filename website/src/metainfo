@@ -24,6 +24,7 @@
   project_forums_url: 'http://fusesource.com/forums'
   project_wiki_url: 'http://fusesource.com/wiki/display/MESHKEEPER'
   project_logo: '/images/meshkeeper-logo.png'
+  project_snapshot_version: "1.0-SNAPSHOT"
   project_version: "1.0-m1"
   api_base: "http://meshkeeper.fusesource.org/maven/1.0-m1/apidocs/org/fusesource/meshkeeper"
   maven_site_base: "http://meshkeeper.fusesource.org/maven/1.0-m1"
